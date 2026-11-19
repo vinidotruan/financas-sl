@@ -1,0 +1,105 @@
+# Publicação rápida no GitHub Pages, para entregar mudança de código sem esperar a coleta diária.
+#
+# Roda depois que o CI passa num push para main (ou à mão). Não refaz a coleta inteira, que leva
+# cerca de 2 horas por causa do PNCP: parte dos dados da última execução (cache do Actions), recoleta
+# só as fontes rápidas (Câmara e Congresso), remonta o banco, exporta em modo público e publica.
+# Não salva o cache: quem guarda os dados entre execuções é a coleta diária (coleta.yml).
+#
+# Usa o mesmo grupo de concorrência da coleta diária, para as duas nunca publicarem ao mesmo tempo.
+name: publicar
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  montar:
+    # Só push deste repositório para main com o CI verde. Um pull request de fork com um branch
+    # chamado main também dispara o workflow_run, por isso o filtro de evento e de repositório.
+    if: >-
+      vars.PUBLICAR_PAGES == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SLF_REVISAO: config/revisao-publica.json
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Dados da última coleta diária
+        id: dados
+        uses: actions/cache/restore@v5
+        with:
+          path: data
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - name: Sem dados no cache, nada a publicar
+        if: steps.dados.outputs.cache-matched-key == ''
+        run: |
+          echo "Cache de dados vazio: rode a coleta diária primeiro." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - run: uv sync --locked
+
+      # Fonte fora do ar não segura a publicação: o banco usa a última coleta boa dela.
+      - name: Recoletar as fontes rápidas
+        continue-on-error: true
+        run: uv run slf coletar camara congresso
+
+      - name: Montar o banco
+        run: uv run slf atualizar
+
+      - name: Front estático
+        working-directory: front
+        run: npm ci && npm run build:estatico
+
+      - name: Exportar em modo público
+        run: uv run slf exportar --modo publico --saida site/data
+
+      - name: Resumo
+        run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run slf status >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  publicar:
+    needs: montar
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

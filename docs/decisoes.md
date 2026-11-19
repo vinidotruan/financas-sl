@@ -391,6 +391,21 @@ exportação apaga a pasta de saída antes, para não sobrar arquivo de sinal qu
 nenhum segredo, nada de `data/`. A primeira coleta no GitHub levou cerca de 2 horas (o PNCP responde
 devagar para máquinas fora do Brasil), dentro do limite de 3 horas do workflow.
 
+### D35 · Publicação rápida a cada push, sem refazer a coleta inteira · 19/11/2026 · vale
+
+**Problema.** O site só mudava na coleta diária, que leva cerca de 2 horas por causa do PNCP. Uma
+mudança de tela ou de regra esperava até o dia seguinte para ir ao ar.
+
+**Decisão.** O workflow `publicar.yml` roda quando o CI termina verde num push para `main` (ou à mão).
+Parte dos dados da última coleta diária no cache, recoleta só as fontes rápidas (Câmara e Congresso),
+remonta o banco, exporta em modo público e publica. Leva minutos. Não salva o cache: quem guarda os
+dados entre execuções continua sendo a coleta diária. Usa o mesmo grupo de concorrência dela, para as
+duas nunca publicarem ao mesmo tempo. Fonte rápida fora do ar não segura a publicação: vale a última
+coleta boa dela.
+
+**Consequência.** Entregas pequenas vão ao ar no mesmo dia. Se o cache estiver vazio (mais de 7 dias
+sem coleta diária), a publicação rápida falha de propósito em vez de publicar um site sem dados.
+
 ---
 
 ## Em aberto

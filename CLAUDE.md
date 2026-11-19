@@ -69,7 +69,7 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql; opcionais pra tela: `observado` ({rotulo, formato}) e `resumo` (frase com `{campo\|formato}` da evidência) |
 | `slf/consultas.py` | O conteúdo de cada rota e os filtros de privacidade (máscara de CPF, modo público). API e exportação usam o mesmo |
 | `slf/exportar.py` | Exportação estática pelas mesmas consultas da API; apaga a saída antes |
-| `.github/workflows/` | `ci.yml` (lint, testes, build) e `coleta.yml` (coleta diária, cache em `data/`, Pages só com `PUBLICAR_PAGES=true`) |
+| `.github/workflows/` | `ci.yml` (lint, testes, build), `coleta.yml` (coleta diária, cache em `data/`, Pages só com `PUBLICAR_PAGES=true`) e `publicar.yml` (publicação rápida depois do CI verde em `main`, D35) |
 | `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido), fina em cima de `consultas.py`; serve `site/` em "/" |
 | `front/` | Vite + Preact + TypeScript. `src/dados.ts` é a camada única (API ou JSON estático, por `VITE_DADOS`); rotas no hash |
 | `slf/web/index.html` | Tela provisória antiga; só aparece se `site/` não foi buildado |
@@ -175,6 +175,8 @@ de privacidade.
 - `ci.yml`: em push e pull request, `uv sync`, ruff, pytest (com as fixtures, sem rede).
 - `coleta.yml`: `schedule` com cron em UTC (`10 9 * * *` = 06:10 em Brasília) e `workflow_dispatch`.
   Roda `slf diario`, `slf exportar --modo publico`, builda o front e publica.
+- `publicar.yml`: depois do CI verde num push para `main`, recoleta Câmara e Congresso, monta,
+  exporta e publica em minutos, a partir do cache da coleta diária (D35).
 - **Persistência entre execuções:** o runner começa vazio a cada vez. Proposta: guardar `data/raw`
   recente e `data/slf.duckdb` como asset de uma release fixa (ex. `dados-latest`) com `gh release`,
   baixando no início e subindo no fim. Assim o histórico de sinais (`primeira_vez`) continua.
