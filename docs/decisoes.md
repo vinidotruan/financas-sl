@@ -323,6 +323,13 @@ sai quando o texto liga o endereço a uma casa ou a um morador); 3) uma conferê
 para o site antes de publicar, com uma lista de falsos positivos aprovada pelo Ruan; 4) objeto de
 contrato de pessoa física.
 
+**Conferência (`slf conferir`).** Roda depois da exportação nos dois workflows de publicação. Se achar algo
+que pareça dado sensível (CPF inteiro ou mascarado, telefone, "Solicitante:"/"Contato:", nome de MEI,
+número de casa de morador no texto do pedido), **a publicação para** e o site fica na versão anterior
+(decisão do Ruan). O relatório vai para o log público do GitHub, então mostra só a forma do trecho
+(dígitos viram #, nomes viram iniciais) e uma chave (sha1 do texto). Falso positivo entra em
+`config/sensivel-liberados.yaml` pela chave, com o motivo.
+
 ---
 
 ## Pedidos dos vereadores

@@ -90,6 +90,17 @@ jobs:
       - name: Exportar em modo público
         run: uv run slf exportar --modo publico --saida site/data
 
+      # D40: nada que pareça dado sensível vai ao ar. Achou, a publicação para e o site fica como estava;
+      # o relatório mostra só a forma do trecho (o log é público). Falso positivo: config/sensivel-liberados.yaml
+      - name: Conferir dados sensíveis
+        run: |
+          if ! uv run slf conferir --pasta site/data > conferencia.txt; then
+            { echo '### Publicação parada: dado sensível no export (D40)'; echo '```'; cat conferencia.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            cat conferencia.txt
+            exit 1
+          fi
+          cat conferencia.txt
+
       - name: Resumo
         run: |
           echo '```' >> "$GITHUB_STEP_SUMMARY"
