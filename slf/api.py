@@ -3,18 +3,40 @@ fica num arquivo JSON à parte, então a API nunca altera o banco."""
 from __future__ import annotations
 
 import json
+import re
 import threading
 from datetime import datetime
 
 import duckdb
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 from .config import DB, MODO, REVISAO, WEB
 from .sinais import ler_revisao
 
-app = FastAPI(title="Finanças de São Leopoldo", version="0.1")
+# 11 dígitos seguidos e isolados = CPF (CNPJ tem 14 e o código da emenda, 12). Aparece no campo
+# do fornecedor PF e também no nome de MEI e empresário individual ("FULANO DE TAL 12345678901").
+_CPF = re.compile(r"(?<!\d)(\d{3})(\d{3})(\d{3})(\d{2})(?!\d)")
+
+
+def _sem_cpf(x):
+    """CPF nunca aparece inteiro, em nenhum modo (LGPD). Percorre a resposta inteira."""
+    if isinstance(x, str):
+        return _CPF.sub(lambda m: f"***.{m[2]}.{m[3]}-**", x)
+    if isinstance(x, dict):
+        return {k: _sem_cpf(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [_sem_cpf(v) for v in x]
+    return x
+
+
+class RespostaSemCpf(JSONResponse):
+    def render(self, content) -> bytes:
+        return super().render(_sem_cpf(content))
+
+
+app = FastAPI(title="Finanças de São Leopoldo", version="0.1", default_response_class=RespostaSemCpf)
 _trava = threading.Lock()
 
 LINKS = {
@@ -32,7 +54,7 @@ def _q(sql: str, params: list | None = None) -> list[dict]:
     try:
         cur = con.execute(sql, params or [])
         cols = [c[0] for c in cur.description]
-        return [dict(zip(cols, linha)) for linha in cur.fetchall()]
+        return [dict(zip(cols, linha, strict=True)) for linha in cur.fetchall()]
     finally:
         con.close()
 
@@ -53,20 +75,16 @@ def _com_revisao(sinais: list[dict]) -> list[dict]:
 
 
 def _mascara_cpf(sinal: dict) -> dict:
-    """CPF nunca aparece inteiro, em nenhum modo (LGPD)."""
-    ev = sinal.get("evidencia")
-    if isinstance(ev, dict) and ev.get("tipo_pessoa") == "PF" and len(str(ev.get("fornecedor") or "")) == 11:
-        cpf = str(ev["fornecedor"])
-        ev["fornecedor"] = f"***.{cpf[3:6]}.{cpf[6:9]}-**"
-    return sinal
+    """CPF nunca aparece inteiro, em nenhum modo. A resposta inteira também passa por _sem_cpf."""
+    return _sem_cpf(sinal)
 
 
 def _publico(sinal: dict) -> dict:
-    """No modo público, pessoa física não aparece pelo nome."""
+    """No modo público, pessoa física (inclui MEI e empresário individual) não aparece pelo nome."""
     ev = sinal.get("evidencia") or {}
     if isinstance(ev, str):
         ev = json.loads(ev)
-    if ev.get("tipo_pessoa") == "PF":
+    if ev.get("pessoa_fisica") or ev.get("tipo_pessoa") == "PF":
         ev["fornecedor"] = "pessoa física"
         sinal["titulo"] = "Pessoa física · " + sinal["titulo"].split(" · ", 1)[-1]
     sinal["evidencia"] = ev
@@ -77,16 +95,19 @@ def _publico(sinal: dict) -> dict:
 def listar_sinais(area: str | None = None, severidade: str | None = None, status: str | None = None,
                   ativos: bool = True):
     filtros, params = ["(o.ativo or not ?)"], [ativos]
-    for campo, valor in (("r.area", area), ("r.severidade", severidade), ("o.status", status)):
+    for campo, valor in (("r.area", area), ("r.severidade", severidade)):
         if valor:
             filtros.append(f"{campo} = ?")
             params.append(valor)
-    if MODO == "publico":
-        filtros.append("o.status in ('confirmado', 'encaminhado')")
     linhas = _com_revisao(_q(f"""select o.id, o.regra_id, r.nome, r.area, r.severidade, o.titulo,
                     o.valor_observado, o.quando, o.primeira_vez, o.ultima_vez, o.ativo, o.status, o.nota, o.evidencia
                     from sinais.ocorrencia o join sinais.regra r on r.id = o.regra_id
                     where {' and '.join(filtros)}""", params))
+    # status filtrado depois da revisão: um sinal revisado depois da última atualização já vale aqui
+    if status:
+        linhas = [s for s in linhas if s["status"] == status]
+    if MODO == "publico":
+        linhas = [s for s in linhas if s["status"] in ("confirmado", "encaminhado")]
     linhas.sort(key=lambda s: (SEVERIDADE.get(s["severidade"], 9), s["status"] != "novo",
                                -(s["primeira_vez"].toordinal() if s["primeira_vez"] else 0)))
     for s in linhas:
@@ -166,17 +187,27 @@ def rastro(codigo: str):
 
 @app.get("/api/contratos")
 def contratos(q: str | None = None, limite: int = 50):
-    if q:
-        return _q("""select * from core.contrato where objeto ilike ? or fornecedor_nome ilike ? or fornecedor_ni = ?
-                     order by valor_global desc limit ?""", [f"%{q}%", f"%{q}%", q, limite])
-    return _q("select * from core.contrato order by valor_global desc limit ?", [limite])
+    if q and MODO == "publico":
+        # no modo público a busca é só pelo objeto: buscar pelo nome ou CPF confirmaria quem é a pessoa física
+        linhas = _q("select * from core.contrato where objeto ilike ? order by valor_global desc limit ?",
+                    [f"%{q}%", limite])
+    elif q:
+        linhas = _q("""select * from core.contrato where objeto ilike ? or fornecedor_nome ilike ? or fornecedor_ni = ?
+                       order by valor_global desc limit ?""", [f"%{q}%", f"%{q}%", q, limite])
+    else:
+        linhas = _q("select * from core.contrato order by valor_global desc limit ?", [limite])
+    if MODO == "publico":
+        for c in linhas:
+            if c["pessoa_fisica"]:
+                c["fornecedor_nome"], c["fornecedor_ni"] = "pessoa física", None
+    return linhas
 
 
 @app.get("/api/fornecedores")
 def fornecedores(limite: int = 30):
     linhas = _q("select * from core.fornecedor order by valor_total desc limit ?", [limite])
     for f in linhas:
-        if f["tipo_pessoa"] == "PF":
+        if f["pessoa_fisica"]:
             f["ni"] = None
             if MODO == "publico":
                 f["nome"] = "pessoa física"

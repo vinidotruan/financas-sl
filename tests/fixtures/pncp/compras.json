@@ -1,0 +1,150 @@
+[
+ {
+  "numeroControlePNCP": "89814693000160-1-000010/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "anoCompra": 2024,
+  "sequencialCompra": 10,
+  "numeroCompra": "10/2024",
+  "processo": "10/2024",
+  "modalidadeId": 8,
+  "modalidadeNome": "Dispensa",
+  "modoDisputaNome": "Não se aplica",
+  "amparoLegal": {
+   "nome": "Lei 14.133/2021, Art. 75, VIII",
+   "descricao": "Dispensa de Licitação: nos casos de emergência ou de calamidade pública",
+   "codigo": 38
+  },
+  "objetoCompra": "Limpeza urbana emergencial",
+  "valorTotalEstimado": 100000.0,
+  "valorTotalHomologado": null,
+  "dataAberturaProposta": null,
+  "dataEncerramentoProposta": null,
+  "dataPublicacaoPncp": "2024-05-08T09:00:00",
+  "situacaoCompraNome": "Divulgada no PNCP",
+  "srp": false
+ },
+ {
+  "numeroControlePNCP": "89814693000160-1-000011/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "anoCompra": 2024,
+  "sequencialCompra": 11,
+  "numeroCompra": "11/2024",
+  "processo": "11/2024",
+  "modalidadeId": 8,
+  "modalidadeNome": "Dispensa",
+  "modoDisputaNome": "Não se aplica",
+  "amparoLegal": {
+   "nome": "Lei 14.133/2021, Art. 75, VIII",
+   "descricao": "Dispensa de Licitação: nos casos de emergência ou de calamidade pública",
+   "codigo": 38
+  },
+  "objetoCompra": "Transporte emergencial",
+  "valorTotalEstimado": 90000.0,
+  "valorTotalHomologado": null,
+  "dataAberturaProposta": null,
+  "dataEncerramentoProposta": null,
+  "dataPublicacaoPncp": "2024-05-09T09:00:00",
+  "situacaoCompraNome": "Divulgada no PNCP",
+  "srp": false
+ },
+ {
+  "numeroControlePNCP": "89814693000160-1-000012/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "anoCompra": 2024,
+  "sequencialCompra": 12,
+  "numeroCompra": "12/2024",
+  "processo": "12/2024",
+  "modalidadeId": 6,
+  "modalidadeNome": "Pregão - Eletrônico",
+  "modoDisputaNome": "Aberto",
+  "amparoLegal": {
+   "nome": "Lei 14.133/2021, Art. 28, I",
+   "descricao": "pregão: modalidade de licitação obrigatória para aquisição de bens e serviços comuns",
+   "codigo": 1
+  },
+  "objetoCompra": "Reforma de escola",
+  "valorTotalEstimado": 100000.0,
+  "valorTotalHomologado": null,
+  "dataAberturaProposta": "2024-04-19T10:00:00",
+  "dataEncerramentoProposta": "2024-04-19T10:00:00",
+  "dataPublicacaoPncp": "2024-04-30T14:14:05",
+  "situacaoCompraNome": "Divulgada no PNCP",
+  "srp": false
+ },
+ {
+  "numeroControlePNCP": "89814693000160-1-000013/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "anoCompra": 2024,
+  "sequencialCompra": 13,
+  "numeroCompra": "13/2024",
+  "processo": "13/2024",
+  "modalidadeId": 6,
+  "modalidadeNome": "Pregão - Eletrônico",
+  "modoDisputaNome": "Aberto",
+  "amparoLegal": {
+   "nome": "Lei 14.133/2021, Art. 28, I",
+   "descricao": "pregão: modalidade de licitação obrigatória para aquisição de bens e serviços comuns",
+   "codigo": 1
+  },
+  "objetoCompra": "Material de expediente",
+  "valorTotalEstimado": 50000.0,
+  "valorTotalHomologado": null,
+  "dataAberturaProposta": "2024-07-01T10:00:00",
+  "dataEncerramentoProposta": "2024-07-01T10:00:00",
+  "dataPublicacaoPncp": "2024-06-10T09:00:00",
+  "situacaoCompraNome": "Divulgada no PNCP",
+  "srp": false
+ }
+]

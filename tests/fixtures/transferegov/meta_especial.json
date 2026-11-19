@@ -1,0 +1,4 @@
+[
+  {"id_meta": 8001, "id_executor": 7001, "nome_meta": "Meta 1", "desc_meta": "Projeto executivo"},
+  {"id_meta": 8002, "id_executor": 7001, "nome_meta": "Meta 2", "desc_meta": "Execução da obra"}
+]

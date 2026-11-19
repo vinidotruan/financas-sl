@@ -1,0 +1,6 @@
+[
+  {"id_dh": 3001, "id_empenho": 2001, "numero_documento_habil": "2024OB000201", "valor_dh": 500000.0, "data_emissao_dh": "2024-06-20", "situacao_dh": 3},
+  {"id_dh": 3002, "id_empenho": 2002, "numero_documento_habil": "2024OB000202", "valor_dh": 100000.0, "data_emissao_dh": "2024-06-20", "situacao_dh": 3},
+  {"id_dh": 3003, "id_empenho": 2003, "numero_documento_habil": "2025OB000203", "valor_dh": 300000.0, "data_emissao_dh": "2025-03-05", "situacao_dh": 3},
+  {"id_dh": 3004, "id_empenho": 2003, "numero_documento_habil": "2025OB000204", "valor_dh": 50000.0, "data_emissao_dh": "2025-03-05", "situacao_dh": 1}
+]

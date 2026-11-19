@@ -1,0 +1,5 @@
+[
+  {"id_plano_trabalho": 5001, "id_plano_acao": 1001, "situacao_plano_trabalho": "CONCLUIDO_NT_TCU", "data_inicio_execucao_plano_trabalho": "2024-07-01", "data_fim_execucao_plano_trabalho": "2030-12-31", "prazo_execucao_meses_plano_trabalho": 78},
+  {"id_plano_trabalho": 5002, "id_plano_acao": 1002, "situacao_plano_trabalho": "APROVADO", "data_inicio_execucao_plano_trabalho": "2024-07-01", "data_fim_execucao_plano_trabalho": "2030-12-31", "prazo_execucao_meses_plano_trabalho": 78},
+  {"id_plano_trabalho": 5003, "id_plano_acao": 1003, "situacao_plano_trabalho": "APROVADO", "data_inicio_execucao_plano_trabalho": "2025-04-01", "data_fim_execucao_plano_trabalho": "2030-12-31", "prazo_execucao_meses_plano_trabalho": 69}
+]

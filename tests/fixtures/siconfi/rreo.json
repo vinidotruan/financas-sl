@@ -1,0 +1,53 @@
+[
+ {
+  "exercicio": 2024,
+  "demonstrativo": "RREO",
+  "periodo": 6,
+  "periodicidade": "B",
+  "instituicao": "Prefeitura Municipal de São Leopoldo - RS",
+  "cod_ibge": 4318705,
+  "uf": "RS",
+  "populacao": 217409,
+  "anexo": "RREO-Anexo 01",
+  "esfera": "M",
+  "rotulo": "Padrão",
+  "cod_conta": "ReceitasCorrentes",
+  "conta": "RECEITAS CORRENTES",
+  "coluna": "PREVISÃO ATUALIZADA (a)",
+  "valor": 1500000000.0
+ },
+ {
+  "exercicio": 2024,
+  "demonstrativo": "RREO",
+  "periodo": 6,
+  "periodicidade": "B",
+  "instituicao": "Prefeitura Municipal de São Leopoldo - RS",
+  "cod_ibge": 4318705,
+  "uf": "RS",
+  "populacao": 217409,
+  "anexo": "RREO-Anexo 01",
+  "esfera": "M",
+  "rotulo": "Padrão",
+  "cod_conta": "ReceitasCorrentes",
+  "conta": "RECEITAS CORRENTES",
+  "coluna": "Até o Bimestre (c)",
+  "valor": 1450000000.0
+ },
+ {
+  "exercicio": 2024,
+  "demonstrativo": "RREO",
+  "periodo": 6,
+  "periodicidade": "B",
+  "instituicao": "Prefeitura Municipal de São Leopoldo - RS",
+  "cod_ibge": 4318705,
+  "uf": "RS",
+  "populacao": 217409,
+  "anexo": "RREO-Anexo 02",
+  "esfera": "M",
+  "rotulo": "Padrão",
+  "cod_conta": "Saude",
+  "conta": "Saúde",
+  "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (b)",
+  "valor": 1.0
+ }
+]

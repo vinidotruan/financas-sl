@@ -15,7 +15,8 @@ sql: |
          fornecedor_nome || ' · ' || left(objeto, 90) as titulo,
          valor_global / nullif(valor_inicial, 0) - 1 as valor_observado,
          struct_pack(contrato := id, valor_inicial := valor_inicial, valor_global := valor_global,
-                     modalidade := modalidade, fornecedor := fornecedor_ni, tipo_pessoa := tipo_pessoa)
+                     modalidade := modalidade, fornecedor := fornecedor_ni, tipo_pessoa := tipo_pessoa,
+                     pessoa_fisica := pessoa_fisica)
            as evidencia,
          data_assinatura as quando
   from core.contrato

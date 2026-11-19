@@ -1,0 +1,78 @@
+{
+ "89814693000160-2-000001/2024": [
+  {
+   "tipoTermoContratoNome": "Termo Aditivo",
+   "numeroTermoContrato": "1",
+   "sequencialTermoContrato": 1,
+   "orgaoEntidade": {
+    "cnpj": "89814693000160",
+    "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+    "poderId": "N",
+    "esferaId": "M"
+   },
+   "unidade": {
+    "codigoUnidade": "1",
+    "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+    "municipioNome": "São Leopoldo",
+    "codigoIbge": "4318705",
+    "ufSigla": "RS",
+    "ufNome": "Rio Grande do Sul"
+   },
+   "niFornecedor": "11222333000144",
+   "nomeRazaoSocialFornecedor": "EMPRESA EMERGENCIAL LTDA",
+   "tipoPessoa": "PJ",
+   "dataAssinatura": "2025-05-05",
+   "dataPublicacaoPncp": "2025-05-05T10:00:00",
+   "dataVigenciaInicio": null,
+   "dataVigenciaFim": null,
+   "prazoAditadoDias": null,
+   "qualificacaoVigencia": false,
+   "qualificacaoAcrescimoSupressao": false,
+   "qualificacaoReajuste": false,
+   "qualificacaoFornecedor": false,
+   "valorAcrescido": null,
+   "valorGlobal": null,
+   "objetoTermoContrato": "PRIMEIRO TERMO ADITIVO. Prorrogação da vigência contratual por 90 dias.",
+   "fundamentoLegal": null,
+   "informativoObservacao": null
+  }
+ ],
+ "89814693000160-2-000002/2024": [
+  {
+   "tipoTermoContratoNome": "Termo de Apostilamento",
+   "numeroTermoContrato": "1",
+   "sequencialTermoContrato": 1,
+   "orgaoEntidade": {
+    "cnpj": "89814693000160",
+    "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+    "poderId": "N",
+    "esferaId": "M"
+   },
+   "unidade": {
+    "codigoUnidade": "1",
+    "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+    "municipioNome": "São Leopoldo",
+    "codigoIbge": "4318705",
+    "ufSigla": "RS",
+    "ufNome": "Rio Grande do Sul"
+   },
+   "niFornecedor": "12345678901",
+   "nomeRazaoSocialFornecedor": "FULANO DE TAL",
+   "tipoPessoa": "PF",
+   "dataAssinatura": "2024-08-01",
+   "dataPublicacaoPncp": "2024-08-01T10:00:00",
+   "dataVigenciaInicio": null,
+   "dataVigenciaFim": null,
+   "prazoAditadoDias": null,
+   "qualificacaoVigencia": false,
+   "qualificacaoAcrescimoSupressao": false,
+   "qualificacaoReajuste": false,
+   "qualificacaoFornecedor": false,
+   "valorAcrescido": null,
+   "valorGlobal": null,
+   "objetoTermoContrato": "APOSTILAMENTO Nº 01. ALTERAÇÃO DO FISCAL DO CONTRATO durante o prazo de férias do titular.",
+   "fundamentoLegal": null,
+   "informativoObservacao": null
+  }
+ ]
+}

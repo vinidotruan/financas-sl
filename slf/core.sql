@@ -107,6 +107,11 @@ create or replace table core.contrato as
 select c.id, c.compra_id, so_digitos(c.orgao_cnpj) as orgao_cnpj, c.orgao_nome, c.unidade,
        cast(c.ano as integer) as ano, cast(c.sequencial as integer) as sequencial, c.tipo, c.categoria,
        c.processo, c.tipo_pessoa, so_digitos(c.fornecedor_ni) as fornecedor_ni, c.fornecedor_nome,
+       -- MEI e empresário individual vêm como PJ, mas a razão social termina no CPF do dono
+       -- ("FULANO DE TAL 12345678901"); contam como pessoa física. A fase 3 troca pela natureza jurídica.
+       coalesce(c.tipo_pessoa = 'PF'
+                or regexp_matches(coalesce(c.fornecedor_nome, ''), '(^|[^0-9])[0-9]{11}\s*$'), false)
+         as pessoa_fisica,
        c.objeto, n(c.valor_inicial) as valor_inicial, n(c.valor_global) as valor_global,
        d(c.data_assinatura) as data_assinatura, d(c.vigencia_inicio) as vigencia_inicio,
        d(c.vigencia_fim) as vigencia_fim, try_cast(c.publicado_em as timestamp) as publicado_em,
@@ -120,15 +125,19 @@ where c.id is not null
 qualify row_number() over (partition by c.id order by c.publicado_em desc) = 1;
 
 -- Os campos de qualificação do aditivo costumam vir vazios; o texto também é lido.
+-- Só termo aditivo muda vigência: apostilamento serve pra reajuste e registros (Lei 14.133, art. 136)
+-- e costuma citar "prazo" sem prorrogar nada (ex.: troca do fiscal durante as férias).
 create or replace table core.aditivo as
 select contrato_id, tipo, numero, d(data_assinatura) as data_assinatura,
        try_cast(publicado_em as timestamp) as publicado_em, d(vigencia_fim) as vigencia_fim,
        try_cast(prazo_aditado_dias as integer) as prazo_aditado_dias,
        try_cast(valor_acrescido as double) as valor_acrescido,
        try_cast(valor_global as double) as valor_global, objeto,
-       coalesce(try_cast(qualif_vigencia as boolean), false)
+       coalesce(tipo ilike '%aditivo%', false) as eh_aditivo,
+       coalesce(tipo ilike '%aditivo%', false) and (
+         coalesce(try_cast(qualif_vigencia as boolean), false)
          or coalesce(try_cast(prazo_aditado_dias as integer), 0) > 0
-         or regexp_matches(lower(coalesce(objeto, '')), 'prorroga|prazo|vig[eê]ncia|renova')
+         or regexp_matches(lower(coalesce(objeto, '')), 'prorroga|prazo|vig[eê]ncia|renova'))
          as altera_vigencia,
        coalesce(try_cast(qualif_acrescimo as boolean), false)
          or coalesce(try_cast(valor_acrescido as double), 0) > 0 as altera_valor
@@ -136,7 +145,7 @@ from staging.pn_termos where contrato_id is not null;
 
 create or replace table core.fornecedor as
 select fornecedor_ni as ni, any_value(fornecedor_nome) as nome, any_value(tipo_pessoa) as tipo_pessoa,
-       count(*) as contratos, sum(valor_global) as valor_total,
+       bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, sum(valor_global) as valor_total,
        sum(case when contratacao_direta then valor_global else 0 end) as valor_direto,
        min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
 from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by 1;

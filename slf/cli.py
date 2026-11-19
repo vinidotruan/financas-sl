@@ -71,6 +71,7 @@ def main(argv=None):
         uvicorn.run("slf.api:app", host=args.host, port=args.porta)
     if args.cmd == "status":
         import duckdb
+
         from .config import DB
         if not DB.exists():
             print("Banco ainda não existe. Rode: slf diario")
@@ -79,7 +80,8 @@ def main(argv=None):
         for f in con.execute("select fonte, coletado_em, linhas from core.fonte order by 1").fetchall():
             print(f"{f[0]:<14} última coleta boa: {f[1] or 'nunca'}  ({f[2]} linhas)")
         print()
-        for r in con.execute("""select r.id, r.nome, count(*) filter (where o.ativo), count(*) filter (where o.ativo and o.status='novo')
+        for r in con.execute("""select r.id, r.nome, count(*) filter (where o.ativo),
+                                       count(*) filter (where o.ativo and o.status = 'novo')
                                 from sinais.regra r left join sinais.ocorrencia o on o.regra_id = r.id
                                 group by 1, 2 order by 1""").fetchall():
             print(f"{r[0]}  {r[1]:<40} {r[2]:>4} ativos  {r[3]:>4} novos")

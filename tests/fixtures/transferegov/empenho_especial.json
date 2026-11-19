@@ -1,0 +1,5 @@
+[
+  {"id_empenho": 2001, "id_plano_acao": 1001, "numero_empenho": "2024NE000101", "data_emissao_empenho": "2024-05-20", "valor_empenho": 500000.0, "situacao_empenho": "EMITIDO"},
+  {"id_empenho": 2002, "id_plano_acao": 1002, "numero_empenho": "2024NE000102", "data_emissao_empenho": "2024-05-20", "valor_empenho": 100000.0, "situacao_empenho": "EMITIDO"},
+  {"id_empenho": 2003, "id_plano_acao": 1003, "numero_empenho": "2025NE000103", "data_emissao_empenho": "2025-02-14", "valor_empenho": 350000.0, "situacao_empenho": "EMITIDO"}
+]

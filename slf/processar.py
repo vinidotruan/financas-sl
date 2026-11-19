@@ -48,7 +48,9 @@ def _pega(d, ks):
 
 # PNCP vem aninhado; achatamos só o que o core usa (o arquivo completo fica no raw).
 def _achatar_pncp(nome: str, linhas: list) -> list:
-    g = lambda d, *ks: _pega(d, ks)
+    def g(d, *ks):
+        return _pega(d, ks)
+
     if nome == "contratos":
         return [{
             "id": g(c, "numeroControlePNCP"), "compra_id": g(c, "numeroControlePncpCompra"),
@@ -143,10 +145,11 @@ def _status_fontes(con, origem: dict):
             con.execute("insert into core.fonte values (?, null, null, 0, 0)", [fonte])
             continue
         pasta = ultima_coleta_boa(fonte)
-        linhas = [json.loads(l) for l in (pasta / "manifest.jsonl").read_text(encoding="utf-8").splitlines() if l]
+        texto = (pasta / "manifest.jsonl").read_text(encoding="utf-8")
+        itens = [json.loads(linha) for linha in texto.splitlines() if linha]
         con.execute("insert into core.fonte values (?, ?, ?, ?, ?)", [
-            fonte, coleta, max(l["coletado_em"] for l in linhas) if linhas else None,
-            len(linhas), sum(l.get("linhas") or 0 for l in linhas)])
+            fonte, coleta, max(i["coletado_em"] for i in itens) if itens else None,
+            len(itens), sum(i.get("linhas") or 0 for i in itens)])
 
 
 TESTES_DUROS = [

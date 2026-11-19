@@ -1,0 +1,190 @@
+[
+ {
+  "numeroControlePNCP": "89814693000160-2-000001/2024",
+  "numeroControlePncpCompra": "89814693000160-1-000010/2024",
+  "anoContrato": 2024,
+  "sequencialContrato": 1,
+  "numeroContratoEmpenho": "1/2024",
+  "processo": "101/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Serviços"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "11222333000144",
+  "nomeRazaoSocialFornecedor": "EMPRESA EMERGENCIAL LTDA",
+  "objetoContrato": "Contratação emergencial de limpeza urbana",
+  "valorInicial": 100000.0,
+  "valorGlobal": 100000.0,
+  "valorParcela": 100000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 100000.0,
+  "dataAssinatura": "2024-05-10",
+  "dataVigenciaInicio": "2024-05-10",
+  "dataVigenciaFim": "2025-05-10",
+  "dataPublicacaoPncp": "2024-05-10T09:00:00",
+  "dataAtualizacao": "2024-05-10T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000002/2024",
+  "numeroControlePncpCompra": "89814693000160-1-000011/2024",
+  "anoContrato": 2024,
+  "sequencialContrato": 2,
+  "numeroContratoEmpenho": "2/2024",
+  "processo": "102/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Serviços"
+  },
+  "tipoPessoa": "PF",
+  "niFornecedor": "12345678901",
+  "nomeRazaoSocialFornecedor": "FULANO DE TAL",
+  "objetoContrato": "Contratação emergencial de serviço de transporte",
+  "valorInicial": 90000.0,
+  "valorGlobal": 120000.0,
+  "valorParcela": 90000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 120000.0,
+  "dataAssinatura": "2024-05-12",
+  "dataVigenciaInicio": "2024-05-12",
+  "dataVigenciaFim": "2025-05-10",
+  "dataPublicacaoPncp": "2024-05-12T09:00:00",
+  "dataAtualizacao": "2024-05-12T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000003/2024",
+  "numeroControlePncpCompra": "89814693000160-1-000012/2024",
+  "anoContrato": 2024,
+  "sequencialContrato": 3,
+  "numeroContratoEmpenho": "3/2024",
+  "processo": "103/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Obras"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "22333444000155",
+  "nomeRazaoSocialFornecedor": "CONSTRUTORA EXEMPLO SA",
+  "objetoContrato": "Reforma de escola municipal",
+  "valorInicial": 100000.0,
+  "valorGlobal": 130000.0,
+  "valorParcela": 130000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 130000.0,
+  "dataAssinatura": "2024-06-03",
+  "dataVigenciaInicio": "2024-06-03",
+  "dataVigenciaFim": "2025-05-10",
+  "dataPublicacaoPncp": "2024-06-03T09:00:00",
+  "dataAtualizacao": "2024-06-03T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000004/2024",
+  "numeroControlePncpCompra": "89814693000160-1-000013/2024",
+  "anoContrato": 2024,
+  "sequencialContrato": 4,
+  "numeroContratoEmpenho": "4/2024",
+  "processo": "104/2024",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Compras"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "33444555000166",
+  "nomeRazaoSocialFornecedor": "MARIA EXEMPLO 98765432100",
+  "objetoContrato": "Aquisição de material de expediente",
+  "valorInicial": 50000.0,
+  "valorGlobal": 50000.0,
+  "valorParcela": 50000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 50000.0,
+  "dataAssinatura": "2024-07-15",
+  "dataVigenciaInicio": "2024-07-15",
+  "dataVigenciaFim": "2025-05-10",
+  "dataPublicacaoPncp": "2024-07-15T09:00:00",
+  "dataAtualizacao": "2024-07-15T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ }
+]
