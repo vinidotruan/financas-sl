@@ -74,3 +74,33 @@ export const Cartoes: StoryObj = {
     </div>
   ),
 }
+
+/** Espaços em múltiplos de 4 e três cantos (tokens.css). Ajustes finos de 2 a 7 px dentro de chips e legendas
+ *  ficam no próprio componente. */
+export const EspacosECantos: StoryObj = {
+  name: 'Espaços e cantos',
+  render: () => (
+    <div style={{ display: 'grid', gap: 'var(--e-5)' }}>
+      <div class="secao">
+        <span class="rotulo">Espaços</span>
+        {['--e-1', '--e-2', '--e-3', '--e-4', '--e-5'].map((t) => (
+          <div key={t} style={{ display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr)', gap: 'var(--e-3)', alignItems: 'center' }}>
+            <code class="mono pequeno">{t}</code>
+            <span style={{ display: 'block', height: '12px', width: `var(${t})`, background: 'var(--destaque)', borderRadius: '2px' }} />
+          </div>
+        ))}
+      </div>
+      <div class="secao">
+        <span class="rotulo">Cantos</span>
+        <div style={{ display: 'flex', gap: 'var(--e-4)', flexWrap: 'wrap' }}>
+          {['--raio-p', '--raio-m', '--raio-pilula'].map((t) => (
+            <div key={t} style={{ display: 'grid', gap: 'var(--e-2)', justifyItems: 'center' }}>
+              <span style={{ width: '96px', height: '48px', background: 'var(--superficie)', border: '1px solid var(--linha)', borderRadius: `var(${t})` }} />
+              <code class="mono pequeno">{t}</code>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  ),
+}
