@@ -253,6 +253,9 @@ def _carregar_temas(con):
 def _status_fontes(con, origem: dict):
     con.execute("create or replace table core.fonte (fonte varchar, coleta varchar, coletado_em varchar, "
                 "arquivos integer, linhas bigint)")
+    # cada arquivo bruto usado, com o sha256 do manifest: a proveniência de cada publicação (D43)
+    con.execute("create or replace table core.arquivo_coleta (fonte varchar, coleta varchar, arquivo varchar, "
+                "url varchar, params json, linhas bigint, bytes bigint, sha256 varchar, coletado_em varchar)")
     for fonte, coleta in origem.items():
         if not coleta:
             con.execute("insert into core.fonte values (?, null, null, 0, 0)", [fonte])
@@ -263,6 +266,10 @@ def _status_fontes(con, origem: dict):
         con.execute("insert into core.fonte values (?, ?, ?, ?, ?)", [
             fonte, coleta, max(i["coletado_em"] for i in itens) if itens else None,
             len(itens), sum(i.get("linhas") or 0 for i in itens)])
+        for i in itens:
+            con.execute("insert into core.arquivo_coleta values (?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                fonte, coleta, i["arquivo"], i.get("url"), json.dumps(i.get("params") or {}, ensure_ascii=False),
+                i.get("linhas"), i.get("bytes"), i.get("sha256"), i.get("coletado_em")])
 
 
 TESTES_DUROS = [

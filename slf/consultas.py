@@ -10,9 +10,13 @@ encaminhado, sem a nota de revisão; pessoa física (inclui MEI e empresário in
 """
 from __future__ import annotations
 
+import functools
 import json
+import os
+import subprocess
 from datetime import date, datetime
 from decimal import Decimal
+from pathlib import Path
 
 from .sensivel import OBJETO_OMITIDO, PESSOA_FISICA, limpar_pedido, sem_cpf, titulo_pessoa_fisica  # noqa: F401 (sem_cpf é usado pela API e pela exportação)
 
@@ -25,6 +29,19 @@ LINKS = {
     "pncp": "https://pncp.gov.br/app/contratos",
     "congresso": "https://dadosabertos.camara.leg.br/",
 }
+
+
+@functools.cache
+def _commit() -> str | None:
+    """O commit do código que gerou os dados: SLF_COMMIT, ou o git do repositório; None fora de um clone."""
+    if os.environ.get("SLF_COMMIT"):
+        return os.environ["SLF_COMMIT"]
+    try:
+        saida = subprocess.run(["git", "rev-parse", "HEAD"], cwd=Path(__file__).parent, capture_output=True,
+                               text=True, timeout=5, check=True)
+        return saida.stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        return None
 
 
 def _valor(v):
@@ -117,6 +134,30 @@ class Consulta:
                         "fontes": [{**f, "link": _link(f["fonte"])}
                                    for f in self._q("select * from core.fonte order by fonte")],
                         "erros_de_regra": self._q("select * from sinais.erro")})
+
+    def proveniencia(self) -> dict:
+        """De onde veio cada número desta publicação (D43): o commit do código, a versão de cada regra, a
+        data de referência e, de cada fonte, a coleta usada e o sha256 de cada arquivo bruto. Com as mesmas
+        coletas e o mesmo commit, o processamento dá o mesmo resultado."""
+        from .config import ente
+
+        cfg = ente()
+        arquivos: dict[str, list] = {}
+        for a in self._q("select * exclude (params), params::varchar as params from core.arquivo_coleta "
+                         "order by fonte, arquivo"):
+            a["params"] = _json(a["params"]) or {}
+            arquivos.setdefault(a.pop("fonte"), []).append(a)
+        return sem_cpf({
+            "projeto": "https://github.com/vinidotruan/financas-sl",
+            "commit": _commit(),
+            "modo": self.modo,
+            "ente": {"nome": cfg.get("nome"), "uf": cfg.get("uf"), "ibge": cfg.get("ibge")},
+            "data_referencia": self._q("select data from core.referencia")[0]["data"],
+            "regras": self._q("select id, versao from sinais.regra order by id"),
+            "fontes": [{**f, "arquivos": [{k: v for k, v in a.items() if k != "coleta"}
+                                          for a in arquivos.get(f["fonte"], [])]}
+                       for f in self._q("select fonte, coleta, coletado_em from core.fonte order by fonte")],
+        })
 
     def regras(self) -> list[dict]:
         regras = self._q("select * exclude (sql) from sinais.regra order by id")

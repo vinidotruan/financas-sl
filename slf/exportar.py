@@ -39,6 +39,7 @@ def exportar(saida: Path, modo: str = "publico") -> dict[str, int]:
     try:
         c = Consulta(con, modo, ler_revisao())
         gravar("fontes.json", c.fontes())
+        gravar("proveniencia.json", c.proveniencia())
         gravar("regras.json", c.regras())
         sinais = c.sinais()
         gravar("sinais.json", sinais)

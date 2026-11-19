@@ -538,9 +538,11 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
   (`arg_max` por data, com o próprio valor no desempate); `min` quando o valor é o mesmo em todas as linhas.
 - **Toda ordenação termina num campo único** (id, código), para empate não trocar a ordem.
 - Conferido nos dados reais: processar duas vezes dá os mesmos 563 arquivos, byte a byte.
+- **Proveniência** em cada publicação (`data/proveniencia.json`, também em `/api/proveniencia`): o commit do
+  código, a data de referência, a versão de cada regra e, de cada fonte, a coleta usada com o sha256, a
+  URL e os parâmetros de cada arquivo bruto (vem do manifest, gravado em `core.arquivo_coleta`).
 
-**Próximas partes.** Proveniência em cada publicação (commit, versão das regras, data de referência,
-coleta e sha256 de cada arquivo); refazer a partir dela; pacote de dados abertos numa Release do GitHub
+**Próximas partes.** Refazer a partir da proveniência; pacote de dados abertos numa Release do GitHub
 (o Zenodo pode arquivar cada release com DOI, ligado pelo Ruan na conta dele); `docs/metodologia.md`.
 
 ---

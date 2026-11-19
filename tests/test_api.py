@@ -258,3 +258,21 @@ def test_situacao_do_pedido_na_api(cliente):
     pedidos = {p["id"]: (p["situacao"], p["situacao_data"]) for p in ficha["pedidos"]}
     assert pedidos[9003] == ("Encaminhado à Comissão", "2025-04-01")
     assert pedidos[9005] == (None, None)
+
+
+def test_proveniencia_diz_de_onde_veio_cada_numero(cliente):
+    from datetime import date
+
+    from slf.raw import ultima_coleta_boa
+
+    p = cliente.get("/api/proveniencia").json()
+    assert p["data_referencia"] == date.today().isoformat()  # as fixtures são coletadas na hora do teste
+    assert {r["id"]: r["versao"] for r in p["regras"]}["R05"] == 3
+    fontes = {f["fonte"]: f for f in p["fontes"]}
+    assert set(fontes) == {"transferegov", "siconfi", "pncp", "camara", "congresso"}
+    assert fontes["pncp"]["coleta"] == ultima_coleta_boa("pncp").name
+    contratos = next(a for a in fontes["pncp"]["arquivos"] if a["arquivo"] == "contratos.json")
+    bruto = (ultima_coleta_boa("pncp") / "contratos.json").read_bytes()
+    assert contratos["sha256"] == hashlib.sha256(bruto).hexdigest()
+    assert contratos["linhas"] == 7
+    assert p["commit"] is None or len(p["commit"]) == 40

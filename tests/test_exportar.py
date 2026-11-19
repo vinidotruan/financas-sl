@@ -19,6 +19,7 @@ ROTAS = {
     "fontes.json": "/api/fontes", "regras.json": "/api/regras", "sinais.json": "/api/sinais",
     "emendas.json": "/api/emendas", "parlamentares.json": "/api/parlamentares",
     "fornecedores.json": "/api/fornecedores", "contas.json": "/api/contas", "pedidos.json": "/api/pedidos",
+    "proveniencia.json": "/api/proveniencia",
 }
 
 

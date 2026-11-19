@@ -57,6 +57,12 @@ def fontes():
         return c.fontes()
 
 
+@app.get("/api/proveniencia")
+def proveniencia():
+    with _consulta() as c:
+        return c.proveniencia()
+
+
 @app.get("/api/regras")
 def regras():
     with _consulta() as c:
