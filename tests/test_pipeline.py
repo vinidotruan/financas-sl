@@ -229,10 +229,54 @@ def test_pedidos_dos_vereadores(banco):
 def test_vereador_sem_tratamento_e_coautoria(banco):
     con = duckdb.connect(str(banco), read_only=True)
     nomes = dict(con.execute("select id, nome from core.vereador").fetchall())
-    assert nomes == {701: "Ana Exemplo", 702: "Beto Exemplo"}
-    # o pedido 9005 é dos dois: conta para cada um
+    assert nomes == {701: "Ana Exemplo", 702: "Beto Exemplo",
+                     411: "Comissão de Obras Públicas, Transporte e Habitação"}
+    # o pedido 9005 é dos dois vereadores e o 9007, do Beto com a comissão: conta para cada um
     por_vereador = dict(con.execute("select id_vereador, count(*) from core.pedido_autor group by 1").fetchall())
-    assert por_vereador == {701: 3, 702: 4}
+    assert por_vereador == {701: 3, 702: 4, 411: 1}
+
+
+def test_cargo_de_quem_assina(banco):
+    con = duckdb.connect(str(banco), read_only=True)
+    cargos = dict(con.execute("select id, cargo from core.vereador").fetchall())
+    # o Beto está no cadastro da Câmara (mandato atual); a Ana já saiu e o cargo vem do "Ver.ª" do nome
+    assert cargos == {701: "Vereadora", 702: "Vereador", 411: "Comissão"}
+
+
+def test_cadastro_dos_autores_de_emenda(banco):
+    con = duckdb.connect(str(banco), read_only=True)
+    linhas = {r[0]: r[1:] for r in con.execute(
+        "select codigo_autor, nome, cargo, uf, link from core.parlamentar").fetchall()}
+    # "Parlamentar Um" tem homônimo de SP e, no RS, já foi registrada como "Coronel Parlamentar Um" (como o
+    # Zucco na Câmara): casa por qualquer grafia, vale o cadastro do RS e o nome que casou
+    assert linhas["1234"] == ("Parlamentar Um", "Deputada federal", "RS", "https://www.camara.leg.br/deputados/1002")
+    assert linhas["5678"][:3] == ("Parlamentar Dois", "Senadora", "RS")
+    assert _um(banco, "select count(distinct cargo_parlamentar) from core.rastro_plano") == (2,)
+    assert _um(banco, "select cargo_parlamentar from core.emenda where codigo_emenda = '202412340001'") == (
+        "Deputada federal",)
+
+
+def test_congresso_vazio_nao_apaga_o_cargo(api_falsa, monkeypatch):
+    """Cadastro vazio deixa a coleta sem _OK; sem nenhuma coleta boa, o autor fica com o nome do
+    Transferegov e sem cargo, e o resto do banco sai igual."""
+    import httpx
+    from conftest import responder
+
+    import slf.http
+
+    def senado_vazio(request):
+        if request.url.host == "legis.senado.leg.br":
+            return httpx.Response(200, json={})
+        return responder(request)
+
+    monkeypatch.setattr(slf.http.httpx, "Client",
+                        lambda **kw: httpx._client.Client(transport=httpx.MockTransport(senado_vazio), **kw))
+    assert cli.coletar(cli.COLETORES) == ["congresso"]
+    assert ultima_coleta_boa("congresso") is None
+    processar.atualizar()
+    assert _um(DB, "select count(*) from core.parlamentar where cargo is null") == (2,)
+    assert _um(DB, "select nome from core.parlamentar where codigo_autor = '1234'") == ("Parlamentar Um",)
+    assert _um(DB, "select count(*) from core.plano_acao") == (4,)
 
 
 def test_bairro_pela_api_e_pelo_texto(banco):

@@ -1,4 +1,4 @@
-"""Ambiente de teste: SLF_HOME numa pasta temporária e as três APIs respondidas por fixtures.
+"""Ambiente de teste: SLF_HOME numa pasta temporária e as APIs respondidas por fixtures.
 
 As fixtures em tests/fixtures/{fonte}/ têm o formato das respostas reais (nomes de campo
 conferidos ao vivo em 18/11/2026), com valores inventados. Nenhum teste usa a rede.
@@ -72,8 +72,8 @@ def _pncp_contratos(params: dict) -> httpx.Response:
 
 def _camara(caminho: str, params: dict) -> httpx.Response:
     """Imita a API do Legiflow: filtros ano e id_bairro; limit acima de 100 volta ao padrão de 10."""
-    if caminho == "/bairros":
-        return httpx.Response(200, json=_fixture("camara", "bairros"))
+    if caminho in ("/bairros", "/parlamentares"):
+        return httpx.Response(200, json=_fixture("camara", caminho[1:]))
     linhas = _fixture("camara", "proposicoes")
     if "ano" in params:
         linhas = [p for p in linhas if str(p["ano"]) == params["ano"]]
@@ -86,10 +86,27 @@ def _camara(caminho: str, params: dict) -> httpx.Response:
                                      for p in linhas[inicio:inicio + limite]])
 
 
+def _congresso(host: str, caminho: str, params: dict) -> httpx.Response:
+    """Câmara dos Deputados (filtro siglaSexo, páginas de até 1000) e lista de senadores do Senado."""
+    if host == "dadosabertos.camara.leg.br" and caminho == "/api/v2/deputados":
+        linhas = [d for d in _fixture("congresso", "deputados")
+                  if params.get("siglaSexo") in (None, d["_sexo"])]
+        itens, pagina = int(params.get("itens", 15)), int(params.get("pagina", 1))
+        pedaco = linhas[(pagina - 1) * itens:pagina * itens]
+        return httpx.Response(200, json={"dados": [{k: v for k, v in d.items() if k != "_sexo"} for d in pedaco],
+                                         "links": []})
+    if host == "legis.senado.leg.br" and re.fullmatch(r"/dadosabertos/senador/lista/legislatura/\d+/\d+\.json",
+                                                      caminho):
+        return httpx.Response(200, json=_fixture("congresso", "senadores"))
+    return httpx.Response(404)
+
+
 def responder(request: httpx.Request) -> httpx.Response:
     caminho, params = request.url.path, dict(request.url.params)
     if request.url.host == "api.camara.exemplo":
         return _camara(caminho, params)
+    if request.url.host in ("dadosabertos.camara.leg.br", "legis.senado.leg.br"):
+        return _congresso(request.url.host, caminho, params)
     if caminho.startswith("/transferenciasespeciais/"):
         return _postgrest(caminho.rsplit("/", 1)[1], params)
     if caminho.startswith("/ords/siconfi/tt/"):
@@ -128,7 +145,7 @@ def api_falsa(monkeypatch):
 
 @pytest.fixture
 def banco(api_falsa):
-    """Coleta as três fontes nas fixtures e monta o banco."""
+    """Coleta todas as fontes nas fixtures e monta o banco."""
     from slf import cli, processar
     from slf.config import DB
 

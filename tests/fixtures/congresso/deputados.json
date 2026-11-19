@@ -1,0 +1,57 @@
+[
+ {
+  "id": 1001,
+  "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/1001",
+  "nome": "Parlamentar Um",
+  "siglaPartido": "AAA",
+  "siglaUf": "SP",
+  "idLegislatura": 57,
+  "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/1001.jpg",
+  "email": null,
+  "_sexo": "M"
+ },
+ {
+  "id": 1002,
+  "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/1002",
+  "nome": "PARLAMENTAR UM",
+  "siglaPartido": "BBB",
+  "siglaUf": "RS",
+  "idLegislatura": 55,
+  "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/1002.jpg",
+  "email": null,
+  "_sexo": "F"
+ },
+ {
+  "id": 1002,
+  "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/1002",
+  "nome": "Parlamentar Um",
+  "siglaPartido": "CCC",
+  "siglaUf": "RS",
+  "idLegislatura": 56,
+  "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/1002.jpg",
+  "email": null,
+  "_sexo": "F"
+ },
+ {
+  "id": 1003,
+  "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/1003",
+  "nome": "Outro Deputado",
+  "siglaPartido": "AAA",
+  "siglaUf": "RS",
+  "idLegislatura": 56,
+  "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/1003.jpg",
+  "email": null,
+  "_sexo": "M"
+ },
+ {
+  "id": 1002,
+  "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/1002",
+  "nome": "Coronel Parlamentar Um",
+  "siglaPartido": "BBB",
+  "siglaUf": "RS",
+  "idLegislatura": 57,
+  "urlFoto": "https://www.camara.leg.br/internet/deputado/bandep/1002.jpg",
+  "email": null,
+  "_sexo": "F"
+ }
+]

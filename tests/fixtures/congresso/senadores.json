@@ -1,0 +1,66 @@
+{
+ "ListaParlamentarLegislatura": {
+  "Parlamentares": {
+   "Parlamentar": [
+    {
+     "IdentificacaoParlamentar": {
+      "CodigoParlamentar": "9001",
+      "NomeParlamentar": "Parlamentar Dois",
+      "NomeCompletoParlamentar": "Parlamentar Dois da Silva",
+      "SexoParlamentar": "Feminino",
+      "SiglaPartidoParlamentar": "DDD",
+      "UrlPaginaParlamentar": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/9001"
+     },
+     "Mandatos": {
+      "Mandato": {
+       "CodigoMandato": "1",
+       "UfParlamentar": "RS",
+       "PrimeiraLegislaturaDoMandato": {
+        "NumeroLegislatura": "56"
+       },
+       "SegundaLegislaturaDoMandato": {
+        "NumeroLegislatura": "57"
+       },
+       "DescricaoParticipacao": "Titular"
+      }
+     }
+    },
+    {
+     "IdentificacaoParlamentar": {
+      "CodigoParlamentar": "9002",
+      "NomeParlamentar": "Outro Senador",
+      "SexoParlamentar": "Masculino",
+      "UfParlamentar": "RS",
+      "UrlPaginaParlamentar": "http://www25.senado.leg.br/web/senadores/senador/-/perfil/9002"
+     },
+     "Mandatos": {
+      "Mandato": [
+       {
+        "CodigoMandato": "1",
+        "UfParlamentar": "RS",
+        "PrimeiraLegislaturaDoMandato": {
+         "NumeroLegislatura": "55"
+        },
+        "SegundaLegislaturaDoMandato": {
+         "NumeroLegislatura": "56"
+        },
+        "DescricaoParticipacao": "Titular"
+       },
+       {
+        "CodigoMandato": "1",
+        "UfParlamentar": "RS",
+        "PrimeiraLegislaturaDoMandato": {
+         "NumeroLegislatura": "57"
+        },
+        "SegundaLegislaturaDoMandato": {
+         "NumeroLegislatura": "58"
+        },
+        "DescricaoParticipacao": "Titular"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

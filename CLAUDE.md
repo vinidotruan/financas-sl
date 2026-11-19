@@ -7,9 +7,10 @@ comentários.
 
 - Município: IBGE `4318705`, CNPJ `89.814.693/0001-60`
 - Pasta: `~/studies/financas-sl`
-- Estado (19/11/2026): o backend da fase 1 rodou contra as APIs reais e foi corrigido (tarefa 1), e o
-  front novo está em `front/` (tarefa 2). Faltam a exportação estática (tarefa 3, `consultas.py` já
-  existe) e o GitHub Actions (tarefa 4). Andamento no artefato https://claude.ai/artifact/BhPEo8UuT1SjqTmhk4TcoX
+- Estado (19/11/2026): tarefas 1 a 4 feitas; site público em https://vinidotruan.github.io/financas-sl/,
+  atualizado pela coleta diária do GitHub Actions. Cadastro de parlamentares com cargo (fonte
+  `congresso` e `/parlamentares` da Câmara, D34). Andamento no artefato
+  https://claude.ai/artifact/BhPEo8UuT1SjqTmhk4TcoX
 
 ## Objetivo desta etapa
 
@@ -23,7 +24,7 @@ Antes de começar o item 3, pergunte ao Ruan a decisão de privacidade (seção 
 
 ```bash
 uv sync                      # instala dependências (uv também baixa o Python)
-uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara; sem argumento, todas
+uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara | congresso; sem argumento, todas
 uv run slf atualizar         # raw -> staging -> core -> testes -> sinais (sem coletar)
 uv run slf atualizar --forcar  # troca o banco mesmo com teste de dados falhando
 uv run slf diario            # coletar tudo + atualizar (o que o agendamento roda)

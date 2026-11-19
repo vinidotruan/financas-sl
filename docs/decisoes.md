@@ -316,6 +316,45 @@ pedido, não o que foi feito.
 
 ---
 
+## Cadastro de parlamentares
+
+### D34 · Nome e cargo pelo cadastro de cada casa legislativa · 19/11/2026 · vale
+
+**Problema.** O nome de quem indicou a emenda saía de cada consulta (`any_value` sobre os planos de
+ação) e o de quem assinou o pedido, de uma expressão que tirava o "Ver." do nome. Nenhuma das duas
+fontes diz o cargo: no ranking de pedidos, uma comissão aparecia como se fosse vereador.
+
+**Decisão.** Um cadastro por casa, coletado da fonte oficial, e o cargo junto:
+
+- **Federais.** Fonte nova `congresso`: `/deputados` da Câmara dos Deputados, por legislatura (e a
+  mesma consulta com `siglaSexo=F`, porque a lista não traz o sexo), e
+  `/senador/lista/legislatura/{inicio}/{fim}` do Senado. `core.parlamentar` casa o autor do
+  Transferegov pelo nome sem acento e sem caixa, contra todas as grafias que o cadastro já registrou
+  para a pessoa (a Câmara guarda "Tenente Coronel Zucco" e "Zucco" para o mesmo deputado). Com dois
+  cadastros de mesmo nome, fica o da UF da cidade e depois o da legislatura mais recente. Quem não casa
+  fica com o nome do Transferegov, sem cargo, e o `slf atualizar` avisa. Conferido em 19/11/2026: os 18
+  autores de São Leopoldo casaram (15 deputados, 3 senadores), nenhum com homônimo.
+- **Câmara municipal.** `/parlamentares` do Legiflow traz o cargo (Vereador, Vereadora) de quem está no
+  mandato atual. Quem já saiu não aparece ali; o cargo vem do tratamento no nome ("Ver.ª" é vereadora).
+  Comissão, bancada, Mesa Diretora e Executivo saem do começo do nome. Tudo fica em `core.vereador`.
+
+O tratamento do nome acontece uma vez, nessas duas tabelas; as consultas e as telas leem o nome pronto.
+Cadastro vazio deixa a coleta sem `_OK` e vale a anterior (D05).
+
+**Alternativas.** Arquivo de nomes e cargos mantido à mão (simples, mas desatualiza sem aviso e não tem
+fonte para conferir); casar pelo código de autor (o do Transferegov vem do sistema de orçamento e não
+existe nos cadastros da Câmara e do Senado); Portal da Transparência (a API exige chave cadastrada por
+e-mail).
+
+**Limite conhecido.** O cargo é o do cadastro mais recente, não o da data da emenda: quem foi deputado e
+virou senador aparece como senador. O partido dos federais fica de fora, porque a Câmara repete o
+deputado por partido sem data e o painel poderia mostrar um partido que não era o da época.
+
+**Onde.** `slf/coletores/congresso.py`, `slf/coletores/camara.py`; `core.parlamentar` e `core.vereador`
+em `slf/core.sql`; selo `ChipCargo` em `front/src/componentes/pecas.tsx`.
+
+---
+
 ## Publicação
 
 ### D31 · Dados entre execuções no cache do Actions, não em release · 19/11/2026 · vale
@@ -361,5 +400,8 @@ devagar para máquinas fora do Brasil), dentro do limite de 3 horas do workflow.
   cortaria o tempo e os minutos do Actions.
 - **dbt-duckdb.** Quando o core passar de uns 40 modelos.
 - **Fontes novas.** Cadastro de CNPJ, sanções, TCE-RS e emendas estaduais nas fases seguintes.
+- **Vereador com dois cadastros.** A Câmara tem "Ver. Johnson Souza" (id 777, 13 pedidos) e "Ver.
+  Diógenes Padilha de Souza (Johnson)" (id 778, 256 pedidos), que parecem a mesma pessoa. Juntar exige
+  confirmação e um arquivo de equivalências; por ora aparecem separados.
 - **Atendimento dos pedidos.** Ver se a Câmara ou a prefeitura publicam a resposta a cada pedido de
   providência, para mostrar o que foi pedido e o que foi feito.

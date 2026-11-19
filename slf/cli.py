@@ -6,12 +6,13 @@ import socket
 import sys
 import traceback
 
-COLETORES = ("transferegov", "siconfi", "pncp", "camara")
+COLETORES = ("transferegov", "siconfi", "pncp", "camara", "congresso")
 
 
 def coletar(fontes) -> list[str]:
-    from .coletores import camara, pncp, siconfi, transferegov
-    mods = {"transferegov": transferegov, "siconfi": siconfi, "pncp": pncp, "camara": camara}
+    from .coletores import camara, congresso, pncp, siconfi, transferegov
+    mods = {"transferegov": transferegov, "siconfi": siconfi, "pncp": pncp, "camara": camara,
+            "congresso": congresso}
     falhas = []
     for nome in fontes:
         print(f"Coletando {nome}…")
@@ -39,7 +40,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="slf", description="Finanças municipais: coleta, sinais e painel")
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("coletar", help="baixa os dados das fontes")
-    c.add_argument("fontes", nargs="*", help="transferegov, siconfi, pncp, camara (padrão: todas)")
+    c.add_argument("fontes", nargs="*", help=", ".join(COLETORES) + " (padrão: todas)")
     a = sub.add_parser("atualizar", help="monta o banco e roda as regras de sinal")
     a.add_argument("--forcar", action="store_true", help="troca o banco mesmo com teste falhando")
     sub.add_parser("diario", help="coletar tudo e atualizar (o que o agendamento roda)")

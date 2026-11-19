@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, ChipsFonte, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipCargo, ChipsFonte, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { brl, brlCurto, data, FONTE, num, pct, VAZIO } from '../formato'
 import { link } from '../rotas'
@@ -14,7 +14,7 @@ function CartaoEmenda({ e }: { e: Emenda }) {
   return (
     <a class="cartao" href={link.emenda(e.codigo_emenda)}>
       <span class="linha-topo"><span class="mono"><strong>{e.codigo}</strong></span><span class="valor">{brlCurto(e.indicado)}</span></span>
-      <span class="apagado pequeno">{e.parlamentar} · {e.ano} · {e.planos} {e.planos === 1 ? 'plano' : 'planos'}</span>
+      <span class="apagado pequeno">{e.parlamentar} <ChipCargo cargo={e.cargo} /> · {e.ano} · {e.planos} {e.planos === 1 ? 'plano' : 'planos'}</span>
       <div class="barra" aria-hidden="true"><i style={{ width: `${fracao(e.transferido, e.indicado) * 100}%` }} /></div>
       <span class="pequeno">
         {e.transferido ? <>{brlCurto(e.transferido)} transferidos ({pct(fracao(e.transferido, e.indicado))})</> : 'Nada transferido ainda'}
@@ -99,7 +99,9 @@ export function TelaRastro({ codigo }: { codigo: string }) {
         const executado = r.valores.find((v) => v.etapa.startsWith('Executado'))
         return (
           <>
-            <Topo titulo={`Emenda ${r.codigo_formatado}`} sub={<a href={link.parlamentar(r.parlamentar.codigo)}>{r.parlamentar.nome}</a>} volta={link.emendas()} />
+            <Topo titulo={`Emenda ${r.codigo_formatado}`}
+              sub={<><a href={link.parlamentar(r.parlamentar.codigo)}>{r.parlamentar.nome}</a> <ChipCargo cargo={r.parlamentar.cargo} /></>}
+              volta={link.emendas()} />
             <main class="conteudo">
               <section class="secao">
                 <span class="rotulo">O valor em cada fonte</span>

@@ -114,8 +114,42 @@ COLUNAS["cm_proposicoes"] = list(_achatar_camara("proposicoes", [{}])[0].keys())
 COLUNAS["cm_autores"] = ["id_proposicao", "id_autor", "nome", "partido"]
 COLUNAS["cm_bairros"] = ["ID", "nome"]
 COLUNAS["cm_proposicao_bairro"] = ["id_proposicao", "id_bairro"]
+COLUNAS["cm_parlamentares"] = ["ID", "nome", "partido", "cargo", "situacao"]
 
-PREFIXO = {"transferegov": "tg", "siconfi": "sc", "pncp": "pn", "camara": "cm"}
+
+# Congresso: a Câmara dos Deputados repete o deputado por legislatura e partido; o Senado manda um
+# objeto por senador com os mandatos dentro (um mandato vem como objeto, vários como lista).
+def _achatar_congresso(nome: str, linhas) -> list:
+    if nome in ("deputados", "deputadas"):
+        return [{"id": d.get("id"), "nome": d.get("nome"), "uf": d.get("siglaUf"),
+                 "legislatura": d.get("idLegislatura")} for d in linhas or []]
+    if nome == "senadores":
+        lista = _pega(linhas, ["ListaParlamentarLegislatura", "Parlamentares", "Parlamentar"]) or []
+        saida = []
+        for p in lista if isinstance(lista, list) else [lista]:
+            ident = p.get("IdentificacaoParlamentar") or {}
+            mandatos = _pega(p, ["Mandatos", "Mandato"]) or []
+            mandatos = mandatos if isinstance(mandatos, list) else [mandatos]
+            legislaturas = [int(n) for m in mandatos
+                            for chave in ("PrimeiraLegislaturaDoMandato", "SegundaLegislaturaDoMandato")
+                            if (n := _pega(m, [chave, "NumeroLegislatura"]))]
+            saida.append({
+                "codigo": ident.get("CodigoParlamentar"), "nome": ident.get("NomeParlamentar"),
+                "sexo": ident.get("SexoParlamentar"),
+                "uf": ident.get("UfParlamentar") or next((m.get("UfParlamentar") for m in mandatos
+                                                          if m.get("UfParlamentar")), None),
+                "legislatura": max(legislaturas, default=None), "link": ident.get("UrlPaginaParlamentar"),
+            })
+        return saida
+    return linhas
+
+
+COLUNAS["cg_deputados"] = ["id", "nome", "uf", "legislatura"]
+COLUNAS["cg_deputadas"] = ["id", "nome", "uf", "legislatura"]
+COLUNAS["cg_senadores"] = ["codigo", "nome", "sexo", "uf", "legislatura", "link"]
+
+PREFIXO = {"transferegov": "tg", "siconfi": "sc", "pncp": "pn", "camara": "cm", "congresso": "cg"}
+ACHATAR = {"pncp": _achatar_pncp, "camara": _achatar_camara, "congresso": _achatar_congresso}
 ORIGEM_ARQUIVO = {("camara", "autores"): "proposicoes"}  # tabela de staging que sai de outro arquivo
 
 
@@ -151,14 +185,23 @@ def carregar_staging(con) -> dict:
         for tabela in [t for t in COLUNAS if t.startswith(prefixo + "_")]:
             nome = tabela[len(prefixo) + 1:]
             arq = arquivos.get(ORIGEM_ARQUIVO.get((fonte, nome), nome))
-            if fonte in ("pncp", "camara"):
+            if fonte in ACHATAR:
                 bruto = json.loads(arq.read_text(encoding="utf-8")) if arq else []
-                achatar = _achatar_pncp if fonte == "pncp" else _achatar_camara
-                _carregar_tabela(con, tabela, None, achatar(nome, bruto))
+                _carregar_tabela(con, tabela, None, ACHATAR[fonte](nome, bruto))
             else:
                 _carregar_tabela(con, tabela, arq)
     _carregar_temas(con)
+    _carregar_ente(con)
     return origem
+
+
+def _carregar_ente(con):
+    """A UF da cidade desempata parlamentares com o mesmo nome no cadastro do Congresso."""
+    from .config import ente
+
+    cfg = ente()
+    con.execute("create or replace table staging.ente (nome varchar, uf varchar, ibge varchar)")
+    con.execute("insert into staging.ente values (?, ?, ?)", [cfg.get("nome"), cfg.get("uf"), str(cfg.get("ibge"))])
 
 
 def _carregar_temas(con):
@@ -199,6 +242,11 @@ TESTES_DUROS = [
      "and not regexp_full_match(codigo_emenda, '[0-9]{12}')"),
 ]
 TABELAS_VOLUME = ["plano_acao", "contrato", "compra", "aditivo", "pessoal"]
+# Avisos não barram o banco: mostram o que ficou incompleto para alguém olhar.
+AVISOS = [
+    ("autor de emenda sem cadastro no Congresso (aparece sem cargo)",
+     "select count(*) from core.parlamentar where cargo is null"),
+]
 
 
 def testar(con, banco_anterior: Path) -> list[str]:
@@ -232,6 +280,9 @@ def atualizar(forcar: bool = False) -> None:
         sql_core = (Path(__file__).parent / "core.sql").read_text(encoding="utf-8")
         con.execute(sql_core)
         _status_fontes(con, origem)
+        for nome, sql in AVISOS:
+            if n := con.execute(sql).fetchone()[0]:
+                print(f"  aviso: {nome}: {n}")
         falhas = testar(con, DB)
         if falhas and not forcar:
             print("Testes falharam; o banco anterior continua valendo:")

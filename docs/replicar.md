@@ -31,6 +31,7 @@ Em ordem de peso:
 | Quem a prefeitura contratou, como e com quais aditivos? | PNCP, consulta de contratos, compras e termos | Nacional (obrigatório pela Lei 14.133) | CNPJ de cada órgão, número de controle | Igual, mas a **lista de órgãos** é sua (veja abaixo) |
 | Quanto da emenda foi empenhado e pago, e a quem? | Portal de transparência do município | Municipal | Código da emenda, CNPJ/CPF do credor | **Muda.** Depende do sistema do portal (fase 2) |
 | Quem pediu obra, placa, limpeza, poda? | Sistema legislativo da Câmara (indicações e pedidos de providência) | Municipal | Vereador, bairro | **Muda.** Depende do sistema da Câmara |
+| Quem indicou a emenda e qual o cargo? | Cadastro da Câmara dos Deputados e do Senado (dados abertos) | Nacional | Nome do parlamentar | Igual |
 | Quem é a empresa e ela tem sanção? | Cadastro de CNPJ (Receita) e CEIS/CNEP/CEPIM (CGU) | Nacional | CNPJ | Igual (fase 3) |
 | O que o tribunal de contas viu? | TCE do seu estado | Estadual | CNPJ, IBGE | **Muda** por estado (fase 4) |
 | Emendas de deputados estaduais | Assembleia ou governo do estado | Estadual | Varia | **Muda** por estado (fase 4) |
@@ -93,8 +94,9 @@ Aqui o endereço muda, mas o jeito de procurar é o mesmo:
   login ou bloqueia, use `inbox/`.
 - **Câmara.** Muitas câmaras usam o SAPL, da Interlegis, que tem API aberta padrão
   (`/api/materia/materialegislativa/`). São Leopoldo usa o Legiflow: o site busca as proposições em
-  `https://api.<dominio da camara>/proposicoes`, com filtros `ano`, `id_bairro`, `limit` e `offset`. Se a
-  sua Câmara só publica PDF, os pedidos entram por `inbox/`.
+  `https://api.<dominio da camara>/proposicoes`, com filtros `ano`, `id_bairro`, `limit` e `offset`, e o
+  cadastro dos vereadores, com o cargo, em `/parlamentares`. Se a sua Câmara só publica PDF, os pedidos
+  entram por `inbox/`.
 
 ### 5. O que não muda
 

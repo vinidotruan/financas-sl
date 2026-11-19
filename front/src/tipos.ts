@@ -71,6 +71,7 @@ export interface Emenda {
   codigo_emenda: string
   codigo: string
   parlamentar: string
+  cargo: string | null
   codigo_autor: string
   ano: number
   planos: number
@@ -107,7 +108,7 @@ export interface Plano {
 export interface Rastro {
   codigo: string
   codigo_formatado: string
-  parlamentar: { codigo: string; nome: string }
+  parlamentar: { codigo: string; nome: string; cargo: string | null }
   ano: number
   valores: { etapa: string; fonte: string; valor: number | null; nota?: string | null }[]
   planos: Plano[]
@@ -120,6 +121,11 @@ export interface Rastro {
 export interface Parlamentar {
   codigo: string
   nome: string
+  /** Deputado(a) federal ou Senador(a), pelo cadastro do Congresso; null quando o nome não casou */
+  cargo: string | null
+  uf: string | null
+  /** perfil oficial na Câmara dos Deputados ou no Senado */
+  link: string | null
   emendas: number
   planos: number
   indicado: number
@@ -212,7 +218,7 @@ export interface Pedidos {
   temas: string[]
   anos: number[]
   por_tema: { ano: number; tema: string; pedidos: number }[]
-  por_vereador: { id: number; nome: string; partido: string | null; ano: number; tema: string; pedidos: number }[]
+  por_vereador: { id: number; nome: string; partido: string | null; cargo: string | null; ano: number; tema: string; pedidos: number }[]
   por_bairro: { id: number; nome: string; ano: number; tema: string; pedidos: number }[]
   sem_bairro: { ano: number; tema: string; pedidos: number }[]
   fontes: FonteRef[]
@@ -233,6 +239,8 @@ export interface Vereador {
   id: number
   nome: string
   partido: string | null
+  /** Vereador, Vereadora, Comissão, Bancada, Mesa Diretora, Executivo municipal... */
+  cargo: string | null
   pedidos: Pedido[]
   fontes: FonteRef[]
 }

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, Fontes, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipCargo, Fontes, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { num } from '../formato'
 import { link } from '../rotas'
@@ -9,7 +9,7 @@ import type { Pedido, Pedidos } from '../tipos'
 type Ano = number | 'todos'
 const TODOS = 'Todos os temas'
 
-interface Linha { chave: string; nome: string; detalhe?: string; n: number; href?: string }
+interface Linha { chave: string; nome: string; cargo?: string | null; detalhe?: string; n: number; href?: string }
 
 function somar<T extends { ano: number; tema: string; pedidos: number }>(
   linhas: T[], ano: Ano, tema: string | undefined, chave: (l: T) => string, rotulo: (l: T) => Omit<Linha, 'n' | 'chave'>,
@@ -36,7 +36,7 @@ function Ranking({ linhas, vazio, limite }: { linhas: Linha[]; vazio: string; li
         const conteudo = (
           <>
             <span class="linha-topo">
-              <span class="titulo">{l.nome}{l.detalhe && <span class="apagado"> · {l.detalhe}</span>}</span>
+              <span class="titulo">{l.nome}{l.cargo && <> <ChipCargo cargo={l.cargo} /></>}{l.detalhe && <span class="apagado"> · {l.detalhe}</span>}</span>
               <span class="valor">{num(l.n)}</span>
             </span>
             <div class="barra" aria-hidden="true"><i style={{ width: `${(l.n / max) * 100}%` }} /></div>
@@ -87,7 +87,7 @@ export function TelaPedidos({ tema }: { tema?: string }) {
             const total = p.por_tema.filter(filtro).reduce((s, l) => s + l.pedidos, 0)
             const semBairro = p.sem_bairro.filter(filtro).reduce((s, l) => s + l.pedidos, 0)
             const vereadores = somar(p.por_vereador, ano, tema, (l) => String(l.id),
-              (l) => ({ nome: l.nome, detalhe: l.partido ?? undefined, href: link.vereador(l.id) }))
+              (l) => ({ nome: l.nome, cargo: l.cargo, detalhe: l.partido ?? undefined, href: link.vereador(l.id) }))
             const temas = somar(p.por_tema, ano, undefined, (l) => l.tema,
               (l) => ({ nome: l.tema, href: link.pedidos(l.tema) }))
             const bairros = somar(p.por_bairro, ano, tema, (l) => String(l.id), (l) => ({ nome: l.nome }))
@@ -172,7 +172,8 @@ export function TelaVereador({ id }: { id: string }) {
         const mostrados = filtrados.slice(0, LIMITE)
         return (
           <>
-            <Topo titulo={ver.nome} sub={ver.partido ? `Vereador(a) · ${ver.partido}` : 'Vereador(a)'} volta={link.pedidos()} />
+            <Topo titulo={ver.nome} volta={link.pedidos()}
+              sub={<><ChipCargo cargo={ver.cargo} />{ver.cargo && ver.partido && ' '}{ver.partido}</>} />
             <main class="conteudo">
               <FiltroAno anos={anos} ano={ano} mudar={setAno} />
               <div class="cartao">

@@ -4,6 +4,7 @@ fica em config/ente.yaml (seção camara). Para câmaras com SAPL ou outro siste
 
 Conferido ao vivo em 19/11/2026: /proposicoes aceita ano, id_bairro, limit e offset; limit acima de
 100 faz a API voltar ao padrão de 10; não há filtro por espécie, então vem tudo e o core separa.
+/parlamentares lista só quem está no mandato atual, com o cargo; quem já saiu não aparece.
 """
 from __future__ import annotations
 
@@ -43,6 +44,9 @@ def coletar() -> Coleta | None:
             print(f"  camara: {ano}: {len(lote)} proposições")
         proposicoes = list({p["ID"]: p for p in proposicoes}.values())
         col.salvar("proposicoes", proposicoes, f"{api}/proposicoes")
+
+        # cadastro dos vereadores no mandato atual, com o cargo (Vereador, Vereadora)
+        col.salvar("parlamentares", cli.get_json(f"{api}/parlamentares") or [], f"{api}/parlamentares")
 
         # a API devolve os bairros como objeto {"1": {"ID": 1, "nome": ...}}
         bairros = cli.get_json(f"{api}/bairros") or {}

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipCargo, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { brl, brlCurto, data, documento, linkPncp, num, pct, VAZIO } from '../formato'
 import { link } from '../rotas'
@@ -36,7 +36,7 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
                   {vis.map((p) => (
                     <li key={p.codigo}>
                       <a href={link.parlamentar(p.codigo)}>
-                        <span class="linha-topo"><span class="titulo">{p.nome}</span><span class="valor">{brlCurto(p.indicado)}</span></span>
+                        <span class="linha-topo"><span class="titulo">{p.nome} <ChipCargo cargo={p.cargo} /></span><span class="valor">{brlCurto(p.indicado)}</span></span>
                         <span class="apagado pequeno">
                           {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'} · {p.planos} {p.planos === 1 ? 'plano' : 'planos'} · {p.primeiro_ano === p.ultimo_ano ? p.primeiro_ano : `${p.primeiro_ano} a ${p.ultimo_ano}`}
                         </span>
@@ -91,7 +91,13 @@ export function TelaParlamentar({ codigo }: { codigo: string }) {
     <Carregado estado={ficha} oque="o parlamentar">
       {(p) => (
         <>
-          <Topo titulo={p.nome} sub={`Código de autor ${p.codigo}`} volta={link.fichas('parlamentares')} />
+          <Topo titulo={p.nome} volta={link.fichas('parlamentares')} sub={
+            <>
+              <ChipCargo cargo={p.cargo} />{p.cargo && ' '}
+              {[p.uf, `código de autor ${p.codigo}`].filter(Boolean).join(' · ')}
+              {p.link && <> · <a href={p.link} target="_blank" rel="noopener">{p.cargo?.startsWith('Senador') ? 'perfil no Senado' : 'perfil na Câmara dos Deputados'}</a></>}
+            </>
+          } />
           <main class="conteudo">
             <div class="trio">
               <div class="cartao"><span class="rotulo">Emendas</span><span class="valor">{num(p.emendas)}</span></div>

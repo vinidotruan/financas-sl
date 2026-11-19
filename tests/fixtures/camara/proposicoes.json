@@ -202,6 +202,11 @@
     "nome": "Ver. Beto Exemplo",
     "partido": "MDB",
     "url_imagem": "https://cdn.exemplo/2.jpg"
+   },
+   {
+    "ID": 411,
+    "nome": "Comissão de Obras Públicas, Transporte e Habitação",
+    "partido": null
    }
   ],
   "url": "https://www.camara.exemplo/processo/9007",

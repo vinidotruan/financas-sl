@@ -161,13 +161,21 @@ def test_ficha_de_pessoa_fisica(cliente, monkeypatch):
 def test_ficha_de_parlamentar(cliente):
     lista = cliente.get("/api/parlamentares").json()
     assert [(p["nome"], p["emendas"], p["planos"]) for p in lista][0] == ("Parlamentar Um", 1, 2)
+    assert {p["nome"]: p["cargo"] for p in lista} == {"Parlamentar Um": "Deputada federal",
+                                                      "Parlamentar Dois": "Senadora"}
     ficha = cliente.get("/api/parlamentares/1234").json()
+    assert ficha["link"] == "https://www.camara.leg.br/deputados/1002"
+    assert [f["nome"] for f in ficha["fontes"]] == ["transferegov", "congresso"]
     assert [e["codigo"] for e in ficha["emendas_lista"]] == ["2024/12340001"]
     assert {s["regra_id"] for s in ficha["sinais"]} == {"R02", "R03"}
 
 
 def test_rastro_mostra_cada_fonte(cliente):
-    valores = {v["etapa"]: v for v in cliente.get("/api/emendas/202412340001/rastro").json()["valores"]}
+    rastro = cliente.get("/api/emendas/202412340001/rastro").json()
+    assert rastro["parlamentar"] == {"codigo": "1234", "nome": "Parlamentar Um", "cargo": "Deputada federal"}
+    assert {e["codigo_emenda"]: e["cargo"] for e in cliente.get("/api/emendas").json()}["202412340001"] == (
+        "Deputada federal")
+    valores = {v["etapa"]: v for v in rastro["valores"]}
     assert valores["Indicado"]["valor"] == 600_000 and valores["Transferido"]["valor"] == 600_000
     assert valores["Executado (relatório de gestão)"]["valor"] == 5_000
     assert valores["Pago"]["valor"] is None and "fase 2" in valores["Pago"]["nota"]
@@ -184,7 +192,9 @@ def test_pedidos_por_vereador_tema_e_bairro(cliente):
     por_vereador = {}
     for linha in p["por_vereador"]:
         por_vereador[linha["nome"]] = por_vereador.get(linha["nome"], 0) + linha["pedidos"]
-    assert por_vereador == {"Ana Exemplo": 3, "Beto Exemplo": 4}
+    assert por_vereador == {"Ana Exemplo": 3, "Beto Exemplo": 4,
+                            "Comissão de Obras Públicas, Transporte e Habitação": 1}
+    assert {x["nome"]: x["cargo"] for x in p["por_vereador"]}["Ana Exemplo"] == "Vereadora"
     placas = [x for x in p["por_vereador"] if x["tema"] == "Sinalização e trânsito"]
     assert [(x["nome"], x["pedidos"]) for x in placas] == [("Ana Exemplo", 1)]
     assert sum(x["pedidos"] for x in p["sem_bairro"]) == 1
@@ -193,7 +203,7 @@ def test_pedidos_por_vereador_tema_e_bairro(cliente):
 
 def test_pedidos_de_um_vereador(cliente):
     v = cliente.get("/api/vereadores/702").json()
-    assert v["nome"] == "Beto Exemplo" and v["partido"] == "MDB"
+    assert v["nome"] == "Beto Exemplo" and v["partido"] == "MDB" and v["cargo"] == "Vereador"
     assert [x["id"] for x in v["pedidos"]] == [9007, 9005, 9004, 9003]
     assert {x["id"]: x["bairros"] for x in v["pedidos"]}[9005] == "Feitoria"
     assert cliente.get("/api/vereadores/999").status_code == 404

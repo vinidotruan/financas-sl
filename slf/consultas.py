@@ -22,6 +22,7 @@ LINKS = {
     "transferegov": "https://api.transferegov.gestao.gov.br/transferenciasespeciais/",
     "siconfi": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
     "pncp": "https://pncp.gov.br/app/contratos",
+    "congresso": "https://dadosabertos.camara.leg.br/",
 }
 PESSOA_FISICA = "pessoa física"
 
@@ -193,8 +194,9 @@ class Consulta:
 
     def emendas(self) -> list[dict]:
         return sem_cpf(self._q("""select codigo_emenda, any_value(codigo_formatado) as codigo,
-                                     any_value(parlamentar) as parlamentar, any_value(codigo_autor) as codigo_autor,
-                                     min(ano) as ano, count(*) as planos, round(sum(valor_indicado), 2) as indicado,
+                                     any_value(parlamentar) as parlamentar, any_value(cargo_parlamentar) as cargo,
+                                     any_value(codigo_autor) as codigo_autor, min(ano) as ano, count(*) as planos,
+                                     round(sum(valor_indicado), 2) as indicado,
                                      round(sum(transferido), 2) as transferido,
                                      round(sum(executado_relatorio), 2) as executado_relatorio
                                   from core.rastro_plano group by codigo_emenda
@@ -213,7 +215,8 @@ class Consulta:
         return sem_cpf({
             "codigo": codigo,
             "codigo_formatado": planos[0]["codigo_formatado"],
-            "parlamentar": {"codigo": planos[0]["codigo_autor"], "nome": planos[0]["parlamentar"]},
+            "parlamentar": {"codigo": planos[0]["codigo_autor"], "nome": planos[0]["parlamentar"],
+                            "cargo": planos[0]["cargo_parlamentar"]},
             "ano": min(p["ano"] for p in planos),
             # o valor de cada fonte lado a lado; o portal da prefeitura entra na fase 2
             "valores": [
@@ -235,12 +238,14 @@ class Consulta:
         })
 
     def parlamentares(self) -> list[dict]:
-        return sem_cpf(self._q("""select codigo_autor as codigo, any_value(parlamentar) as nome,
-                                     count(distinct codigo_emenda) as emendas, count(*) as planos,
-                                     round(sum(valor_indicado), 2) as indicado,
-                                     round(sum(transferido), 2) as transferido,
-                                     min(ano) as primeiro_ano, max(ano) as ultimo_ano
-                                  from core.rastro_plano group by codigo_autor order by indicado desc"""))
+        return sem_cpf(self._q("""select r.codigo_autor as codigo, any_value(r.parlamentar) as nome,
+                                     any_value(p.cargo) as cargo, any_value(p.uf) as uf, any_value(p.link) as link,
+                                     count(distinct r.codigo_emenda) as emendas, count(*) as planos,
+                                     round(sum(r.valor_indicado), 2) as indicado,
+                                     round(sum(r.transferido), 2) as transferido,
+                                     min(r.ano) as primeiro_ano, max(r.ano) as ultimo_ano
+                                  from core.rastro_plano r left join core.parlamentar p using (codigo_autor)
+                                  group by r.codigo_autor order by indicado desc"""))
 
     def parlamentar(self, codigo: str) -> dict | None:
         linhas = [p for p in self.parlamentares() if str(p["codigo"]) == str(codigo)]
@@ -251,7 +256,7 @@ class Consulta:
         sinais = (self._ocorrencias(" or ".join(["o.chave like ?"] * len(codigos)), [c + "/%" for c in codigos])
                   if codigos else [])
         return sem_cpf({**linhas[0], "emendas_lista": emendas, "sinais": sinais,
-                        "fontes": self._fontes(["transferegov"])})
+                        "fontes": self._fontes(["transferegov", "congresso"])})
 
     def fornecedores(self, limite: int | None = None) -> list[dict]:
         sql = "select * from core.fornecedor order by valor_total desc"
@@ -301,7 +306,7 @@ class Consulta:
             "temas": [t["tema"] for t in self._q("select tema from core.tema order by ordem")],
             "anos": [a["ano"] for a in self._q("select distinct ano from core.pedido order by ano desc")],
             "por_tema": self._q("select ano, tema, count(*) as pedidos from core.pedido group by all order by all"),
-            "por_vereador": self._q("""select v.id, v.nome, v.partido, p.ano, p.tema, count(*) as pedidos
+            "por_vereador": self._q("""select v.id, v.nome, v.partido, v.cargo, p.ano, p.tema, count(*) as pedidos
                                        from core.pedido p
                                        join core.pedido_autor a on a.id_pedido = p.id
                                        join core.vereador v on v.id = a.id_vereador

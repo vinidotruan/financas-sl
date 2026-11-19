@@ -1,8 +1,9 @@
 # Finanças de São Leopoldo
 
 Coleta Transferegov (emendas Pix), SICONFI (RGF e RREO) e PNCP (contratos, compras e aditivos da
-prefeitura, das fundações, do SEMAE e da Câmara), monta um banco DuckDB, roda as regras de sinal e
-serve um painel pro celular. Sinais são pontos de atenção, não acusações.
+prefeitura, das fundações, do SEMAE e da Câmara), os pedidos dos vereadores (Câmara Municipal) e o
+cadastro de deputados e senadores (Câmara dos Deputados e Senado), monta um banco DuckDB, roda as regras
+de sinal e serve um painel pro celular. Sinais são pontos de atenção, não acusações.
 
     uv sync
     (cd front && npm install && npm run build)   # front em site/ (Node do .nvmrc)

@@ -23,11 +23,54 @@ select
   n(valor_custeio_plano_acao) + n(valor_investimento_plano_acao) as valor_indicado
 from staging.tg_plano_acao_especial;
 
+-- Cadastro dos autores das emendas. O Transferegov dá o código de autor e o nome, mas não o cargo; o
+-- cargo vem do cadastro oficial da Câmara dos Deputados e do Senado (fonte "congresso"), casado pelo
+-- nome sem acento e sem caixa. O casamento olha todas as grafias que o cadastro já registrou para a
+-- pessoa (a Câmara guarda "Tenente Coronel Zucco" e "Zucco" para o mesmo deputado). Com dois cadastros
+-- de mesmo nome, fica o da UF da cidade e depois o da legislatura mais recente. Quem não casa fica com
+-- o nome do Transferegov e sem cargo.
+create or replace macro chave_nome(x) as lower(strip_accents(trim(cast(x as varchar))));
+
+create or replace table core.parlamentar as
+with autor as (
+  select codigo_autor, any_value(parlamentar) as nome_fonte
+  from core.plano_acao where codigo_autor is not null group by 1
+),
+grafia as (
+  select 'camara' as casa, cast(id as varchar) as id_casa, nome, max(cast(legislatura as integer)) as leg_nome
+  from staging.cg_deputados where id is not null and nome is not null group by all
+  union all
+  select 'senado', cast(codigo as varchar), nome, max(cast(legislatura as integer))
+  from staging.cg_senadores where codigo is not null and nome is not null group by all
+),
+pessoa as (
+  select 'camara' as casa, cast(id as varchar) as id_casa,
+         arg_max(uf, cast(legislatura as integer)) as uf, max(cast(legislatura as integer)) as legislatura,
+         case when cast(id as varchar) in (select cast(id as varchar) from staging.cg_deputadas)
+              then 'Deputada federal' else 'Deputado federal' end as cargo,
+         'https://www.camara.leg.br/deputados/' || cast(id as varchar) as link
+  from staging.cg_deputados where id is not null group by id
+  union all
+  select 'senado', cast(codigo as varchar), uf, cast(legislatura as integer),
+         case when sexo = 'Feminino' then 'Senadora' else 'Senador' end, link
+  from staging.cg_senadores where codigo is not null
+)
+select a.codigo_autor, coalesce(g.nome, a.nome_fonte) as nome, p.cargo, p.uf, p.casa, p.id_casa, p.link,
+       a.nome_fonte
+from autor a
+left join grafia g on chave_nome(g.nome) = chave_nome(a.nome_fonte)
+left join pessoa p on p.casa = g.casa and p.id_casa = g.id_casa
+qualify row_number() over (partition by a.codigo_autor
+                           order by (p.uf = (select uf from staging.ente)) desc nulls last,
+                                    p.legislatura desc nulls last, p.casa, g.leg_nome desc nulls last) = 1;
+
 create or replace table core.emenda as
-select codigo_emenda, any_value(codigo_formatado) as codigo_formatado, any_value(parlamentar) as parlamentar,
-       any_value(codigo_autor) as codigo_autor, min(ano) as ano, count(*) as planos,
-       sum(valor_indicado) as valor_indicado
-from core.plano_acao group by codigo_emenda;
+select e.codigo_emenda, any_value(e.codigo_formatado) as codigo_formatado,
+       any_value(coalesce(p.nome, e.parlamentar)) as parlamentar, any_value(p.cargo) as cargo_parlamentar,
+       any_value(e.codigo_autor) as codigo_autor, min(e.ano) as ano, count(*) as planos,
+       sum(e.valor_indicado) as valor_indicado
+from core.plano_acao e left join core.parlamentar p using (codigo_autor)
+group by e.codigo_emenda;
 
 -- Empenho federal -> documento hábil -> ordem bancária: é a transferência que chegou ao município.
 create or replace table core.transferencia as
@@ -72,7 +115,7 @@ left join staging.tg_meta_especial m on cast(m.id_executor as varchar) = cast(x.
 -- prazo_relatorio_parcial: IN-TCU 93/2024 (arts. 3º e 8º) e Nota Conjunta TCU/AGU/CGU/MGI 1/2025:
 -- 30/06 do ano seguinte ao repasse; para repasses anteriores a 17/01/2024, 30/06/2025.
 create or replace table core.rastro_plano as
-select p.*,
+select p.* replace (coalesce(pa.nome, p.parlamentar) as parlamentar), pa.cargo as cargo_parlamentar,
        coalesce(t.transferido, 0) as transferido, t.primeira_ob, t.ultima_ob,
        r.valor_executado as executado_relatorio, r.tipo as tipo_relatorio, r.data as data_relatorio,
        coalesce(q.relatorios_entregues, 0) as relatorios_entregues,
@@ -92,7 +135,8 @@ left join (select id_plano_acao, count(*) filter (where entregue) as relatorios_
                   count(*) filter (where not entregue) as relatorios_em_elaboracao,
                   bool_or(entregue and lower(tipo) like '%final%') as tem_final
            from core.relatorio_gestao group by 1) q using (id_plano_acao)
-left join core.prazo_plano z using (id_plano_acao);
+left join core.prazo_plano z using (id_plano_acao)
+left join core.parlamentar pa using (codigo_autor);
 
 -- ===== Compras (PNCP) =====
 create or replace table core.compra as
@@ -202,12 +246,34 @@ from staging.cm_proposicoes
 where id is not null
 qualify row_number() over (partition by id order by atualizado_em desc nulls last) = 1;
 
--- O nome vem com o tratamento ("Ver.ª Karina Camillo"); o id do autor é a chave.
+-- Quem assina as proposições: vereadores, comissões, bancadas, Mesa Diretora, Executivo. O id do autor é
+-- a chave. O cargo vem do cadastro da Câmara (/parlamentares), que só lista o mandato atual; para quem
+-- já saiu, vem do tratamento no nome ("Ver.ª" é vereadora); para os outros proponentes, do começo do
+-- nome. O tratamento sai do nome uma vez, aqui; o resto do painel lê o nome pronto desta tabela.
 create or replace table core.vereador as
-select cast(id_autor as bigint) as id,
-       any_value(trim(regexp_replace(nome, '^\s*Ver(\.|eador|eadora)?\s*ª?\s*', ''))) as nome,
-       any_value(partido) as partido
-from staging.cm_autores where id_autor is not null group by 1;
+with assinou as (
+  select cast(id_autor as bigint) as id, any_value(nome) as bruto, any_value(partido) as partido
+  from staging.cm_autores where id_autor is not null group by 1
+),
+cadastro as (
+  select cast("ID" as bigint) as id, any_value(cargo) as cargo, any_value(partido) as partido
+  from staging.cm_parlamentares where "ID" is not null group by 1
+)
+select a.id,
+       coalesce(nullif(trim(regexp_replace(a.bruto, '^\s*(Ver\.\s*ª|Ver\.|Vice-Prefeit[ao])\s*', '')), ''),
+                a.bruto) as nome,
+       coalesce(c.partido, a.partido) as partido,
+       coalesce(c.cargo, case
+         when regexp_matches(a.bruto, '^\s*Ver\.\s*ª') then 'Vereadora'
+         when regexp_matches(a.bruto, '^\s*Ver\.') then 'Vereador'
+         when regexp_matches(a.bruto, '^\s*Vice-Prefeita') then 'Vice-prefeita'
+         when regexp_matches(a.bruto, '^\s*Vice-Prefeito') then 'Vice-prefeito'
+         when regexp_matches(a.bruto, '^\s*Comiss') then 'Comissão'
+         when regexp_matches(a.bruto, '^\s*Bancada') then 'Bancada'
+         when regexp_matches(a.bruto, '^\s*Mesa Diretora') then 'Mesa Diretora'
+         when regexp_matches(a.bruto, '^\s*Executivo Municipal') then 'Executivo municipal'
+       end) as cargo
+from assinou a left join cadastro c using (id);
 
 create or replace table core.bairro as
 select cast("ID" as bigint) as id, nome from staging.cm_bairros where "ID" is not null;

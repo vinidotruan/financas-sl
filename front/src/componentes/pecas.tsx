@@ -58,6 +58,11 @@ export function ChipStatus(props: { status: Status }) {
   return <span class={`chip ${CLASSE_STATUS[props.status] ?? ''}`}>{props.status}</span>
 }
 
+/** Cargo de quem assina ou indica: vereadora, deputado federal, senadora, comissão. Sem cargo, nada. */
+export function ChipCargo(props: { cargo: string | null | undefined }) {
+  return props.cargo ? <span class="chip cargo">{props.cargo}</span> : null
+}
+
 export function ChipsFonte(props: { fontes: (FonteRef | string)[] }) {
   return (
     <span class="chips">
