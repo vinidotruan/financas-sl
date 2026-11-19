@@ -308,7 +308,7 @@ preenchidos), marca-texto (azul-tinta com grifo amarelo) e Rio dos Sinos (faixa 
 **Entregas.** 1) Storybook com o que existe hoje; 2) cores por função no visual sóbrio; 3) escala de
 texto; 4) o site usando só as variáveis.
 
-### D40 · Dados sensíveis: um módulo para esconder e conferir · 19/11/2026 · em andamento
+### D40 · Dados sensíveis: um módulo para esconder e conferir · 19/11/2026 · vale
 
 **Problema.** A revisão de 19/11 achou no ar dois MEIs com o nome do dono. Desde 2023 a Receita monta o
 nome do MEI como "raiz do CNPJ + nome do dono" ("12.345.678 FULANO DE TAL"), e a regra só conhecia o
@@ -522,7 +522,7 @@ tem o seu (`pages`). Os dados brutos continuam só no cache, porque têm CPF (D3
 **Consequência.** Mudança só de tela vai ao ar sem reprocessar. O pacote de dados é a peça que a etapa
 seguinte (resultado repetível, com o pacote numa Release do GitHub) vai publicar.
 
-### D43 · Resultado repetível: as mesmas coletas dão o mesmo resultado · 19/11/2026 · em andamento
+### D43 · Resultado repetível: as mesmas coletas dão o mesmo resultado · 19/11/2026 · vale
 
 **Problema.** Para alguém aplicar método científico nos dados (refazer as contas, testar outra regra,
 usar em outra cidade), o mesmo ponto de partida tem que dar o mesmo resultado. Não dava: as regras R02 e
@@ -548,9 +548,10 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
   de aditivos). Fica de fora `core.proposicao`. Passa pela `slf conferir`, que também lê Parquet. Rodar o
   SQL das regras sobre o pacote dá os mesmos casos do banco (teste e `docs/metodologia.md`).
 - **Release do GitHub** (escolha minha; o Ruan não escolheu entre ela e o Zenodo, que pode arquivar cada
-  release com DOI depois): uma por data de referência, `dados-AAAA-MM-DD`, criada pelo processar. Fica
-  **desligada** até o Ruan ligar `PUBLICAR_RELEASE = true`: com as tabelas abertas, qualquer pessoa
-  recalcula também os casos ainda não revisados, e o site hoje mostra só os revisados.
+  release com DOI depois): uma por data de referência, `dados-AAAA-MM-DD`, criada pelo processar, só com
+  `PUBLICAR_RELEASE = true`. **Ligada pelo Ruan em 19/11/2026**, sabendo que, com as tabelas abertas,
+  qualquer pessoa recalcula também os casos ainda não revisados (o site mostra só os revisados). Primeira:
+  `dados-2026-11-19`, conferida de fora: passa na `slf conferir` e refaz os mesmos casos.
 - **`docs/metodologia.md`**: o caminho do dado bruto ao sinal, como refazer as contas e, para cada regra, o
   que testa, o limiar, o que pode explicar e como refutar. Um teste confere que cada regra, na versão
   atual, está lá.
