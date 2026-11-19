@@ -222,6 +222,12 @@ mudam a vigência, porque o valor acrescido numa prorrogação quase sempre é z
 pelo texto (`prorroga|prazo|vigência|renova`), já que os campos de qualificação vêm vazios; os 18 casos
 de 18/11/2026 foram lidos um a um.
 
+**Conferência com a análise de 18/11.** A análise contou "21 de 80 emergenciais com aditivo de prazo"
+somando o art. 75, VIII e o regime de calamidade da enchente (MP 1.221/2024). Reproduzido em 19/11/2026:
+81 contratos, 21 com aditivo de vigência, R$ 27,3 mi de valor inicial, os mesmos números. A R05 fica só
+com o art. 75, VIII (18 na prefeitura, 22 com os outros órgãos), porque o regime de calamidade é
+justamente uma das explicações do "pode ser normal se" da regra.
+
 ### D22 · R06: inclui dispensa com disputa · 18/11/2026 · vale
 
 **Decisão.** A dispensa com disputa também exige aviso publicado antes das propostas (art. 75, § 3º), então
@@ -229,6 +235,16 @@ entra na regra; só inexigibilidade fica de fora. Decisão do Ruan em 18/11/2026
 
 **Ressalva para outras cidades.** Municípios de até 20 mil habitantes têm prazo de transição para o
 PNCP (art. 176 da Lei 14.133). Lá a R06 precisa considerar essa transição.
+
+---
+
+### D30 · R08: contrato por consumo no "pode ser normal se" · 19/11/2026 · vale
+
+**Problema.** Com o SEMAE e a Câmara, a R08 subiu de 3 para 25 casos. Vários são contratos por consumo
+(energia elétrica, cartões de passagem), em que o valor global cresce com o uso e não por aditivo.
+
+**Decisão.** A regra continua a mesma; o "pode ser normal se" passou a citar contrato por consumo ou
+demanda. Quem revisa vê a explicação ao lado do número.
 
 ---
 

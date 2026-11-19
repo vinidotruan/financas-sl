@@ -7,7 +7,8 @@ base_legal: Lei 14.133/2021, art. 125 (acréscimo até 25%; 50% em reforma de ed
 limiar: valor global atual mais de 25% acima do valor inicial do contrato
 pode_ser_normal_se: >
   É reforma (teto de 50%), o aumento veio de reajuste ou repactuação, que não contam no
-  limite, ou o valor inicial no PNCP é de uma parcela só.
+  limite, o valor inicial no PNCP é de uma parcela só, ou é contrato por consumo ou demanda
+  (energia, passagens, combustível), em que o valor global acompanha o uso.
 como_verificar: Termos aditivos e o objeto do contrato.
 observado: {rotulo: Acréscimo sobre o valor inicial, formato: pct}
 resumo: "Valor inicial {valor_inicial|brl}; valor global atual {valor_global|brl}."
