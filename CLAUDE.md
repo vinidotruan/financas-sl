@@ -34,6 +34,7 @@ SLF_MODO=publico uv run slf servir   # modo público (ver "Regras que não se qu
 ./scripts/agendar.sh         # launchd: slf diario todo dia às 06:10
 uv run slf exportar [--modo publico|privado] [--saida site/data]   # um JSON por rota, para o site estático
 uv run slf revisao-publica   # config/revisao-publica.json: id e status dos confirmados, sem notas
+uv run slf pacote [--saida pacote-aberto]   # dados abertos em Parquet, modo público (D43)
 uv run slf conferir [--pasta site/data]   # procura dado sensível no export (D40); falsos positivos em config/sensivel-liberados.yaml
 uv run slf podar --manter 2  # apaga coletas antigas de data/raw (o Actions usa para o cache não crescer)
 uv run pytest                # testes sem rede (fixtures por fonte em tests/fixtures/)
@@ -60,6 +61,8 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `config/ente.yaml` | Nome, UF, IBGE, CNPJ, data de início, a lista de órgãos do PNCP e a API da Câmara. É o único lugar com a cidade |
 | `docs/decisoes.md` | Registro das decisões técnicas (Dnn), para auditoria. Toda decisão nova ou mudança de regra entra aqui |
 | `docs/replicar.md` | Como montar o painel para outra cidade: critérios de escolha de fonte e passo a passo |
+| `docs/metodologia.md` | Do dado bruto ao sinal, resultado repetível (D43), como refazer as contas e cada regra (um teste confere a versão) |
+| `slf/pacote.py` | Pacote de dados abertos: tabelas tratadas em Parquet, modo público, com proveniência (`slf pacote`, D43) |
 | `slf/coletores/*.py` | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
 | `slf/raw.py` | `data/raw/{fonte}/{AAAA-MM-DDTHHMMSS}/*.json` + `manifest.jsonl` (url, params, sha256, linhas) |
 | `slf/http.py` | httpx com retry (tenacity) em 429/5xx/timeout e pausa entre chamadas |

@@ -32,6 +32,8 @@ jobs:
        (github.event.workflow_run.name == 'coleta' || github.event.workflow_run.event == 'push'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write   # só para a Release do pacote de dados abertos (desligada sem PUBLICAR_RELEASE)
     env:
       SLF_REVISAO: config/revisao-publica.json
       PYTHONUNBUFFERED: "1"
@@ -147,3 +149,29 @@ jobs:
         with:
           path: pacote
           key: pacote-${{ github.run_id }}
+
+      # D43: pacote de dados abertos (tabelas tratadas em Parquet, modo público, e a proveniência) numa
+      # Release do GitHub, uma por data de referência; o Zenodo pode arquivar cada uma com DOI. Só com a
+      # variável PUBLICAR_RELEASE = true: abrir as tabelas é decisão do Ruan. Passa pela conferência antes.
+      - name: Pacote de dados abertos na Release
+        if: steps.decidir.outputs.reprocessar == 'true' && vars.PUBLICAR_RELEASE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run slf pacote --saida pacote-aberto
+          if ! uv run slf conferir --pasta pacote-aberto > conferencia-pacote.txt; then
+            { echo '### Release parada: dado sensível no pacote aberto (D40)'; echo '```'; cat conferencia-pacote.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            cat conferencia-pacote.txt
+            exit 1
+          fi
+          ref=$(jq -r .data_referencia pacote-aberto/proveniencia.json)
+          tag="dados-$ref"
+          (cd pacote-aberto && zip -qrX "../dados-abertos-$ref.zip" .)
+          (cd pacote && zip -qrX "../dados-do-site-$ref.zip" .)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" "dados-abertos-$ref.zip" "dados-do-site-$ref.zip" pacote-aberto/proveniencia.json --clobber
+          else
+            gh release create "$tag" "dados-abertos-$ref.zip" "dados-do-site-$ref.zip" pacote-aberto/proveniencia.json \
+              --title "Dados de $ref" --notes-file pacote-aberto/LEIAME.md --target "$(git rev-parse HEAD)"
+          fi
+          echo "Release $tag com o pacote de dados abertos." >> "$GITHUB_STEP_SUMMARY"

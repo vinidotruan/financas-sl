@@ -54,6 +54,8 @@ def main(argv=None):
     e.add_argument("--saida", default="site/data", help="pasta de saída (padrão: site/data)")
     po = sub.add_parser("podar", help="apaga coletas antigas de data/raw, mantendo as N últimas boas de cada fonte")
     po.add_argument("--manter", type=int, default=3)
+    pc = sub.add_parser("pacote", help="tabelas tratadas em Parquet, modo público, para dados abertos (D43)")
+    pc.add_argument("--saida", default="pacote-aberto", help="pasta de saída (padrão: pacote-aberto)")
     cf = sub.add_parser("conferir", help="procura dado sensível nos JSON exportados, antes de publicar (D40)")
     cf.add_argument("--pasta", default="site/data", help="pasta exportada (padrão: site/data)")
     cf.add_argument("--liberados", default="config/sensivel-liberados.yaml",
@@ -94,6 +96,12 @@ def main(argv=None):
         removidas = podar(args.manter)
         print(f"{len(removidas)} coletas antigas apagadas de data/raw "
               f"(mantidas as {args.manter} últimas boas por fonte)")
+    if args.cmd == "pacote":
+        from pathlib import Path
+
+        from .pacote import montar_pacote
+        linhas = montar_pacote(Path(args.saida))
+        print(f"Pacote em {args.saida}: {len(linhas)} tabelas, {sum(linhas.values())} linhas")
     if args.cmd == "conferir":
         from pathlib import Path
 

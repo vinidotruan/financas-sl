@@ -31,6 +31,7 @@ OBJETO_OMITIDO = "objeto omitido (pessoa física)"
 # dígitos e o código da emenda, 12; ids em hash como "c89673977497c" não são CPF). Aparece no campo
 # do fornecedor PF e também no nome de MEI e empresário individual ("FULANO DE TAL 12345678901").
 _CPF = re.compile(r"(?<![0-9A-Za-z])(\d{3})\.?(\d{3})\.?(\d{3})-?(\d{2})(?![0-9A-Za-z])")
+_CPF_MASCARADO_TEXTO = re.compile(r"\*{3}\.\d{3}\.\d{3}-\*{2}")
 
 
 def sem_cpf(x):
@@ -47,6 +48,21 @@ def sem_cpf(x):
 def titulo_pessoa_fisica(chave: str) -> str:
     """Título do sinal de contrato com pessoa física: o número do contrato, sem nome nem objeto."""
     return f"{PESSOA_FISICA.capitalize()} · contrato {chave.rsplit('-', 1)[-1]}"
+
+
+CPF_OMITIDO = "[CPF omitido]"
+
+
+def sem_documento(x):
+    """Para os dados abertos: CPF nenhum, nem mascarado (o do representante da empresa, no texto do
+    aditivo, por exemplo). Percorre a estrutura inteira, como sem_cpf."""
+    if isinstance(x, str):
+        return _CPF_MASCARADO_TEXTO.sub(CPF_OMITIDO, sem_cpf(x))
+    if isinstance(x, dict):
+        return {k: sem_documento(v) for k, v in x.items()}
+    if isinstance(x, list):
+        return [sem_documento(v) for v in x]
+    return x
 
 
 # ===== Texto do pedido =====
@@ -155,12 +171,31 @@ def _textos(dado, caminho: str = ""):
             yield from _textos(v, f"{caminho}[{i}]")
 
 
+def _linhas_parquet(arq: Path):
+    """Cada texto de um Parquet, com o caminho "[linha].coluna" (como no JSON)."""
+    import duckdb
+
+    con = duckdb.connect()
+    try:
+        cur = con.execute("select * from read_parquet(?)", [str(arq)])
+        colunas = [c[0] for c in cur.description]
+        for i, linha in enumerate(cur.fetchall()):
+            for coluna, valor in zip(colunas, linha, strict=True):
+                if isinstance(valor, str):
+                    yield f"[{i}].{coluna}", valor
+    finally:
+        con.close()
+
+
 def conferir(pasta: Path, liberados: set[str] | frozenset[str] = frozenset()) -> list[Achado]:
-    """Tudo o que parece dado sensível nos JSON da pasta, menos o que foi liberado pela chave."""
+    """Tudo o que parece dado sensível nos JSON e Parquet da pasta, menos o que foi liberado pela chave."""
     achados = []
-    for arq in sorted(pasta.rglob("*.json")):
+    arquivos = sorted([*pasta.rglob("*.json"), *pasta.rglob("*.parquet")])
+    for arq in arquivos:
         nome = arq.relative_to(pasta).as_posix()
-        for caminho, texto in _textos(json.loads(arq.read_text(encoding="utf-8"))):
+        textos = (_linhas_parquet(arq) if arq.suffix == ".parquet"
+                  else _textos(json.loads(arq.read_text(encoding="utf-8"))))
+        for caminho, texto in textos:
             chave = hashlib.sha1(texto.encode("utf-8")).hexdigest()[:12]
             if chave in liberados:
                 continue

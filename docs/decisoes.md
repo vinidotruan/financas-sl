@@ -542,8 +542,18 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
   código, a data de referência, a versão de cada regra e, de cada fonte, a coleta usada com o sha256, a
   URL e os parâmetros de cada arquivo bruto (vem do manifest, gravado em `core.arquivo_coleta`).
 
-**Próximas partes.** Refazer a partir da proveniência; pacote de dados abertos numa Release do GitHub
-(o Zenodo pode arquivar cada release com DOI, ligado pelo Ruan na conta dele); `docs/metodologia.md`.
+- **Pacote de dados abertos** (`slf pacote`, `slf/pacote.py`): as tabelas tratadas em Parquet, em modo
+  público, com a proveniência e um LEIAME. Pessoa física sem nome, CPF ou objeto; pedidos limpos (D40);
+  só os sinais revisados; e CPF nenhum, nem mascarado (o representante da empresa aparece com CPF no texto
+  de aditivos). Fica de fora `core.proposicao`. Passa pela `slf conferir`, que também lê Parquet. Rodar o
+  SQL das regras sobre o pacote dá os mesmos casos do banco (teste e `docs/metodologia.md`).
+- **Release do GitHub** (escolha minha; o Ruan não escolheu entre ela e o Zenodo, que pode arquivar cada
+  release com DOI depois): uma por data de referência, `dados-AAAA-MM-DD`, criada pelo processar. Fica
+  **desligada** até o Ruan ligar `PUBLICAR_RELEASE = true`: com as tabelas abertas, qualquer pessoa
+  recalcula também os casos ainda não revisados, e o site hoje mostra só os revisados.
+- **`docs/metodologia.md`**: o caminho do dado bruto ao sinal, como refazer as contas e, para cada regra, o
+  que testa, o limiar, o que pode explicar e como refutar. Um teste confere que cada regra, na versão
+  atual, está lá.
 
 ---
 
