@@ -1,0 +1,22 @@
+id: R03
+nome: Relatório de gestão ausente
+versao: 1
+area: emendas
+severidade: atencao
+base_legal: Portarias do Transferegov e decisões do STF (ADPF 854) sobre prestação de contas
+limiar: prazo do plano de trabalho vencido, com dinheiro transferido e sem relatório final
+pode_ser_normal_se: A API está atrasada em relação ao sistema do Transferegov, ou o prazo foi prorrogado.
+como_verificar: Interface do Transferegov e as listas do TCU e do STF de quem não prestou contas.
+fontes: [transferegov]
+sql: |
+  select codigo_emenda || '/' || id_plano_acao as chave,
+         codigo_formatado || ' · ' || parlamentar as titulo,
+         current_date - prazo_fim as valor_observado,
+         struct_pack(prazo_fim := prazo_fim, transferido := transferido,
+                     ultimo_relatorio := tipo_relatorio, data_relatorio := data_relatorio,
+                     id_plano_acao := id_plano_acao) as evidencia,
+         prazo_fim as quando
+  from core.rastro_plano
+  where transferido > 0
+    and prazo_fim < current_date
+    and coalesce(lower(tipo_relatorio), '') not like '%final%'

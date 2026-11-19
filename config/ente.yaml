@@ -1,0 +1,10 @@
+# Município analisado
+ibge: 4318705
+cnpj_municipio: "89814693000160"
+inicio: 2022-01-01
+
+# Órgãos cujas compras entram no PNCP. Adicione a Fundação Hospital Centenário
+# e as outras fundações e autarquias: o CNPJ aparece na página do órgão em pncp.gov.br.
+orgaos_pncp:
+  - cnpj: "89814693000160"
+    nome: Prefeitura Municipal de São Leopoldo

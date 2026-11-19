@@ -1,0 +1,21 @@
+id: R06
+nome: Licitação publicada depois de fechar
+versao: 1
+area: compras
+severidade: atencao
+base_legal: Lei 14.133/2021, arts. 54 e 174 (divulgação obrigatória no PNCP)
+limiar: publicação no PNCP depois do encerramento do prazo de propostas
+pode_ser_normal_se: O edital saiu em outro meio e o PNCP serviu só de registro posterior.
+como_verificar: Data de publicação no Diário Oficial Leopoldense e a plataforma usada na licitação.
+fontes: [pncp]
+sql: |
+  select id as chave,
+         coalesce(modalidade, '?') || ' · ' || left(objeto, 90) as titulo,
+         date_diff('day', encerramento_propostas, publicado_em) as valor_observado,
+         struct_pack(compra := id, encerramento := encerramento_propostas, publicado := publicado_em,
+                     valor_estimado := valor_estimado) as evidencia,
+         cast(publicado_em as date) as quando
+  from core.compra
+  where encerramento_propostas is not null
+    and publicado_em > encerramento_propostas
+    and coalesce(modalidade, '') not in ('Inexigibilidade')

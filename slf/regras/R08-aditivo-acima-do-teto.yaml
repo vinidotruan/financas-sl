@@ -1,0 +1,22 @@
+id: R08
+nome: Aditivo acima do teto legal
+versao: 1
+area: compras
+severidade: alto
+base_legal: Lei 14.133/2021, art. 125 (acréscimo até 25%; 50% em reforma de edifício ou equipamento)
+limiar: valor global atual mais de 25% acima do valor inicial do contrato
+pode_ser_normal_se: >
+  É reforma (teto de 50%), o aumento veio de reajuste ou repactuação, que não contam no
+  limite, ou o valor inicial no PNCP é de uma parcela só.
+como_verificar: Termos aditivos e o objeto do contrato.
+fontes: [pncp]
+sql: |
+  select id as chave,
+         fornecedor_nome || ' · ' || left(objeto, 90) as titulo,
+         valor_global / nullif(valor_inicial, 0) - 1 as valor_observado,
+         struct_pack(contrato := id, valor_inicial := valor_inicial, valor_global := valor_global,
+                     modalidade := modalidade, fornecedor := fornecedor_ni, tipo_pessoa := tipo_pessoa)
+           as evidencia,
+         data_assinatura as quando
+  from core.contrato
+  where valor_inicial > 0 and valor_global > 1.25 * valor_inicial

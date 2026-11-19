@@ -1,0 +1,25 @@
+id: R05
+nome: Contrato emergencial prorrogado
+versao: 1
+area: compras
+severidade: alto
+base_legal: Lei 14.133/2021, art. 75, VIII (veda prorrogar contrato emergencial)
+limiar: contrato emergencial com qualquer termo aditivo que altere a vigência
+pode_ser_normal_se: >
+  A prorrogação ficou dentro do teto de 1 ano, ou valeu o regime de calamidade
+  (MP 1.221/2024 e Lei 14.981/2024). A leitura do aditivo é feita pelo texto e pode errar.
+como_verificar: Justificativa de cada aditivo e se a licitação definitiva foi aberta.
+fontes: [pncp]
+sql: |
+  select c.id as chave,
+         c.fornecedor_nome || ' · ' || left(c.objeto, 90) as titulo,
+         c.valor_global - c.valor_inicial as valor_observado,
+         struct_pack(contrato := c.id, amparo := c.amparo, valor_inicial := c.valor_inicial,
+                     valor_global := c.valor_global, aditivos_de_prazo := count(*),
+                     fornecedor := c.fornecedor_ni, tipo_pessoa := c.tipo_pessoa) as evidencia,
+         max(a.data_assinatura) as quando
+  from core.contrato c
+  join core.aditivo a on a.contrato_id = c.id
+  where c.emergencial and a.altera_vigencia
+  group by c.id, c.fornecedor_nome, c.objeto, c.valor_global, c.valor_inicial, c.amparo,
+           c.fornecedor_ni, c.tipo_pessoa

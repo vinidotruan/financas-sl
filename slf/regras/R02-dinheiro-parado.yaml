@@ -1,0 +1,25 @@
+id: R02
+nome: Dinheiro de emenda parado
+versao: 1
+area: emendas
+severidade: atencao
+base_legal: TCU, auditorias de transferências especiais (recursos parados de 6 a 12 meses)
+limiar: transferido há mais de 180 dias e menos de 10% executado no último relatório de gestão
+pode_ser_normal_se: >
+  Projeto e licitação de obra são lentos, houve a enchente de maio de 2024, ou o relatório
+  de gestão está atrasado em relação ao gasto real. Na fase 2 o portal da prefeitura
+  mostra o empenhado e o pago de verdade.
+como_verificar: Cronograma do plano de trabalho e situação das licitações ligadas à emenda.
+fontes: [transferegov]
+sql: |
+  select codigo_emenda || '/' || id_plano_acao as chave,
+         codigo_formatado || ' · ' || parlamentar as titulo,
+         coalesce(executado_relatorio, 0) / transferido as valor_observado,
+         struct_pack(transferido := transferido, executado_relatorio := executado_relatorio,
+                     primeira_transferencia := primeira_ob, dias_parado := current_date - primeira_ob,
+                     id_plano_acao := id_plano_acao) as evidencia,
+         primeira_ob as quando
+  from core.rastro_plano
+  where transferido > 0
+    and current_date - primeira_ob > 180
+    and coalesce(executado_relatorio, 0) < 0.10 * transferido

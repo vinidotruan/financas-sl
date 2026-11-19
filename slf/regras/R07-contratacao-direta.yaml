@@ -1,0 +1,24 @@
+id: R07
+nome: Contratação direta alta
+versao: 1
+area: compras
+severidade: atencao
+base_legal: Lei 14.133/2021, arts. 72 a 75 (licitação é a regra; contratação direta, exceção)
+limiar: mais de 50% do valor contratado no ano sem licitação, por órgão
+pode_ser_normal_se: Ano de calamidade (2024, enchente) ou serviços de fornecedor exclusivo.
+como_verificar: Lista dos maiores contratos diretos do ano e as justificativas de cada um.
+fontes: [pncp]
+sql: |
+  select orgao_cnpj || '/' || ano as chave,
+         any_value(orgao_nome) || ' · ' || ano as titulo,
+         sum(case when contratacao_direta then valor_global else 0 end) / nullif(sum(valor_global), 0)
+           as valor_observado,
+         struct_pack(contratos := count(*), diretos := count(*) filter (where contratacao_direta),
+                     valor_total := sum(valor_global),
+                     valor_direto := sum(case when contratacao_direta then valor_global else 0 end))
+           as evidencia,
+         make_date(ano, 12, 31) as quando
+  from core.contrato
+  where ano is not null
+  group by orgao_cnpj, ano
+  having sum(case when contratacao_direta then valor_global else 0 end) > 0.5 * sum(valor_global)

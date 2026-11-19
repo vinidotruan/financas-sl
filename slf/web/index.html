@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sinais · São Leopoldo</title>
+<style>
+:root{--bg:#f4f7f5;--surface:#fff;--fg:#17211d;--muted:#56665f;--line:#d6dfda;--accent:#1d6b58;--accent-soft:#e0efe8;
+--bad:#a3301d;--bad-soft:#f7e2dc;--warn:#8f5a00;--warn-soft:#faefd6;--info:#2c5a88;--info-soft:#e2ebf5;
+--mono:ui-monospace,"SF Mono",Menlo,monospace;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#111714;--surface:#18201c;--fg:#e3eae6;--muted:#9bada5;--line:#2b3732;
+--accent:#5fc3a5;--accent-soft:#163329;--bad:#f29482;--bad-soft:#3a1d17;--warn:#e6ad47;--warn-soft:#342911;
+--info:#92bae8;--info-soft:#19293a;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,system-ui,sans-serif;
+padding:env(safe-area-inset-top) max(14px,env(safe-area-inset-right)) calc(76px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+header{padding:14px 0 8px;display:grid;gap:8px}
+h1{margin:0;font-size:1.3rem}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 11px;font-size:.82rem}
+.chip.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.list{display:grid;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:10px 12px;display:grid;gap:3px;text-align:left;color:inherit;font:inherit;width:100%}
+.card.alto{border-left-color:var(--bad)}
+.sev{font:600 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+.alto .sev{color:var(--bad)}
+.t{font-weight:700}
+.small{font-size:.82rem;color:var(--muted)}
+.st{font:600 .68rem var(--mono);text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--info-soft);color:var(--info);width:fit-content}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:6px}
+.lbl{font:600 .68rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.88rem}
+dt{color:var(--muted)}dd{margin:0;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.back{color:var(--accent);font-weight:600;background:none;border:0;padding:0;font:inherit;text-align:left}
+textarea{width:100%;min-height:60px;font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--fg)}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btns button{border:1.5px solid var(--accent);color:var(--accent);background:none;border-radius:8px;padding:6px 10px;font:inherit;font-size:.85rem}
+.btns button.on{background:var(--accent);color:var(--bg)}
+a{color:var(--accent)}
+nav{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border-top:1px solid var(--line);
+padding:8px max(8px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+nav button{background:none;border:0;color:var(--muted);font:inherit;font-size:.8rem;padding:6px}
+nav button.on{color:var(--accent);font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wrap{overflow-x:auto}
+.empty{color:var(--muted);padding:20px 0}
+</style>
+</head>
+<body>
+<main id="app"><p class="empty">Carregando…</p></main>
+<nav>
+  <button data-tab="sinais" class="on">Sinais</button>
+  <button data-tab="emendas">Emendas</button>
+  <button data-tab="contas">Contas</button>
+  <button data-tab="fontes">Fontes</button>
+</nav>
+<script>
+const app = document.getElementById('app');
+const brl = v => v == null ? '—' : Number(v).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL', maximumFractionDigits: 0});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const api = async (url, opts) => { const r = await fetch(url, opts); if (!r.ok) throw new Error((await r.json()).detail || r.status); return r.json(); };
+let filtro = '';
+
+function fmtValor(s) {
+  const v = s.valor_observado;
+  if (v == null) return '';
+  if (['R07', 'R02'].includes(s.regra_id)) return (v * 100).toFixed(1).replace('.', ',') + '%';
+  if (s.regra_id === 'R08') return '+' + (v * 100).toFixed(0) + '%';
+  if (['R03', 'R06'].includes(s.regra_id)) return Math.round(v) + ' dias';
+  return brl(v);
+}
+
+async function sinais() {
+  const lista = await api('/api/sinais' + (filtro ? '?area=' + filtro : ''));
+  app.innerHTML = `<header><h1>Sinais pra olhar</h1>
+    <div class="chips">${[['', 'Todos'], ['emendas', 'Emendas'], ['compras', 'Compras']].map(([v, t]) =>
+      `<button class="chip ${filtro === v ? 'on' : ''}" data-f="${v}">${t}</button>`).join('')}</div>
+    <span class="small">${lista.length} sinais ativos. Sinal é ponto de atenção, não prova.</span></header>
+    <div class="list">${lista.map(s => `<button class="card ${s.severidade}" data-id="${s.id}">
+      <span class="sev">${esc(s.severidade)} · ${esc(s.area)} · ${esc(s.regra_id)}</span>
+      <span class="t">${esc(s.nome)}</span><span>${esc(s.titulo)}</span>
+      <span class="small">${fmtValor(s)} · desde ${esc(s.primeira_vez)}</span>
+      ${s.status !== 'novo' ? `<span class="st">${esc(s.status)}</span>` : ''}</button>`).join('') || '<p class="empty">Nenhum sinal.</p>'}</div>`;
+  app.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { filtro = b.dataset.f; sinais(); });
+  app.querySelectorAll('[data-id]').forEach(b => b.onclick = () => detalhe(b.dataset.id));
+}
+
+async function detalhe(id) {
+  const s = await api('/api/sinais/' + id);
+  const ev = Object.entries(s.evidencia || {}).map(([k, v]) =>
+    `<dt>${esc(k.replaceAll('_', ' '))}</dt><dd>${typeof v === 'number' && Math.abs(v) > 999 ? brl(v) : esc(v)}</dd>`).join('');
+  const status = ['novo', 'em análise', 'descartado', 'confirmado', 'encaminhado'];
+  app.innerHTML = `<header><button class="back" id="voltar">‹ Sinais</button><h1>${esc(s.nome)}</h1>
+    <span class="small">${esc(s.titulo)}</span></header>
+    <div class="list">
+    <div class="box"><span class="lbl">O que foi visto</span><dl>${ev}</dl></div>
+    <div class="box"><span class="lbl">Regra</span><span>${esc(s.limiar)}</span><span class="small">${esc(s.base_legal)}</span></div>
+    <div class="box"><span class="lbl">Pode ser normal se</span><span>${esc(s.pode_ser_normal_se)}</span></div>
+    <div class="box"><span class="lbl">Como verificar</span><span>${esc(s.como_verificar)}</span></div>
+    <div class="box"><span class="lbl">Fontes</span>${s.fontes.map(f => `<span><a href="${esc(f.link)}" target="_blank" rel="noopener">${esc(f.nome)}</a> · coletado em ${esc(f.coletado_em)}</span>`).join('')}</div>
+    <div class="box"><span class="lbl">Sua revisão</span>
+      <div class="btns">${status.map(st => `<button class="${s.status === st ? 'on' : ''}" data-st="${st}">${st}</button>`).join('')}</div>
+      <textarea id="nota" placeholder="Nota (o que você verificou)">${esc(s.nota)}</textarea>
+      <span class="small" id="msg"></span></div>
+    </div>`;
+  document.getElementById('voltar').onclick = sinais;
+  app.querySelectorAll('[data-st]').forEach(b => b.onclick = async () => {
+    try {
+      await api('/api/sinais/' + id, {method: 'PATCH', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({status: b.dataset.st, nota: document.getElementById('nota').value || null})});
+      detalhe(id);
+    } catch (e) { document.getElementById('msg').textContent = 'Não salvou: ' + e.message; }
+  });
+}
+
+async function emendas() {
+  const l = await api('/api/emendas');
+  app.innerHTML = `<header><h1>Emendas Pix</h1><span class="small">Transferegov. Executado = último relatório de gestão.</span></header>
+    <div class="wrap"><table><tr><th>Emenda</th><th>Transferido</th><th>Executado</th></tr>
+    ${l.map(e => `<tr><td><b>${esc(e.codigo)}</b><br><span class="small">${esc(e.parlamentar)} · ${e.planos} plano(s)</span></td>
+      <td class="n">${brl(e.transferido)}</td><td class="n">${brl(e.executado_relatorio)}</td></tr>`).join('')}</table></div>`;
+}
+
+async function contas() {
+  const c = await api('/api/contas');
+  app.innerHTML = `<header><h1>Contas da cidade</h1><span class="small">SICONFI, RGF Anexo 1 (pessoal do Executivo).</span></header>
+    <div class="wrap"><table><tr><th>Período</th><th>Conta · coluna</th><th>Valor</th></tr>
+    ${c.pessoal.slice(0, 80).map(r => `<tr><td>${r.exercicio}/${r.periodo}º</td><td>${esc(r.conta)}<br><span class="small">${esc(r.coluna)}</span></td>
+      <td class="n">${Math.abs(r.valor) < 200 ? r.valor.toFixed(2).replace('.', ',') : brl(r.valor)}</td></tr>`).join('')}</table></div>`;
+}
+
+async function fontes() {
+  const f = await api('/api/fontes');
+  app.innerHTML = `<header><h1>Fontes</h1><span class="small">Modo ${esc(f.modo)}</span></header>
+    <div class="list">${f.fontes.map(x => `<div class="box"><b>${esc(x.fonte)}</b>
+      <span class="small">Última coleta boa: ${esc(x.coletado_em || 'nunca')} · ${x.linhas} linhas em ${x.arquivos} arquivos</span></div>`).join('')}
+    ${f.erros_de_regra.map(e => `<div class="box"><b>Regra ${esc(e.regra_id)} falhou</b><span class="small">${esc(e.mensagem)}</span></div>`).join('')}</div>`;
+}
+
+const telas = {sinais, emendas, contas, fontes};
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  telas[b.dataset.tab]().catch(e => app.innerHTML = `<p class="empty">${esc(e.message)}</p>`);
+});
+sinais().catch(e => app.innerHTML = `<p class="empty">${esc(e.message)}</p>`);
+</script>
+</body>
+</html>
