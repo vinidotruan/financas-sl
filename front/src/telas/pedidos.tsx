@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
 import { Carregado, ChipCargo, Fontes, Foto, Rodape, Topo } from '../componentes/pecas'
+import { type Linha, Ranking } from '../componentes/ranking'
 import { dados } from '../dados'
 import { data, num } from '../formato'
 import { link } from '../rotas'
@@ -8,12 +9,6 @@ import type { Pedido, Pedidos } from '../tipos'
 
 type Ano = number | 'todos'
 const TODOS = 'Todos os temas'
-
-interface Linha {
-  chave: string; nome: string; cargo?: string | null; detalhe?: string; n: number; href?: string
-  /** só no ranking de pessoas: arquivo da foto, ou null para as iniciais */
-  foto?: string | null
-}
 
 function somar<T extends { ano: number; tema: string; pedidos: number }>(
   linhas: T[], ano: Ano, tema: string | undefined, chave: (l: T) => string, rotulo: (l: T) => Omit<Linha, 'n' | 'chave'>,
@@ -28,30 +23,6 @@ function somar<T extends { ano: number; tema: string; pedidos: number }>(
     acc.set(k, atual)
   }
   return [...acc.values()].sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome))
-}
-
-function Ranking({ linhas, vazio, limite }: { linhas: Linha[]; vazio: string; limite?: number }) {
-  if (!linhas.length) return <p class="vazio">{vazio}</p>
-  const max = linhas[0].n
-  const mostradas = limite ? linhas.slice(0, limite) : linhas
-  return (
-    <ul class="lista">
-      {mostradas.map((l) => {
-        const texto = (
-          <>
-            <span class="linha-topo">
-              <span class="titulo">{l.nome}{l.cargo && <> <ChipCargo cargo={l.cargo} /></>}{l.detalhe && <span class="apagado"> · {l.detalhe}</span>}</span>
-              <span class="valor">{num(l.n)}</span>
-            </span>
-            <div class="barra" aria-hidden="true"><i style={{ width: `${(l.n / max) * 100}%` }} /></div>
-          </>
-        )
-        const conteudo = l.foto === undefined ? texto
-          : <span class="pessoa"><Foto arquivo={l.foto} nome={l.nome} /><span class="pessoa-corpo">{texto}</span></span>
-        return <li key={l.chave}>{l.href ? <a href={l.href}>{conteudo}</a> : <div class="item">{conteudo}</div>}</li>
-      })}
-    </ul>
-  )
 }
 
 function FiltroAno({ anos, ano, mudar }: { anos: number[]; ano: Ano; mudar: (a: Ano) => void }) {

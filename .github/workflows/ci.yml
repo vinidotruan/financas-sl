@@ -1,4 +1,4 @@
-# Testes em todo push e pull request: lint, pytest (sem rede, com as fixtures) e o build do front.
+# Testes em todo push e pull request: lint, pytest (sem rede, com as fixtures), o build do front e o do Storybook.
 name: ci
 
 on:
@@ -37,3 +37,4 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run build:estatico
+      - run: npm run build-storybook

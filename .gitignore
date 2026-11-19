@@ -3,3 +3,4 @@ data/
 __pycache__/
 site/
 front/node_modules/
+front/storybook-static/

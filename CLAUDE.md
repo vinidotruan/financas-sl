@@ -177,6 +177,7 @@ de privacidade.
   Roda `slf diario`, `slf exportar --modo publico`, builda o front e publica.
 - `publicar.yml`: depois do CI verde num push para `main`, recoleta Câmara e Congresso, monta,
   exporta e publica em minutos, a partir do cache da coleta diária (D35).
+- Design system: `cd front && npm run storybook` (porta 6006); o build sai em `/storybook/` no site (D39).
 - **Persistência entre execuções:** o runner começa vazio a cada vez. Proposta: guardar `data/raw`
   recente e `data/slf.duckdb` como asset de uma release fixa (ex. `dados-latest`) com `gh release`,
   baixando no início e subindo no fim. Assim o histórico de sinais (`primeira_vez`) continua.

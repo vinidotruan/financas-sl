@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:estatico": "tsc --noEmit && vite build --mode estatico",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build --quiet"
   },
   "dependencies": {
     "@fontsource/archivo": "5.3.0",
@@ -17,6 +19,9 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "2.10.6",
+    "@storybook/addon-docs": "10.6.5",
+    "@storybook/preact-vite": "10.6.5",
+    "storybook": "10.6.5",
     "typescript": "5.9.3",
     "vite": "7.3.7"
   }

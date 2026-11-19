@@ -292,6 +292,22 @@ cor de outra. Ao lado, dois cartões com o indicado por cargo (deputados federai
 **Alternativas.** Barras ordenadas mostrariam as 13 áreas sem agrupar e comparariam melhor valores
 próximos; o Ruan preferiu a pizza, mais fácil de ler de relance.
 
+### D39 · Design system no Storybook, visual sóbrio · 19/11/2026 · vale
+
+**Decisão.** Os componentes de `front/src/componentes` e os fundamentos (cores, tipografia, cartões)
+ficam documentados no Storybook 10.6.5 (`@storybook/preact-vite`, versão fixa, publicada há mais de
+duas semanas, como D24 pede), nos temas claro e escuro, pela barra do próprio Storybook. Sem telemetria.
+O build vai junto com o site em `/storybook/` (os dois workflows de publicação) e o CI confere que ele
+compila. A foto de exemplo é um boneco neutro, sem rosto de ninguém.
+
+**Direção visual, escolhida pelo Ruan.** Visual sóbrio: base cinza neutra, dois temas, e cor só com
+motivo: o número principal de cada tela, os gráficos e os estados dos sinais. A hierarquia vem do
+tamanho e do peso do texto. Antes dessa, três direções foram descartadas: verde forte (cartões
+preenchidos), marca-texto (azul-tinta com grifo amarelo) e Rio dos Sinos (faixa azul-petróleo no topo).
+
+**Entregas.** 1) Storybook com o que existe hoje; 2) cores por função no visual sóbrio; 3) escala de
+texto; 4) o site usando só as variáveis.
+
 ---
 
 ## Pedidos dos vereadores

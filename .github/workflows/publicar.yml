@@ -82,6 +82,11 @@ jobs:
         working-directory: front
         run: npm ci && npm run build:estatico
 
+      # o design system (Storybook) vai junto, em /storybook/; depois do front, que esvazia site/
+      - name: Design system
+        working-directory: front
+        run: npm run build-storybook -- -o ../site/storybook
+
       - name: Exportar em modo público
         run: uv run slf exportar --modo publico --saida site/data
 
