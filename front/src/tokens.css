@@ -25,6 +25,15 @@
   /* gráficos: paleta categórica validada para daltonismo; "outras" em cinza */
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s-outras: #8c939a;
 
+  /* escala de texto: seis tamanhos. A hierarquia vem do tamanho e do peso, não da cor */
+  --t-mini: 12px;     /* chips, abas, legenda de gráfico */
+  --t-apoio: 13px;    /* texto de apoio e rótulos */
+  --t-texto: 15px;    /* texto corrido e listas */
+  --t-sub: 17px;      /* subtítulos e valores de cartão */
+  --t-titulo: 22px;   /* título da tela */
+  --t-numero: 32px;   /* o número principal da tela */
+
+  /* Archivo para títulos e números; Public Sans para texto; mono só para códigos (2026/42710013) */
   --f-titulo: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-texto: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;

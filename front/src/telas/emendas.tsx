@@ -47,10 +47,10 @@ export function TelaEmendas() {
                     <button key={a} type="button" class="filtro mono" aria-pressed={ano === a} onClick={() => setAno(a)}>{a}</button>
                   ))}
                 </div>
-                <div class="trio">
-                  <div class="cartao"><span class="rotulo">Planos</span><span class="valor">{num(planos)}</span></div>
-                  <div class="cartao"><span class="rotulo">Indicado</span><span class="valor">{brlCurto(indicado)}</span></div>
-                  <div class="cartao"><span class="rotulo">Transferido</span><span class="valor">{brlCurto(transferido)}</span></div>
+                <div class="cartao">
+                  <span class="rotulo">Indicado para a cidade{ano === 'todos' ? '' : ` em ${ano}`}</span>
+                  <span class="valor-grande">{brlCurto(indicado)}</span>
+                  <span class="apagado pequeno">{brlCurto(transferido)} já transferidos, em {num(planos)} {planos === 1 ? 'plano' : 'planos'}</span>
                 </div>
                 <section class="secao">
                   <span class="rotulo">Indicado por área</span>

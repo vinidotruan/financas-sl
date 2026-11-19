@@ -41,29 +41,30 @@ export const Cores: StoryObj = {
   ),
 }
 
-/** Os estilos de texto que as telas usam hoje. */
+/** Seis tamanhos (tokens.css). A hierarquia vem do tamanho e do peso; a cor fica para o destaque. */
 export const Tipografia: StoryObj = {
   render: () => (
     <div style={{ display: 'grid', gap: '18px' }}>
-      <div><span class="rotulo">Título da tela (h1, Archivo 22)</span><h1>Pedidos à prefeitura</h1></div>
-      <div><span class="rotulo">Número em destaque (valor-grande, mono 24)</span><div class="valor-grande">10.555</div></div>
-      <div><span class="rotulo">Valor (mono 15)</span><div class="valor">R$ 2,69 mi</div></div>
-      <div><span class="rotulo">Texto (Public Sans 15)</span><p>Solicita ao Poder Executivo Municipal a colocação de duas tampas de bueiro.</p></div>
-      <div><span class="rotulo">Texto pequeno (13)</span><p class="pequeno apagado">Pedido assinado por mais de um vereador conta para cada um.</p></div>
-      <div><span class="rotulo">Rótulo (mono 11, caixa alta)</span><div class="rotulo">Quem mais pediu</div></div>
+      <div><span class="rotulo">--t-numero, Archivo 32 negrito, cor de destaque: o número principal da tela</span><div class="valor-grande">R$ 10,37 mi</div></div>
+      <div><span class="rotulo">--t-titulo, Archivo 22: título da tela</span><h1>Pedidos à prefeitura</h1></div>
+      <div><span class="rotulo">--t-sub, Archivo 17: subtítulo e valor de cartão</span><h2>Quem mais pediu</h2><div class="valor" style={{ fontSize: 'var(--t-sub)' }}>R$ 2,69 mi</div></div>
+      <div><span class="rotulo">--t-texto, Public Sans 15: texto corrido e listas</span><p>Solicita ao Poder Executivo Municipal a colocação de duas tampas de bueiro.</p></div>
+      <div><span class="rotulo">--t-apoio, Public Sans 13: apoio e rótulos</span><p class="pequeno apagado">Pedido assinado por mais de um vereador conta para cada um.</p></div>
+      <div><span class="rotulo">--t-mini, Public Sans 12: chips e abas</span><span class="chip">Limpeza e capina</span></div>
+      <div><span class="rotulo">Mono só para códigos</span><span class="mono">2026/42710013</span></div>
     </div>
   ),
 }
 
-/** Cartões e a trinca de números do topo das telas. */
+/** O cartão com o número principal da tela e a trinca de números das fichas. */
 export const Cartoes: StoryObj = {
   name: 'Cartões',
   render: () => (
     <div style={{ display: 'grid', gap: '12px' }}>
       <div class="cartao">
-        <span class="rotulo">Todos os temas · todos os anos</span>
-        <span class="valor-grande">10.555</span>
-        <span class="apagado pequeno">pedidos de providência e indicações</span>
+        <span class="rotulo">Indicado para a cidade</span>
+        <span class="valor-grande">R$ 10,37 mi</span>
+        <span class="apagado pequeno">R$ 5,55 mi já transferidos, em 34 planos</span>
       </div>
       <div class="trio">
         <div class="cartao"><span class="rotulo">Planos</span><span class="valor">34</span></div>
