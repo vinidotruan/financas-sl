@@ -1,0 +1,16 @@
+# Como as ementas dos pedidos escrevem cada bairro oficial da lista da Câmara.
+#
+# A API da Câmara só liga uns 13% dos pedidos a um bairro, mas a maioria das ementas diz "no bairro X".
+# O bairro é reconhecido no texto só logo depois da palavra "bairro" (para "Avenida Feitoria" não virar
+# o bairro Feitoria) e sem acento nem maiúscula. Cada bairro oficial casa com o próprio nome; aqui vão
+# só as outras grafias. Os padrões são expressões regulares, escritas sem acento.
+#
+# Vilas e loteamentos que ficam dentro de um bairro (Vila Nova, Monte Blanco, Parque Mauá, Bom Fim,
+# Jardim Luciana, São Cristóvão) ainda não estão mapeados: quem conhece a cidade pode acrescentar
+# cada um no bairro certo.
+
+Santa Teresa: [santa tereza]
+Pinheiro: [pinheiros]
+Fazenda São Borja: [sao borja]
+Duque de Caxias: [cohab duque, duque]
+Feitoria: [cohab feitoria]

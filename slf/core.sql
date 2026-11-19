@@ -227,10 +227,31 @@ select distinct cast(a.id_proposicao as bigint) as id_pedido, cast(a.id_autor as
 from staging.cm_autores a
 join core.pedido p on p.id = cast(a.id_proposicao as bigint);
 
+-- Bairro do pedido: o que a API da Câmara liga (fonte "camara") e o que a ementa diz logo depois da
+-- palavra "bairro" (fonte "ementa"), pelo nome oficial ou por um apelido de slf/bairros.yaml.
 create or replace table core.pedido_bairro as
-select distinct cast(v.id_proposicao as bigint) as id_pedido, cast(v.id_bairro as bigint) as id_bairro
-from staging.cm_proposicao_bairro v
-join core.pedido p on p.id = cast(v.id_proposicao as bigint);
+with padroes as (
+  select id as id_bairro, strip_accents(lower(nome)) as padrao from core.bairro
+  union all
+  select b.id, a.padrao from staging.cm_bairro_apelido a
+  join core.bairro b on strip_accents(lower(b.nome)) = strip_accents(lower(a.bairro))
+),
+pela_api as (
+  select distinct cast(v.id_proposicao as bigint) as id_pedido, cast(v.id_bairro as bigint) as id_bairro
+  from staging.cm_proposicao_bairro v
+),
+pelo_texto as (
+  select distinct p.id as id_pedido, x.id_bairro
+  from core.pedido p join padroes x
+    on regexp_matches(strip_accents(lower(coalesce(p.ementa, ''))), 'bairro\s+(' || x.padrao || ')\b')
+)
+select id_pedido, id_bairro, min(fonte) as fonte from (
+  select *, 'camara' as fonte from pela_api
+  union all
+  select *, 'ementa' as fonte from pelo_texto
+) j
+where id_pedido in (select id from core.pedido)
+group by id_pedido, id_bairro;
 
 create or replace table core.tema as
 select ordem, tema from staging.cm_temas

@@ -4,19 +4,23 @@
 # Como funciona: a ementa vai para minúsculas e cada "padrao" é uma expressão regular procurada nela.
 # A primeira regra que casar, de cima para baixo, decide o tema; a ordem importa. Pedido que não casa
 # com nenhuma fica em "Outros". Mudou uma regra, rode `slf atualizar`.
+#
+# Ajustes de 19/11/2026, de uma amostra dos pedidos reais: "arroio" saiu de Drenagem (casava no
+# bairro Arroio da Manteiga), "valo" virou palavra inteira (casava em "intervalo"), "quebra molas" com
+# espaço e "tachões" entraram em Sinalização, "Guarda Civil Municipal" em Segurança, vazamento e tubulação de água no tema de água e esgoto.
 
 - tema: Iluminação pública
   padrao: 'ilumina|l[aâ]mpada|lumin[aá]ria|poste de luz|refletor'
 - tema: Transporte coletivo
-  padrao: 'parada de [oô]nibus|abrigo de passageiro|[oô]nibus|linha de transporte|transporte coletivo'
+  padrao: 'parada (de [oô]nibus|f[ií]sica)|abrigo de passageiro|[oô]nibus|linha de transporte|transporte coletivo'
 - tema: Sinalização e trânsito
-  padrao: 'sinaliza|placa|faixa de (pedestre|seguran)|quebra-mola|redutor de velocidade|lombada|sem[aá]foro|tr[aâ]nsito|estacionamento|rota[tç]'
+  padrao: 'sinaliza|placa|faixa de (pedestre|seguran)|quebra[- ]?molas?|tach[aã]o|tach[oõ]es|redutor(es)? de velocidade|lombada|sem[aá]foro|tr[aâ]nsito|estacionamento|rota[tç]'
 - tema: Pavimentação e buracos
-  padrao: 'asfalt|paviment|buraco|recape|cal[cç]amento|patrol|cascalh|saibro|meio-fio|meio fio|cal[cç]ada'
-- tema: Drenagem e esgoto
-  padrao: 'bueiro|boca de lobo|drenagem|esgoto|alagamento|desobstru|pluvial|sarjeta|valo|arroio'
+  padrao: 'asfalt|paviment|buraco|recape|cal[cç]amento|patrol|cascalh|saibro|brita|meio-fio|meio fio|cal[cç]ada|eros[aã]o'
+- tema: Água, esgoto e drenagem
+  padrao: 'vazamento|tubula|falta d[ea] [aá]gua|abastecimento de [aá]gua|hidr[oô]metro|bueiro|bocas? de lobo|drenagem|esgoto|alagamento|desobstru|pluvial|sarjeta|\bval(o|eta)s?\b|desassore'
 - tema: Limpeza e capina
-  padrao: 'limpeza|capina|ro[cç]ada|lixo|entulho|varri[cç]|recolhimento|lixeira|container|cont[eê]iner'
+  padrao: 'limpeza|capina|ro[cç]ada|lixo|entulho|varri[cç]|recolhimento|lixeira|container|cont[eê]iner|lavagem'
 - tema: Poda e árvores
   padrao: 'poda|[aá]rvore|galho|supress[aã]o vegetal|arboriza'
 - tema: Praças, esporte e lazer
@@ -26,6 +30,8 @@
 - tema: Educação
   padrao: 'escola|\bemei\b|\bemef\b|creche|educa[cç]'
 - tema: Segurança
-  padrao: 'seguran[cç]a p[uú]blica|guarda municipal|c[aâ]mera|policiamento|videomonitoramento'
+  padrao: 'seguran[cç]a p[uú]blica|guarda (civil )?municipal|\bgcm\b|c[aâ]mera|policiamento|patrulhamento|ronda|videomonitoramento'
+- tema: Assistência social
+  padrao: 'cadastro [uú]nico|\bcras\b|\bcreas\b|assist[eê]ncia social|bolsa fam[ií]lia|vulnerabilidade'
 - tema: Animais
   padrao: 'animal|animais|cachorro|c[aã]es|gato|castra[cç]'

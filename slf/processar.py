@@ -167,6 +167,12 @@ def _carregar_temas(con):
     con.execute("create or replace table staging.cm_temas (ordem integer, tema varchar, padrao varchar)")
     for i, r in enumerate(temas):
         con.execute("insert into staging.cm_temas values (?, ?, ?)", [i, r["tema"], r["padrao"]])
+    # apelidos de bairro (slf/bairros.yaml); o nome oficial de cada bairro entra no core
+    apelidos = yaml.safe_load((Path(__file__).parent / "bairros.yaml").read_text(encoding="utf-8")) or {}
+    con.execute("create or replace table staging.cm_bairro_apelido (bairro varchar, padrao varchar)")
+    for bairro, padroes in apelidos.items():
+        for padrao in padroes:
+            con.execute("insert into staging.cm_bairro_apelido values (?, ?)", [bairro, padrao])
 
 
 def _status_fontes(con, origem: dict):

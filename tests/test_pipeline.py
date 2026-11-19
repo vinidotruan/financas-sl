@@ -235,10 +235,12 @@ def test_vereador_sem_tratamento_e_coautoria(banco):
     assert por_vereador == {701: 3, 702: 4}
 
 
-def test_bairro_vem_do_filtro_da_api(banco):
+def test_bairro_pela_api_e_pelo_texto(banco):
     con = duckdb.connect(str(banco), read_only=True)
-    assert sorted(con.execute("select id_pedido, id_bairro from core.pedido_bairro").fetchall()) == [
-        (9001, 1), (9002, 1), (9003, 2), (9005, 2)]
+    # 9004 só diz "no bairro Feitoria Seller" na ementa: entra pela ementa, no bairro Feitoria.
+    # 9005 cita a "Av. Feitoria" (rua): o bairro vem só da API, não do nome da rua.
+    assert sorted(con.execute("select id_pedido, id_bairro, fonte from core.pedido_bairro").fetchall()) == [
+        (9001, 1, "camara"), (9002, 1, "camara"), (9003, 2, "camara"), (9004, 2, "ementa"), (9005, 2, "camara")]
 
 
 def test_camara_pagina_de_verdade(api_falsa, monkeypatch):

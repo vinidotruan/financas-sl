@@ -187,7 +187,7 @@ def test_pedidos_por_vereador_tema_e_bairro(cliente):
     assert por_vereador == {"Ana Exemplo": 3, "Beto Exemplo": 4}
     placas = [x for x in p["por_vereador"] if x["tema"] == "Sinalização e trânsito"]
     assert [(x["nome"], x["pedidos"]) for x in placas] == [("Ana Exemplo", 1)]
-    assert sum(x["pedidos"] for x in p["sem_bairro"]) == 2
+    assert sum(x["pedidos"] for x in p["sem_bairro"]) == 1
     assert p["fontes"][0]["link"] == "https://www.camara.exemplo"
 
 
