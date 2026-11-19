@@ -218,6 +218,20 @@ def test_emendas_trazem_o_valor_por_area(cliente):
     assert emendas["202556780003"] == [{"area": "Sem área informada", "indicado": 200000.0}]
 
 
+def test_publico_tira_contato_e_casa_de_morador_dos_pedidos(cliente, publico):
+    pedidos = {p["id"]: p["ementa"] for p in cliente.get("/api/vereadores/702").json()["pedidos"]}
+    assert pedidos[9007] == ("Solicita providências quanto ao horário de atendimento. "
+                             "Solicitante: [nome omitido]. Contato: [contato omitido].")
+    assert pedidos[9003] == "Indica a capina e a limpeza da praça da Rua C, [nº omitido], em frente à casa da moradora."
+    assert cliente.get("/api/vereadores/701").json()["pedidos"][-1]["ementa"] == (
+        "Solicita a troca de lâmpadas na Rua A, número 120, no bairro Centro.")  # lugar do serviço fica
+
+
+def test_privado_mostra_o_pedido_inteiro(cliente):
+    pedidos = {p["id"]: p["ementa"] for p in cliente.get("/api/vereadores/702").json()["pedidos"]}
+    assert "Solicitante: Fulana Exemplo. Contato: (51) 99999-1234." in pedidos[9007]
+
+
 def test_foto_do_vereador_na_api(cliente):
     fotos = {v["id"]: v["foto"] for v in cliente.get("/api/pedidos").json()["por_vereador"]}
     assert fotos[702] == "vereador-702.jpg" and fotos[701] is None

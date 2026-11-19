@@ -3,17 +3,18 @@
 Um lugar só para as consultas e para os filtros de privacidade: num mesmo modo, a API e os
 arquivos JSON devolvem exatamente o mesmo conteúdo. Tudo sai em tipos de JSON (datas em ISO).
 
-Privacidade, em qualquer modo: CPF nunca inteiro (sem_cpf percorre a resposta toda) e o
-fornecedor é identificado por um id curto, nunca pelo CPF. No modo público: só sinais com status
-confirmado ou encaminhado, sem a nota de revisão, e pessoa física (inclui MEI e empresário
-individual) aparece como "pessoa física", sem ficha própria.
+Privacidade (as regras ficam em sensivel.py): CPF nunca inteiro, em qualquer modo, e o fornecedor é
+identificado por um id curto, nunca pelo CPF. No modo público: só sinais com status confirmado ou
+encaminhado, sem a nota de revisão; pessoa física (inclui MEI e empresário individual) aparece como
+"pessoa física", sem ficha própria; e o texto dos pedidos sai sem o contato de quem pediu.
 """
 from __future__ import annotations
 
 import json
-import re
 from datetime import date, datetime
 from decimal import Decimal
+
+from .sensivel import PESSOA_FISICA, limpar_pedido, sem_cpf  # noqa: F401 (sem_cpf é usado pela API e pela exportação)
 
 PUBLICOS = ("confirmado", "encaminhado")
 STATUS = ("novo", "em análise", "descartado", "confirmado", "encaminhado")
@@ -24,23 +25,6 @@ LINKS = {
     "pncp": "https://pncp.gov.br/app/contratos",
     "congresso": "https://dadosabertos.camara.leg.br/",
 }
-PESSOA_FISICA = "pessoa física"
-
-# CPF = 11 dígitos seguidos, ou no formato 123.456.789-01, sem letra nem dígito colado (CNPJ tem 14
-# dígitos e o código da emenda, 12; ids em hash como "c89673977497c" não são CPF). Aparece no campo
-# do fornecedor PF e também no nome de MEI e empresário individual ("FULANO DE TAL 12345678901").
-_CPF = re.compile(r"(?<![0-9A-Za-z])(\d{3})\.?(\d{3})\.?(\d{3})-?(\d{2})(?![0-9A-Za-z])")
-
-
-def sem_cpf(x):
-    """CPF nunca aparece inteiro, em nenhum modo (LGPD)."""
-    if isinstance(x, str):
-        return _CPF.sub(lambda m: f"***.{m[2]}.{m[3]}-**", x)
-    if isinstance(x, dict):
-        return {k: sem_cpf(v) for k, v in x.items()}
-    if isinstance(x, list):
-        return [sem_cpf(v) for v in x]
-    return x
 
 
 def _valor(v):
@@ -351,6 +335,9 @@ class Consulta:
                              group by p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema, p.situacao,
                                       p.situacao_data
                              order by p.ano desc, p.numero desc""", [linhas[0]["id"]])
+        if self.publico:
+            for p in pedidos:
+                p["ementa"] = limpar_pedido(p["ementa"])
         return sem_cpf({**linhas[0], "pedidos": pedidos, "fontes": self._fontes(["camara"])})
 
     def contas(self) -> dict:

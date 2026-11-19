@@ -67,7 +67,8 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/temas.yaml` | Tema dos pedidos dos vereadores por expressão na ementa; a primeira que casa vence |
 | `slf/sinais.py` | Lê `slf/regras/*.yaml`, roda o SQL de cada regra, guarda histórico e aplica a revisão |
 | `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql; opcionais pra tela: `observado` ({rotulo, formato}) e `resumo` (frase com `{campo\|formato}` da evidência) |
-| `slf/consultas.py` | O conteúdo de cada rota e os filtros de privacidade (máscara de CPF, modo público). API e exportação usam o mesmo |
+| `slf/consultas.py` | O conteúdo de cada rota e onde o modo público se aplica. API e exportação usam o mesmo |
+| `slf/sensivel.py` | As regras de dados sensíveis (D40): máscara de CPF, "pessoa física" e o texto dos pedidos sem contato nem número de casa de morador |
 | `slf/exportar.py` | Exportação estática pelas mesmas consultas da API; apaga a saída antes |
 | `.github/workflows/` | `ci.yml` (lint, testes, build), `coleta.yml` (coleta diária, cache em `data/`, Pages só com `PUBLICAR_PAGES=true`) e `publicar.yml` (publicação rápida depois do CI verde em `main`, D35) |
 | `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido), fina em cima de `consultas.py`; serve `site/` em "/" |

@@ -51,7 +51,7 @@ def test_exportacao_igual_a_api(banco, tmp_path, monkeypatch, modo):
     if modo == "publico":
         assert "nota privada" not in corpo
         assert [a for a in arquivos if a.startswith("sinais/")] == [f"sinais/{R07}.json"]
-        for dono in ("FULANO", "MARIA EXEMPLO", "JOANA EXEMPLO", "PEDRO EXEMPLO"):
+        for dono in ("FULANO", "MARIA EXEMPLO", "JOANA EXEMPLO", "PEDRO EXEMPLO", "Fulana Exemplo", "99999-1234"):
             assert dono not in corpo, dono
 
 

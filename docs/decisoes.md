@@ -51,7 +51,7 @@ contratos em São Leopoldo.
   heurística até a fase 3 trazer a natureza jurídica do cadastro de CNPJ.
 - Endereço de pessoa física nunca entra.
 
-**Onde.** `sem_cpf` em `slf/consultas.py`; `core.contrato.pessoa_fisica` e `core.fornecedor.id` em
+**Onde.** `sem_cpf` em `slf/sensivel.py` (D40); `core.contrato.pessoa_fisica` e `core.fornecedor.id` em
 `slf/core.sql`; testes em `tests/test_privacidade.py` e `tests/test_api.py`.
 
 **Histórico.** A primeira versão da máscara (só "11 dígitos sem dígito colado") trocava trechos dos ids
