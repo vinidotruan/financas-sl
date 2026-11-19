@@ -67,8 +67,12 @@ jobs:
       - run: uv sync --locked
 
       # Fonte fora do ar não segura a publicação: o banco usa a última coleta boa dela.
+      # A situação dos pedidos (uma consulta por pedido) vem toda da coleta diária: aqui só reaproveita,
+      # porque esta execução não guarda o cache e a consulta se perderia.
       - name: Recoletar as fontes rápidas
         continue-on-error: true
+        env:
+          SLF_CAMARA_TRAMITACOES: "0"
         run: uv run slf coletar camara congresso
 
       - name: Montar o banco

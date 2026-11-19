@@ -340,14 +340,16 @@ class Consulta:
         linhas = self._q("select * from core.vereador where cast(id as varchar) = ?", [str(vid)])
         if not linhas:
             return None
-        pedidos = self._q("""select p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema,
+        pedidos = self._q("""select p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema, p.situacao,
+                                p.situacao_data,
                                 string_agg(distinct b.nome, ', ' order by b.nome) as bairros
                              from core.pedido p
                              join core.pedido_autor a on a.id_pedido = p.id
                              left join core.pedido_bairro pb on pb.id_pedido = p.id
                              left join core.bairro b on b.id = pb.id_bairro
                              where a.id_vereador = ?
-                             group by p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema
+                             group by p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema, p.situacao,
+                                      p.situacao_data
                              order by p.ano desc, p.numero desc""", [linhas[0]["id"]])
         return sem_cpf({**linhas[0], "pedidos": pedidos, "fontes": self._fontes(["camara"])})
 

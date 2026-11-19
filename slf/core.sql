@@ -295,13 +295,18 @@ create or replace table core.bairro as
 select cast("ID" as bigint) as id, nome from staging.cm_bairros where "ID" is not null;
 
 -- Pedidos à prefeitura: pedidos de providência e indicações. O tema sai de slf/temas.yaml: a primeira
--- regra (na ordem do arquivo) cuja expressão aparece na ementa; sem nenhuma, "Outros".
+-- regra (na ordem do arquivo) cuja expressão aparece na ementa; sem nenhuma, "Outros". A situação é o
+-- último passo de tramitação na Câmara (coletado aos poucos; sem consulta ainda, fica nula). Não diz se
+-- a prefeitura atendeu.
 create or replace table core.pedido as
 select p.id, p.ano, p.numero, p.especie, p.sigla_especie, p.ementa, p.url,
        coalesce((select t.tema from staging.cm_temas t
                  where regexp_matches(lower(coalesce(p.ementa, '')), t.padrao)
-                 order by t.ordem limit 1), 'Outros') as tema
+                 order by t.ordem limit 1), 'Outros') as tema,
+       tr.nome as situacao, d(tr.data) as situacao_data
 from core.proposicao p
+left join (select cast(id as bigint) as id, any_value(nome) as nome, any_value(data) as data
+           from staging.cm_tramitacoes where id is not null group by 1) tr on tr.id = p.id
 where p.especie in ('Pedido de Providência', 'Indicação');
 
 create or replace table core.pedido_autor as

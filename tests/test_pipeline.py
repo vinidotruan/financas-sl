@@ -295,6 +295,52 @@ def test_foto_de_deputado_e_senador(banco):
         "camara-1002.jpg", "senado-9001.jpg"]
     assert max(Image.open(DATA / "fotos" / "senado-9001.jpg").size) <= 160
 
+def test_situacao_do_pedido_na_camara(banco):
+    """O último passo de tramitação de cada pedido; sem detalhe na API (9005), fica sem situação."""
+    con = duckdb.connect(str(banco), read_only=True)
+    situacao = {r[0]: (r[1], str(r[2]) if r[2] else None) for r in con.execute(
+        "select id, situacao, situacao_data from core.pedido").fetchall()}
+    assert situacao == {
+        9001: ("Encaminhado para o Executivo", "2025-03-01"), 9002: ("Arquivado", "2025-12-20"),
+        9003: ("Encaminhado à Comissão", "2025-04-01"), 9004: ("Encaminhado para o Executivo", "2026-02-01"),
+        9005: (None, None), 9007: ("Encaminha para Pauta da Sessão - Para Leitura", "2026-11-18")}
+
+
+def test_tramitacao_aos_poucos(api_falsa, monkeypatch):
+    """Cada coleta tem um limite de consultas. Começa pelos pedidos mais novos sem situação; depois
+    reaproveita da coleta anterior o que já está encaminhado ao Executivo ou arquivado (revê uma vez por
+    mês) e consulta de novo só o que ainda anda na Câmara. A emenda (9006) não é pedido: nunca consulta."""
+    import time
+
+    import httpx
+    from conftest import responder
+
+    import slf.http
+
+    consultados = []
+
+    def contando(request):
+        if request.url.path.startswith("/proposicao/"):
+            consultados.append(int(request.url.path.rsplit("/", 1)[1]))
+        return responder(request)
+
+    monkeypatch.setattr(slf.http.httpx, "Client",
+                        lambda **kw: httpx._client.Client(transport=httpx.MockTransport(contando), **kw))
+
+    def coletar_camara():
+        consultados.clear()
+        assert cli.coletar(["camara"]) == []
+        tram = json.loads((ultima_coleta_boa("camara") / "tramitacoes.json").read_text(encoding="utf-8"))
+        time.sleep(1.1)  # a pasta da coleta tem o segundo no nome
+        return sorted(consultados), sorted(t["id"] for t in tram)
+
+    monkeypatch.setenv("SLF_CAMARA_TRAMITACOES", "3")
+    assert coletar_camara() == ([9004, 9005, 9007], [9004, 9007])
+    monkeypatch.setenv("SLF_CAMARA_TRAMITACOES", "100")
+    # 9004 já está no Executivo e foi visto hoje: fica; 9007 ainda está na pauta: consulta de novo
+    assert coletar_camara() == ([9001, 9002, 9003, 9005, 9007], [9001, 9002, 9003, 9004, 9007])
+    assert coletar_camara() == ([9003, 9005, 9007], [9001, 9002, 9003, 9004, 9007])
+
 def test_area_de_cada_plano(banco):
     """A área é a função do orçamento que o Transferegov põe no plano, sem o código. Plano com mais de
     uma função vira "Mais de uma área" (a fonte não diz quanto vai para cada); duas subfunções da mesma

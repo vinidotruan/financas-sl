@@ -211,8 +211,11 @@ a.cartao:hover { border-color: var(--destaque); }
 .lista { list-style: none; margin: 0; padding: 0; background: var(--superficie); border: 1px solid var(--linha); border-radius: 12px; }
 .lista > li { border-top: 1px solid var(--linha); }
 .lista > li:first-child { border-top: 0; }
-.lista a, .lista .item { display: grid; gap: 4px; padding: 12px 14px; color: inherit; text-decoration: none; min-width: 0; }
-.lista a:hover { background: var(--fundo); }
+/* só o link que é a linha inteira; links dentro da linha (chip, "Ver na Câmara") ficam como links comuns */
+.lista > li > a, .lista .item { display: grid; gap: 4px; padding: 12px 14px; color: inherit; text-decoration: none; min-width: 0; }
+.lista > li > a:hover { background: var(--fundo); }
+.situacao { font-size: 13px; color: var(--apagado); }
+.situacao strong { color: var(--texto); font-weight: 600; }
 .lista .titulo { font-weight: 600; overflow-wrap: anywhere; }
 
 .barra { height: 8px; border-radius: 4px; background: var(--neutro-suave); overflow: hidden; }

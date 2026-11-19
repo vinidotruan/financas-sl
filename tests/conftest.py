@@ -70,8 +70,27 @@ def _pncp_contratos(params: dict) -> httpx.Response:
                                      "numeroPagina": 1, "paginasRestantes": 0, "empty": False})
 
 
+# Último passo de tramitação de cada pedido, como /proposicao/{id} devolve. 9005 não tem detalhe (404).
+TRAMITACAO = {
+    9001: ("Encaminhado para o Executivo", "2025-03-01"),
+    9002: ("Arquivado", "2025-12-20"),
+    9003: ("Encaminhado à Comissão", "2025-04-01"),
+    9004: ("Encaminhado para o Executivo", "2026-02-01"),
+    9006: ("Aprovado", "2026-03-01"),
+    9007: ("Encaminha para Pauta da Sessão - Para Leitura", "2026-11-18"),
+}
+
+
 def _camara(caminho: str, params: dict) -> httpx.Response:
     """Imita a API do Legiflow: filtros ano e id_bairro; limit acima de 100 volta ao padrão de 10."""
+    m = re.fullmatch(r"/proposicao/(\d+)", caminho)
+    if m:
+        if int(m[1]) not in TRAMITACAO:
+            return httpx.Response(404)
+        nome, data = TRAMITACAO[int(m[1])]
+        proposicao = next(p for p in _fixture("camara", "proposicoes") if p["ID"] == int(m[1]))
+        return httpx.Response(200, json={**{k: v for k, v in proposicao.items() if k != "_bairros"},
+                                         "ultima_tramitacao": {"nome_tramitacao": nome, "data_tramitacao": data}})
     if caminho == "/bairros":
         return httpx.Response(200, json=_fixture("camara", "bairros"))
     if caminho == "/parlamentares":

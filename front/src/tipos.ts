@@ -237,6 +237,9 @@ export interface Pedido {
   url: string | null
   tema: string
   bairros: string | null
+  /** último passo de tramitação na Câmara ("Encaminhado para o Executivo"...); não diz se a prefeitura atendeu */
+  situacao: string | null
+  situacao_data: string | null
 }
 
 export interface Vereador {

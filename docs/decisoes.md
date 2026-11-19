@@ -326,7 +326,25 @@ soma pode passar do total). O bairro não vem na proposição: vem de consultar 
 Pedido sem bairro identificado aparece contado à parte, não some.
 
 **Limite conhecido.** A API não traz se a prefeitura atendeu o pedido. O painel mostra o que foi
-pedido, não o que foi feito.
+pedido, não o que foi feito (a situação na Câmara, D38, é o andamento dentro da Câmara).
+
+### D38 · Situação do pedido na Câmara, coletada aos poucos · 19/11/2026 · vale
+
+**Problema.** O pedido não tem valor (nenhum campo da API, e só 1 de 10.555 ementas cita um), mas o
+detalhe de cada um (`/proposicao/{id}`) traz o último passo de tramitação na Câmara. A lista não traz
+esse passo, e o `updated_at` da proposição não muda quando entra tramitação nova: é uma consulta por
+pedido, meio segundo cada, mais de hora e meia para todos.
+
+**Decisão.** A coleta da Câmara consulta no máximo 2.000 pedidos por vez (`SLF_CAMARA_TRAMITACOES`) e
+reaproveita o resto da coleta anterior (`tramitacoes.json`, com a data em que cada um foi visto).
+Ordem: os pedidos sem situação, do mais novo ao mais antigo; os que ainda andam na Câmara (comissão,
+pauta, parecer), sempre; os parados ("Encaminhado para o Executivo", "Arquivado"), uma vez por mês. A
+publicação rápida (D35) não consulta nenhum, só reaproveita, porque não guarda o cache. Cinco falhas
+seguidas param as consultas daquela coleta. A tela do vereador mostra "Na Câmara: passo em data".
+
+**Limite.** O passo é da Câmara, não diz se a prefeitura atendeu: 87% de uma amostra de 60 estava em
+"Encaminhado para o Executivo", inclusive pedidos de 2022. A cobertura completa leva uns 6 dias de
+coleta diária; até lá, parte dos pedidos aparece sem situação.
 
 ---
 

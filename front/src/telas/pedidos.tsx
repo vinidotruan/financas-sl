@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
 import { Carregado, ChipCargo, Fontes, Foto, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
-import { num } from '../formato'
+import { data, num } from '../formato'
 import { link } from '../rotas'
 import type { Pedido, Pedidos } from '../tipos'
 
@@ -155,6 +155,9 @@ function ItemPedido({ p }: { p: Pedido }) {
           <a class="chip" href={link.pedidos(p.tema)} style={{ textDecoration: 'none' }}>{p.tema}</a>
           {p.bairros && <span class="chip">{p.bairros}</span>}
         </span>
+        {p.situacao && (
+          <span class="situacao">Na Câmara: <strong>{p.situacao}</strong>{p.situacao_data && <> em <span class="mono">{data(p.situacao_data)}</span></>}</span>
+        )}
         {p.url && <a class="pequeno" href={p.url} target="_blank" rel="noopener">Ver na Câmara ↗</a>}
       </div>
     </li>

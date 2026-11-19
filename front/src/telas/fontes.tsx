@@ -24,7 +24,7 @@ const O_QUE_TRAZ: Record<string, string> = {
   transferegov: 'Emendas Pix: planos de ação, empenhos, ordens bancárias, planos de trabalho e relatórios de gestão.',
   siconfi: 'Contas que a prefeitura declara ao Tesouro: RGF (pessoal, dívida) e RREO (receita e despesa).',
   pncp: 'Contratos, a compra de origem e os termos aditivos da prefeitura, das fundações, do SEMAE e da Câmara.',
-  camara: 'Pedidos de providência e indicações dos vereadores, os bairros e o cadastro dos vereadores no mandato atual.',
+  camara: 'Pedidos de providência e indicações dos vereadores, a situação de cada pedido na Câmara, os bairros e o cadastro dos vereadores de todas as legislaturas, com foto.',
   congresso: 'Cadastro de deputados federais (Câmara dos Deputados) e senadores (Senado), para o nome oficial e o cargo de quem indicou cada emenda.',
 }
 

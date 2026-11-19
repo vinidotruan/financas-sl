@@ -232,3 +232,10 @@ def test_foto_do_parlamentar_na_api(cliente):
         "1234": "camara-1002.jpg", "5678": "senado-9001.jpg"}
     assert cliente.get("/api/parlamentares/5678").json()["foto"] == "senado-9001.jpg"
     assert cliente.get("/api/fotos/senado-9001.jpg").status_code == 200
+
+
+def test_situacao_do_pedido_na_api(cliente):
+    ficha = cliente.get("/api/vereadores/702").json()
+    pedidos = {p["id"]: (p["situacao"], p["situacao_data"]) for p in ficha["pedidos"]}
+    assert pedidos[9003] == ("Encaminhado à Comissão", "2025-04-01")
+    assert pedidos[9005] == (None, None)

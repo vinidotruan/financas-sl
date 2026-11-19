@@ -117,6 +117,7 @@ COLUNAS["cm_autores"] = ["id_proposicao", "id_autor", "nome", "partido"]
 COLUNAS["cm_bairros"] = ["ID", "nome"]
 COLUNAS["cm_proposicao_bairro"] = ["id_proposicao", "id_bairro"]
 COLUNAS["cm_parlamentares"] = ["ID", "nome", "partido", "cargo", "situacao"]
+COLUNAS["cm_tramitacoes"] = ["id", "nome", "data", "verificado_em"]
 
 
 # Congresso: a Câmara dos Deputados repete o deputado por legislatura e partido; o Senado manda um

@@ -6,18 +6,28 @@ Conferido ao vivo em 19/11/2026: /proposicoes aceita ano, id_bairro, limit e off
 100 faz a API voltar ao padrão de 10; não há filtro por espécie, então vem tudo e o core separa.
 /parlamentares lista só quem está no mandato atual; com ?all (o que o próprio site da Câmara usa, fora
 da documentação) vem o cadastro de todas as legislaturas, com cargo, partido e url_foto.
+/proposicao/{id} traz o último passo de tramitação na Câmara ("Encaminhado para o Executivo",
+"Arquivado", "Encaminhado à Comissão"...). Não diz se a prefeitura atendeu. A lista não traz esse passo
+e o updated_at da proposição não muda quando entra tramitação nova, então é uma consulta por pedido.
 """
 from __future__ import annotations
 
+import json
+import os
 from datetime import date
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
 
 from ..config import ente
 from ..http import Cliente
-from ..raw import Coleta
+from ..raw import Coleta, ultima_coleta_boa
 
 PAGINA = 100
+PEDIDOS = ("Pedido de Providência", "Indicação")  # as espécies que o painel mostra (core.pedido)
+# passos depois dos quais o pedido quase nunca muda: revistos uma vez por mês, não a cada coleta
+PARADOS = ("Encaminhado para o Executivo", "Arquivado")
+REVER_DIAS = 30
+LIMITE_PADRAO = 2000  # consultas por coleta (meio segundo cada); SLF_CAMARA_TRAMITACOES muda
 
 
 def _todas(cli: Cliente, api: str, params: dict) -> list:
@@ -48,6 +58,53 @@ def _fotos(cli: Cliente, col: Coleta, parlamentares: list) -> int:
     return baixadas
 
 
+def _anteriores() -> dict:
+    """Tramitações da última coleta boa, por id do pedido."""
+    pasta = ultima_coleta_boa("camara")
+    arq = pasta / "tramitacoes.json" if pasta else None
+    if not arq or not arq.exists():
+        return {}
+    return {t["id"]: t for t in json.loads(arq.read_text(encoding="utf-8"))}
+
+
+def _tramitacoes(cli: Cliente, api: str, proposicoes: list, anteriores: dict, limite: int) -> tuple[list, int]:
+    """Último passo de tramitação de cada pedido, aos poucos: até `limite` consultas por coleta. Primeiro os
+    pedidos sem situação, do mais novo ao mais antigo; depois os que ainda andam na Câmara; por último os
+    parados (no Executivo ou arquivados) vistos há mais de um mês. O resto vem da coleta anterior."""
+    hoje = date.today()
+    pedidos = [p for p in proposicoes if p.get("especie") in PEDIDOS and p.get("ID") is not None]
+
+    def fila(p):
+        t = anteriores.get(p["ID"])
+        if t is None:
+            return (0, -(p.get("ano") or 0), -(p.get("numero") or 0))
+        return (1 if t.get("nome") not in PARADOS else 2, t.get("verificado_em") or "")
+
+    def precisa(p):
+        t = anteriores.get(p["ID"])
+        if t is None or t.get("nome") not in PARADOS:
+            return True
+        return (hoje - date.fromisoformat(t["verificado_em"])).days >= REVER_DIAS
+
+    novos, falhas_seguidas = {}, 0
+    for p in sorted(filter(precisa, pedidos), key=fila)[:limite]:
+        try:
+            det = cli.get_json(f"{api}/proposicao/{p['ID']}")
+            falhas_seguidas = 0
+        except Exception:  # noqa: BLE001 (sem detalhe, o pedido fica sem situação nesta coleta)
+            falhas_seguidas += 1
+            if falhas_seguidas >= 5:
+                print("  camara: 5 falhas seguidas no detalhe dos pedidos, parando as consultas desta coleta")
+                break
+            continue
+        det = det[0] if isinstance(det, list) and det else det if isinstance(det, dict) else {}
+        u = det.get("ultima_tramitacao") or {}
+        novos[p["ID"]] = {"id": p["ID"], "nome": u.get("nome_tramitacao"), "data": u.get("data_tramitacao"),
+                          "verificado_em": hoje.isoformat()}
+    ids = sorted({p["ID"] for p in pedidos})
+    return [novos.get(i) or anteriores[i] for i in ids if i in novos or i in anteriores], len(novos)
+
+
 def coletar() -> Coleta | None:
     cfg = ente()
     camara = cfg.get("camara") or {}
@@ -65,6 +122,13 @@ def coletar() -> Coleta | None:
             print(f"  camara: {ano}: {len(lote)} proposições")
         proposicoes = list({p["ID"]: p for p in proposicoes}.values())
         col.salvar("proposicoes", proposicoes, f"{api}/proposicoes")
+
+        # situação de cada pedido na Câmara, aos poucos (o que já se sabe vem da coleta anterior)
+        limite = int(os.environ.get("SLF_CAMARA_TRAMITACOES", LIMITE_PADRAO))
+        tramitacoes, consultadas = _tramitacoes(cli, api, proposicoes, _anteriores(), limite)
+        col.salvar("tramitacoes", tramitacoes, f"{api}/proposicao/{{id}}",
+                   {"consultadas_nesta_coleta": consultadas, "limite": limite})
+        print(f"  camara: situação de {len(tramitacoes)} pedidos ({consultadas} consultados agora)")
 
         # cadastro dos vereadores de todas as legislaturas, com cargo, partido e foto
         parlamentares = cli.get_json(f"{api}/parlamentares", {"all": "true"}) or []
