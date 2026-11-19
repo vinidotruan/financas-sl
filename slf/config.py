@@ -11,6 +11,7 @@ ROOT = Path(os.environ.get("SLF_HOME", Path(__file__).resolve().parent.parent))
 DATA = ROOT / "data"
 RAW = DATA / "raw"
 DB = DATA / "slf.duckdb"
+FOTOS = DATA / "fotos"  # fotos reduzidas, derivadas do raw a cada atualizar
 DB_TMP = DATA / "slf.novo.duckdb"
 # status e nota de cada sinal. No GitHub Actions aponta para config/revisao-publica.json
 # (só id e status dos confirmados e encaminhados, sem nota), gerado por `slf revisao-publica`.

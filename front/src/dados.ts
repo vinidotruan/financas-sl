@@ -50,6 +50,11 @@ async function buscar<T>(r: Rota): Promise<T> {
   return cache.get(url) as Promise<T>
 }
 
+/** Endereço de uma foto reduzida: a API serve em api/fotos, o site publicado em data/fotos. */
+export function urlFoto(arquivo: string): string {
+  return MODO_DADOS === 'api' ? `api/fotos/${arquivo}` : `${BASE_ESTATICA}fotos/${arquivo}`
+}
+
 export const dados = {
   fontes: () => buscar<Fontes>(rota.fontes()),
   regras: () => buscar<Regra[]>(rota.regras()),

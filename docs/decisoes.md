@@ -367,6 +367,25 @@ deputado por partido sem data e o painel poderia mostrar um partido que não era
 **Onde.** `slf/coletores/congresso.py`, `slf/coletores/camara.py`; `core.parlamentar` e `core.vereador`
 em `slf/core.sql`; selo `ChipCargo` em `front/src/componentes/pecas.tsx`.
 
+### D37 · Foto oficial, copiada na coleta e publicada reduzida · 19/11/2026 · vale
+
+**Problema.** Dois nomes parecidos (como "Johnson Souza" e "Diógenes Padilha de Souza (Johnson)") não
+bastam para saber quem é quem. A foto ajuda a reconhecer.
+
+**Decisão.** A coleta da Câmara usa `/parlamentares?all` (o cadastro de todas as legislaturas, que o
+próprio site da Câmara usa fora da documentação) e baixa a `url_foto` de cada vereador para o raw, como
+veio, com linha no manifest. Foto que falha não derruba a coleta. O `atualizar` gera em `data/fotos`
+uma cópia reduzida (até 160 px, JPEG) de cada foto do raw; `staging.fotos` lista o que existe e o core
+liga a foto à pessoa (`vereador-{id}.jpg`). A API serve e a exportação copia só as fotos que alguma
+tela usa. Quem não tem foto na fonte aparece com as iniciais. Efeito do `?all`: quem já saiu do
+mandato passa a ter cargo e partido da fonte, não do "Ver." no nome.
+
+**Por que copiar e não apontar para a fonte.** O site não quebra se o endereço mudar, a foto do Senado
+cai de até 330 KB para uns 7 KB e quem visita o site não carrega nada dos sites do governo.
+
+**Dados conferidos em 19/11/2026.** 49 vereadores no cadastro, 46 com foto; dos que assinam
+proposições, 32 têm foto. A API manda pelo menos um endereço com espaço no começo (tratado).
+
 ---
 
 ## Publicação

@@ -36,6 +36,24 @@ class Coleta:
             f.write(json.dumps(linha, ensure_ascii=False) + "\n")
         return destino
 
+    def salvar_arquivo(self, caminho: str, conteudo: bytes, url: str = "") -> Path:
+        """Arquivo binário (uma foto, por exemplo) dentro da coleta, com linha no manifest."""
+        destino = self.dir / caminho
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        destino.write_bytes(conteudo)
+        linha = {
+            "arquivo": caminho,
+            "url": url,
+            "params": {},
+            "linhas": None,
+            "bytes": len(conteudo),
+            "sha256": hashlib.sha256(conteudo).hexdigest(),
+            "coletado_em": datetime.now().isoformat(timespec="seconds"),
+        }
+        with open(self.manifest, "a", encoding="utf-8") as f:
+            f.write(json.dumps(linha, ensure_ascii=False) + "\n")
+        return destino
+
     def concluir(self) -> None:
         (self.dir / "_OK").write_text(datetime.now().isoformat(timespec="seconds"))
 

@@ -72,3 +72,8 @@ def test_revisao_publica_sem_nota(tmp_path):
     destino = tmp_path / "revisao-publica.json"
     assert revisao_publica(origem, destino) == 1
     assert json.loads(destino.read_text(encoding="utf-8")) == {R07: {"status": "confirmado", "valor": 0.55}}
+
+
+def test_exportacao_leva_as_fotos(banco, tmp_path):
+    exportar(tmp_path, "publico")
+    assert sorted(p.name for p in (tmp_path / "fotos").iterdir()) == ["vereador-702.jpg"]

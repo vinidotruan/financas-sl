@@ -220,7 +220,7 @@ export interface Pedidos {
   temas: string[]
   anos: number[]
   por_tema: { ano: number; tema: string; pedidos: number }[]
-  por_vereador: { id: number; nome: string; partido: string | null; cargo: string | null; ano: number; tema: string; pedidos: number }[]
+  por_vereador: { id: number; nome: string; partido: string | null; cargo: string | null; foto: string | null; ano: number; tema: string; pedidos: number }[]
   por_bairro: { id: number; nome: string; ano: number; tema: string; pedidos: number }[]
   sem_bairro: { ano: number; tema: string; pedidos: number }[]
   fontes: FonteRef[]
@@ -243,6 +243,8 @@ export interface Vereador {
   partido: string | null
   /** Vereador, Vereadora, Comissão, Bancada, Mesa Diretora, Executivo municipal... */
   cargo: string | null
+  /** arquivo da foto reduzida (vereador-{id}.jpg); sem foto na fonte, null */
+  foto: string | null
   pedidos: Pedido[]
   fontes: FonteRef[]
 }

@@ -35,5 +35,14 @@ class Cliente:
             return None
         return r.json()
 
+    @retry(retry=retry_if_exception(_transitorio), stop=stop_after_attempt(3),
+           wait=wait_exponential(multiplier=2, max=20), reraise=True)
+    def get_bytes(self, url: str) -> bytes:
+        """Arquivo binário, como uma foto. Erro HTTP sobe como exceção."""
+        time.sleep(self.pausa)
+        r = self.http.get(url)
+        r.raise_for_status()
+        return r.content
+
     def fechar(self):
         self.http.close()

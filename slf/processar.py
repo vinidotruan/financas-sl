@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -193,7 +194,36 @@ def carregar_staging(con) -> dict:
                 _carregar_tabela(con, tabela, arq)
     _carregar_temas(con)
     _carregar_ente(con)
+    _carregar_fotos(con)
     return origem
+
+
+def _carregar_fotos(con):
+    """Fotos reduzidas em data/fotos (derivadas do raw, refeitas a cada atualizar) e a lista delas em
+    staging.fotos, que o core usa para saber quem tem foto. Arquivo que não abre como imagem fica de
+    fora. Nome: vereador-{id}.jpg."""
+    from PIL import Image, ImageOps
+
+    from .config import FOTOS
+
+    shutil.rmtree(FOTOS, ignore_errors=True)
+    FOTOS.mkdir(parents=True)
+    chaves = []
+    pasta = ultima_coleta_boa("camara")
+    for arq in sorted(pasta.glob("fotos/*")) if pasta else []:
+        chave = arq.stem + ".jpg"
+        try:
+            with Image.open(arq) as img:
+                img = ImageOps.exif_transpose(img).convert("RGB")
+                img.thumbnail((160, 160))
+                img.save(FOTOS / chave, "JPEG", quality=82, optimize=True)
+        except Exception as erro:  # noqa: BLE001 (foto estragada só fica de fora)
+            print(f"  aviso: foto {arq.name} não abriu ({type(erro).__name__})")
+            continue
+        chaves.append(chave)
+    con.execute("create or replace table staging.fotos (chave varchar)")
+    if chaves:
+        con.executemany("insert into staging.fotos values (?)", [[c] for c in chaves])
 
 
 def _carregar_ente(con):

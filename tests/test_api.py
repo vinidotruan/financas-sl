@@ -215,3 +215,13 @@ def test_emendas_trazem_o_valor_por_area(cliente):
                                        {"area": "Mais de uma área", "indicado": 100000.0}]
     assert emendas["202556780002"] == [{"area": "Desporto e Lazer", "indicado": 300000.0}]
     assert emendas["202556780003"] == [{"area": "Sem área informada", "indicado": 200000.0}]
+
+
+def test_foto_do_vereador_na_api(cliente):
+    fotos = {v["id"]: v["foto"] for v in cliente.get("/api/pedidos").json()["por_vereador"]}
+    assert fotos[702] == "vereador-702.jpg" and fotos[701] is None
+    assert cliente.get("/api/vereadores/702").json()["foto"] == "vereador-702.jpg"
+    r = cliente.get("/api/fotos/vereador-702.jpg")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
+    assert cliente.get("/api/fotos/vereador-701.jpg").status_code == 404
+    assert cliente.get("/api/fotos/..%2Fslf.duckdb").status_code == 404

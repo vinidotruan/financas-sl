@@ -1,9 +1,18 @@
 [
  {
+  "ID": 701,
+  "nome": "Ver.ª Ana Exemplo",
+  "partido": "PSOL",
+  "url_foto": "https://cdn.exemplo/sumiu.jpg",
+  "tipo_mandato": null,
+  "situacao": null,
+  "cargo": "Vereadora"
+ },
+ {
   "ID": 702,
   "nome": "Ver. Beto Exemplo",
   "partido": "MDB",
-  "url_foto": "https://cdn.exemplo/2.jpg",
+  "url_foto": " https://cdn.exemplo/2.jpg",
   "tipo_mandato": "Titular",
   "situacao": "Em Atividade",
   "cargo": "Vereador"

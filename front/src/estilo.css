@@ -88,6 +88,22 @@ body::before {
   color: var(--destaque); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 4px;
 }
 .topo .sub { color: var(--apagado); font-size: 13px; }
+.topo-pessoa { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: center; }
+.topo-texto { display: grid; gap: 4px; min-width: 0; }
+
+/* Foto de quem assina ou indica: círculo, recorte puxado para o rosto; sem foto, as iniciais */
+.foto {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: 50% 18%;
+  background: var(--neutro-suave); box-shadow: 0 0 0 1px var(--linha); display: block;
+}
+.foto.grande { width: 48px; height: 48px; }
+.foto.iniciais {
+  display: grid; place-items: center; font-family: var(--f-titulo); font-weight: 600; font-size: 13px;
+  color: var(--apagado); letter-spacing: 0.02em;
+}
+.foto.grande.iniciais { font-size: 16px; }
+.pessoa { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 10px; align-items: center; }
+.pessoa-corpo { display: grid; gap: 4px; min-width: 0; }
 .conteudo {
   max-width: 720px; margin: 0 auto;
   padding-block: 16px 8px;

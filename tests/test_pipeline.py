@@ -256,6 +256,30 @@ def test_cadastro_dos_autores_de_emenda(banco):
         "Deputada federal",)
 
 
+def test_cadastro_de_todas_as_legislaturas(banco):
+    """O cadastro vem com ?all: quem já saiu do mandato (Ana) também tem partido e cargo da fonte."""
+    con = duckdb.connect(str(banco), read_only=True)
+    partidos = dict(con.execute("select id, partido from core.vereador").fetchall())
+    assert partidos[701] == "PSOL" and partidos[702] == "MDB"
+
+
+def test_foto_do_vereador(banco):
+    """A foto vai para o raw como veio e para data/fotos reduzida. Foto que sumiu do CDN (Ana) não
+    derruba a coleta: o vereador fica sem foto."""
+    from PIL import Image
+
+    from slf.config import DATA
+    from slf.raw import ultima_coleta_boa
+
+    con = duckdb.connect(str(banco), read_only=True)
+    fotos = dict(con.execute("select id, foto from core.vereador").fetchall())
+    assert fotos == {701: None, 702: "vereador-702.jpg", 411: None}
+    bruta = ultima_coleta_boa("camara") / "fotos" / "vereador-702.jpg"
+    assert Image.open(bruta).size == (300, 400)
+    assert "fotos/vereador-702.jpg" in (bruta.parent.parent / "manifest.jsonl").read_text(encoding="utf-8")
+    reduzida = Image.open(DATA / "fotos" / "vereador-702.jpg")
+    assert max(reduzida.size) <= 160 and reduzida.format == "JPEG"
+
 def test_area_de_cada_plano(banco):
     """A área é a função do orçamento que o Transferegov põe no plano, sem o código. Plano com mais de
     uma função vira "Mais de uma área" (a fonte não diz quanto vai para cada); duas subfunções da mesma

@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, ChipCargo, Fontes, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipCargo, Fontes, Foto, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { num } from '../formato'
 import { link } from '../rotas'
@@ -9,7 +9,11 @@ import type { Pedido, Pedidos } from '../tipos'
 type Ano = number | 'todos'
 const TODOS = 'Todos os temas'
 
-interface Linha { chave: string; nome: string; cargo?: string | null; detalhe?: string; n: number; href?: string }
+interface Linha {
+  chave: string; nome: string; cargo?: string | null; detalhe?: string; n: number; href?: string
+  /** só no ranking de pessoas: arquivo da foto, ou null para as iniciais */
+  foto?: string | null
+}
 
 function somar<T extends { ano: number; tema: string; pedidos: number }>(
   linhas: T[], ano: Ano, tema: string | undefined, chave: (l: T) => string, rotulo: (l: T) => Omit<Linha, 'n' | 'chave'>,
@@ -33,7 +37,7 @@ function Ranking({ linhas, vazio, limite }: { linhas: Linha[]; vazio: string; li
   return (
     <ul class="lista">
       {mostradas.map((l) => {
-        const conteudo = (
+        const texto = (
           <>
             <span class="linha-topo">
               <span class="titulo">{l.nome}{l.cargo && <> <ChipCargo cargo={l.cargo} /></>}{l.detalhe && <span class="apagado"> · {l.detalhe}</span>}</span>
@@ -42,6 +46,8 @@ function Ranking({ linhas, vazio, limite }: { linhas: Linha[]; vazio: string; li
             <div class="barra" aria-hidden="true"><i style={{ width: `${(l.n / max) * 100}%` }} /></div>
           </>
         )
+        const conteudo = l.foto === undefined ? texto
+          : <span class="pessoa"><Foto arquivo={l.foto} nome={l.nome} /><span class="pessoa-corpo">{texto}</span></span>
         return <li key={l.chave}>{l.href ? <a href={l.href}>{conteudo}</a> : <div class="item">{conteudo}</div>}</li>
       })}
     </ul>
@@ -87,7 +93,7 @@ export function TelaPedidos({ tema }: { tema?: string }) {
             const total = p.por_tema.filter(filtro).reduce((s, l) => s + l.pedidos, 0)
             const semBairro = p.sem_bairro.filter(filtro).reduce((s, l) => s + l.pedidos, 0)
             const vereadores = somar(p.por_vereador, ano, tema, (l) => String(l.id),
-              (l) => ({ nome: l.nome, cargo: l.cargo, detalhe: l.partido ?? undefined, href: link.vereador(l.id) }))
+              (l) => ({ nome: l.nome, cargo: l.cargo, detalhe: l.partido ?? undefined, href: link.vereador(l.id), foto: l.foto }))
             const temas = somar(p.por_tema, ano, undefined, (l) => l.tema,
               (l) => ({ nome: l.tema, href: link.pedidos(l.tema) }))
             const bairros = somar(p.por_bairro, ano, tema, (l) => String(l.id), (l) => ({ nome: l.nome }))
@@ -172,7 +178,7 @@ export function TelaVereador({ id }: { id: string }) {
         const mostrados = filtrados.slice(0, LIMITE)
         return (
           <>
-            <Topo titulo={ver.nome} volta={link.pedidos()}
+            <Topo titulo={ver.nome} volta={link.pedidos()} avatar={<Foto arquivo={ver.foto} nome={ver.nome} grande />}
               sub={<><ChipCargo cargo={ver.cargo} />{ver.cargo && ver.partido && ' '}{ver.partido}</>} />
             <main class="conteudo">
               <FiltroAno anos={anos} ano={ano} mudar={setAno} />

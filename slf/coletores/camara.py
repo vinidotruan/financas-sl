@@ -4,11 +4,14 @@ fica em config/ente.yaml (seção camara). Para câmaras com SAPL ou outro siste
 
 Conferido ao vivo em 19/11/2026: /proposicoes aceita ano, id_bairro, limit e offset; limit acima de
 100 faz a API voltar ao padrão de 10; não há filtro por espécie, então vem tudo e o core separa.
-/parlamentares lista só quem está no mandato atual, com o cargo; quem já saiu não aparece.
+/parlamentares lista só quem está no mandato atual; com ?all (o que o próprio site da Câmara usa, fora
+da documentação) vem o cadastro de todas as legislaturas, com cargo, partido e url_foto.
 """
 from __future__ import annotations
 
 from datetime import date
+from pathlib import PurePosixPath
+from urllib.parse import urlparse
 
 from ..config import ente
 from ..http import Cliente
@@ -25,6 +28,24 @@ def _todas(cli: Cliente, api: str, params: dict) -> list:
         if len(pagina) < PAGINA:
             return linhas
         offset += PAGINA
+
+
+def _fotos(cli: Cliente, col: Coleta, parlamentares: list) -> int:
+    """Baixa a foto de cada vereador como veio. Foto que falha não derruba a coleta: o vereador fica
+    sem foto e o painel mostra as iniciais."""
+    baixadas = 0
+    for p in parlamentares:
+        url = (p.get("url_foto") or "").strip()  # a API manda endereço com espaço no começo
+        if not url or p.get("ID") is None:
+            continue
+        ext = PurePosixPath(urlparse(url).path).suffix.lower()
+        ext = ext if ext in (".jpg", ".jpeg", ".png", ".webp") else ".jpg"
+        try:
+            col.salvar_arquivo(f"fotos/vereador-{p['ID']}{ext}", cli.get_bytes(url), url)
+            baixadas += 1
+        except Exception as erro:  # noqa: BLE001 (qualquer falha numa foto só tira aquela foto)
+            print(f"  camara: sem foto de {p.get('nome')} ({type(erro).__name__})")
+    return baixadas
 
 
 def coletar() -> Coleta | None:
@@ -45,8 +66,10 @@ def coletar() -> Coleta | None:
         proposicoes = list({p["ID"]: p for p in proposicoes}.values())
         col.salvar("proposicoes", proposicoes, f"{api}/proposicoes")
 
-        # cadastro dos vereadores no mandato atual, com o cargo (Vereador, Vereadora)
-        col.salvar("parlamentares", cli.get_json(f"{api}/parlamentares") or [], f"{api}/parlamentares")
+        # cadastro dos vereadores de todas as legislaturas, com cargo, partido e foto
+        parlamentares = cli.get_json(f"{api}/parlamentares", {"all": "true"}) or []
+        col.salvar("parlamentares", parlamentares, f"{api}/parlamentares", {"all": "true"})
+        fotos = _fotos(cli, col, parlamentares)
 
         # a API devolve os bairros como objeto {"1": {"ID": 1, "nome": ...}}
         bairros = cli.get_json(f"{api}/bairros") or {}
@@ -59,7 +82,8 @@ def coletar() -> Coleta | None:
             for p in _todas(cli, api, {"id_bairro": b["ID"]}):
                 vinculos.append({"id_proposicao": p["ID"], "id_bairro": b["ID"]})
         col.salvar("proposicao_bairro", vinculos, f"{api}/proposicoes?id_bairro=")
-        print(f"  camara: {len(proposicoes)} proposições, {len(bairros)} bairros, {len(vinculos)} vínculos com bairro")
+        print(f"  camara: {len(proposicoes)} proposições, {len(bairros)} bairros, {len(vinculos)} vínculos com bairro, "
+              f"{len(parlamentares)} vereadores no cadastro, {fotos} fotos")
         col.concluir()
     finally:
         cli.fechar()

@@ -13,7 +13,7 @@ from pathlib import Path
 
 import duckdb
 
-from .config import DB
+from .config import DB, FOTOS
 from .consultas import Consulta, sem_cpf
 from .sinais import ler_revisao
 
@@ -62,6 +62,12 @@ def exportar(saida: Path, modo: str = "publico") -> dict[str, int]:
         gravar("pedidos.json", pedidos)
         for vid in sorted({v["id"] for v in pedidos["por_vereador"]}):
             gravar(f"vereadores/{vid}.json", c.vereador(str(vid)))
+        # fotos: só as que alguma tela usa, já reduzidas
+        for arquivo in c.fotos():
+            if (FOTOS / arquivo).is_file():
+                (saida / "fotos").mkdir(exist_ok=True)
+                shutil.copyfile(FOTOS / arquivo, saida / "fotos" / arquivo)
+                contagem["fotos"] = contagem.get("fotos", 0) + 1
     finally:
         con.close()
     return contagem

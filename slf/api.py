@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .config import DB, MODO, REVISAO, SITE, WEB
+from .config import DB, FOTOS, MODO, REVISAO, SITE, WEB
 from .consultas import STATUS, Consulta, sem_cpf
 from .sinais import ler_revisao
 
@@ -154,6 +154,15 @@ def pedidos():
 def vereador(vid: str):
     with _consulta() as c:
         return _ou_404(c.vereador(vid), "Vereador não encontrado")
+
+
+@app.get("/api/fotos/{arquivo}")
+def foto(arquivo: str):
+    """Só serve foto que alguma tela usa; o nome vem da lista, nunca vira caminho por conta própria."""
+    with _consulta() as c:
+        if arquivo not in c.fotos() or not (FOTOS / arquivo).is_file():
+            raise HTTPException(404, "Foto não encontrada")
+    return FileResponse(FOTOS / arquivo, media_type="image/jpeg")
 
 
 @app.get("/api/contas")

@@ -257,9 +257,10 @@ where id is not null
 qualify row_number() over (partition by id order by atualizado_em desc nulls last) = 1;
 
 -- Quem assina as proposições: vereadores, comissões, bancadas, Mesa Diretora, Executivo. O id do autor é
--- a chave. O cargo vem do cadastro da Câmara (/parlamentares), que só lista o mandato atual; para quem
--- já saiu, vem do tratamento no nome ("Ver.ª" é vereadora); para os outros proponentes, do começo do
+-- a chave. O cargo vem do cadastro da Câmara (/parlamentares?all, todas as legislaturas); para quem
+-- não está nele, vem do tratamento no nome ("Ver.ª" é vereadora); para os outros proponentes, do começo do
 -- nome. O tratamento sai do nome uma vez, aqui; o resto do painel lê o nome pronto desta tabela.
+-- A foto é a do cadastro, reduzida em data/fotos; quem não tem fica sem (o painel mostra as iniciais).
 create or replace table core.vereador as
 with assinou as (
   select cast(id_autor as bigint) as id, any_value(nome) as bruto, any_value(partido) as partido
@@ -282,7 +283,9 @@ select a.id,
          when regexp_matches(a.bruto, '^\s*Bancada') then 'Bancada'
          when regexp_matches(a.bruto, '^\s*Mesa Diretora') then 'Mesa Diretora'
          when regexp_matches(a.bruto, '^\s*Executivo Municipal') then 'Executivo municipal'
-       end) as cargo
+       end) as cargo,
+       case when 'vereador-' || a.id || '.jpg' in (select chave from staging.fotos)
+            then 'vereador-' || a.id || '.jpg' end as foto
 from assinou a left join cadastro c using (id);
 
 create or replace table core.bairro as

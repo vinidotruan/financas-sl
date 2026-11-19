@@ -1,11 +1,18 @@
 import type { ComponentChildren } from 'preact'
-import { ErroDados } from '../dados'
+import { useState } from 'preact/hooks'
+import { ErroDados, urlFoto } from '../dados'
 import { AREA, data, dataHora, FONTE, formatar, SEVERIDADE } from '../formato'
 import { link, voltar } from '../rotas'
 import type { FonteRef, Formato, Severidade, Sinal, Status } from '../tipos'
 import type { Estado } from './carregar'
 
-export function Topo(props: { titulo: string; sub?: ComponentChildren; volta?: string }) {
+export function Topo(props: { titulo: string; sub?: ComponentChildren; volta?: string; avatar?: ComponentChildren }) {
+  const texto = (
+    <>
+      <h1>{props.titulo}</h1>
+      {props.sub && <p class="sub">{props.sub}</p>}
+    </>
+  )
   return (
     <header class="topo">
       <div class="topo-dentro">
@@ -14,8 +21,7 @@ export function Topo(props: { titulo: string; sub?: ComponentChildren; volta?: s
             <span aria-hidden="true">‹</span> Voltar
           </button>
         )}
-        <h1>{props.titulo}</h1>
-        {props.sub && <p class="sub">{props.sub}</p>}
+        {props.avatar ? <div class="topo-pessoa">{props.avatar}<div class="topo-texto">{texto}</div></div> : texto}
       </div>
     </header>
   )
@@ -56,6 +62,26 @@ const CLASSE_STATUS: Record<Status, string> = {
 
 export function ChipStatus(props: { status: Status }) {
   return <span class={`chip ${CLASSE_STATUS[props.status] ?? ''}`}>{props.status}</span>
+}
+
+const LIGACOES = new Set(['de', 'da', 'do', 'das', 'dos', 'e'])
+
+/** "Diógenes Padilha de Souza (Johnson)" vira "DS": primeira e última palavra, sem o apelido. */
+export function iniciais(nome: string): string {
+  const palavras = nome.replace(/\(.*?\)/g, ' ').split(/\s+/).filter((p) => p && !LIGACOES.has(p.toLowerCase()))
+  if (!palavras.length) return '?'
+  const ultima = palavras.length > 1 ? palavras[palavras.length - 1] : ''
+  return (palavras[0][0] + (ultima[0] ?? '')).toUpperCase()
+}
+
+/** Foto oficial reduzida; sem foto na fonte (ou se ela não carregar), as iniciais num círculo. */
+export function Foto(props: { arquivo: string | null | undefined; nome: string; grande?: boolean }) {
+  const [falhou, setFalhou] = useState(false)
+  const classe = props.grande ? 'foto grande' : 'foto'
+  if (!props.arquivo || falhou) return <span class={`${classe} iniciais`} aria-hidden="true">{iniciais(props.nome)}</span>
+  const lado = props.grande ? 48 : 40
+  return <img class={classe} src={urlFoto(props.arquivo)} alt="" width={lado} height={lado} loading="lazy"
+    decoding="async" onError={() => setFalhou(true)} />
 }
 
 /** Cargo de quem assina ou indica: vereadora, deputado federal, senadora, comissão. Sem cargo, nada. */

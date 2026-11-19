@@ -72,8 +72,13 @@ def _pncp_contratos(params: dict) -> httpx.Response:
 
 def _camara(caminho: str, params: dict) -> httpx.Response:
     """Imita a API do Legiflow: filtros ano e id_bairro; limit acima de 100 volta ao padrão de 10."""
-    if caminho in ("/bairros", "/parlamentares"):
-        return httpx.Response(200, json=_fixture("camara", caminho[1:]))
+    if caminho == "/bairros":
+        return httpx.Response(200, json=_fixture("camara", "bairros"))
+    if caminho == "/parlamentares":
+        # sem ?all a API real só devolve quem está no mandato atual
+        linhas = _fixture("camara", "parlamentares")
+        return httpx.Response(200, json=linhas if "all" in params else
+                              [x for x in linhas if x["situacao"] == "Em Atividade"])
     linhas = _fixture("camara", "proposicoes")
     if "ano" in params:
         linhas = [p for p in linhas if str(p["ano"]) == params["ano"]]
@@ -101,8 +106,22 @@ def _congresso(host: str, caminho: str, params: dict) -> httpx.Response:
     return httpx.Response(404)
 
 
+def _jpeg(largura: int, altura: int) -> bytes:
+    from io import BytesIO
+
+    from PIL import Image
+
+    saida = BytesIO()
+    Image.new("RGB", (largura, altura), (40, 110, 90)).save(saida, "JPEG")
+    return saida.getvalue()
+
+
 def responder(request: httpx.Request) -> httpx.Response:
     caminho, params = request.url.path, dict(request.url.params)
+    if request.url.host == "cdn.exemplo":  # fotos da Câmara: só a do Beto existe
+        if caminho == "/2.jpg":
+            return httpx.Response(200, content=_jpeg(300, 400), headers={"Content-Type": "image/jpeg"})
+        return httpx.Response(404)
     if request.url.host == "api.camara.exemplo":
         return _camara(caminho, params)
     if request.url.host in ("dadosabertos.camara.leg.br", "legis.senado.leg.br"):

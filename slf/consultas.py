@@ -312,7 +312,8 @@ class Consulta:
             "temas": [t["tema"] for t in self._q("select tema from core.tema order by ordem")],
             "anos": [a["ano"] for a in self._q("select distinct ano from core.pedido order by ano desc")],
             "por_tema": self._q("select ano, tema, count(*) as pedidos from core.pedido group by all order by all"),
-            "por_vereador": self._q("""select v.id, v.nome, v.partido, v.cargo, p.ano, p.tema, count(*) as pedidos
+            "por_vereador": self._q("""select v.id, v.nome, v.partido, v.cargo, v.foto, p.ano, p.tema,
+                                              count(*) as pedidos
                                        from core.pedido p
                                        join core.pedido_autor a on a.id_pedido = p.id
                                        join core.vereador v on v.id = a.id_vereador
@@ -327,6 +328,10 @@ class Consulta:
                                      group by all order by all"""),
             "fontes": self._fontes(["camara"]),
         })
+
+    def fotos(self) -> list[str]:
+        """Arquivos de foto que alguma tela usa (os únicos que a API serve e a exportação copia)."""
+        return [r["foto"] for r in self._q("select distinct foto from core.vereador where foto is not null order by 1")]
 
     def vereador(self, vid: str) -> dict | None:
         linhas = self._q("select * from core.vereador where cast(id as varchar) = ?", [str(vid)])
