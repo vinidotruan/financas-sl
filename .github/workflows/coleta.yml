@@ -28,18 +28,18 @@ jobs:
       SLF_REVISAO: config/revisao-publica.json
       PYTHONUNBUFFERED: "1"
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: front/package-lock.json
 
       - name: Dados da última execução (banco e última coleta boa de cada fonte)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data
           key: dados-${{ github.run_id }}
@@ -56,7 +56,7 @@ jobs:
 
       - name: Guardar dados para a próxima execução
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: data
           key: dados-${{ github.run_id }}
@@ -74,7 +74,7 @@ jobs:
           uv run slf status >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         if: vars.PUBLICAR_PAGES == 'true'
         with:
           path: site
@@ -91,4 +91,4 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
