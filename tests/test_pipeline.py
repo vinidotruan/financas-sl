@@ -256,6 +256,15 @@ def test_cadastro_dos_autores_de_emenda(banco):
         "Deputada federal",)
 
 
+def test_area_de_cada_plano(banco):
+    """A área é a função do orçamento que o Transferegov põe no plano, sem o código. Plano com mais de
+    uma função vira "Mais de uma área" (a fonte não diz quanto vai para cada); duas subfunções da mesma
+    função continuam uma área só; plano sem área fica "Sem área informada"."""
+    con = duckdb.connect(str(banco), read_only=True)
+    areas = dict(con.execute("select id_plano_acao, area from core.plano_acao").fetchall())
+    assert areas == {1001: "Saúde", 1002: "Mais de uma área", 1003: "Desporto e Lazer",
+                     1004: "Sem área informada"}
+
 def test_congresso_vazio_nao_apaga_o_cargo(api_falsa, monkeypatch):
     """Cadastro vazio deixa a coleta sem _OK; sem nenhuma coleta boa, o autor fica com o nome do
     Transferegov e sem cargo, e o resto do banco sai igual."""

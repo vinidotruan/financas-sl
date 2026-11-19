@@ -6,7 +6,8 @@
    "codigo_parlamentar_emenda_plano_acao": 1234, "nome_parlamentar_emenda_plano_acao": "Parlamentar Um",
    "numero_emenda_parlamentar_plano_acao": "202412340001", "sequencial_emenda_parlamentar_plano_acao": 1,
    "codigo_emenda_parlamentar_formatado_plano_acao": "202412340001-Parlamentar Um",
-   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 0.0, "valor_investimento_plano_acao": 500000.0},
+   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 0.0, "valor_investimento_plano_acao": 500000.0,
+   "codigo_descricao_areas_politicas_publicas_plano_acao": "10-Saúde / 302-Assistência Hospitalar e Ambulatorial"},
   {"id_plano_acao": 1002, "codigo_plano_acao": "09032024-001002", "ano_plano_acao": 2024,
    "modalidade_plano_acao": "ESPECIAL", "situacao_plano_acao": "CIENTE",
    "cnpj_beneficiario_plano_acao": "89814693000160", "nome_beneficiario_plano_acao": "MUNICIPIO DE SAO LEOPOLDO",
@@ -14,7 +15,8 @@
    "codigo_parlamentar_emenda_plano_acao": 1234, "nome_parlamentar_emenda_plano_acao": "Parlamentar Um",
    "numero_emenda_parlamentar_plano_acao": "202412340001", "sequencial_emenda_parlamentar_plano_acao": 1,
    "codigo_emenda_parlamentar_formatado_plano_acao": "202412340001-Parlamentar Um",
-   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 100000.0, "valor_investimento_plano_acao": 0.0},
+   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 100000.0, "valor_investimento_plano_acao": 0.0,
+   "codigo_descricao_areas_politicas_publicas_plano_acao": "10-Saúde / 301-Atenção Básica , 15-Urbanismo / 451-Infraestrutura Urbana"},
   {"id_plano_acao": 1003, "codigo_plano_acao": "09032025-001003", "ano_plano_acao": 2025,
    "modalidade_plano_acao": "ESPECIAL", "situacao_plano_acao": "CIENTE",
    "cnpj_beneficiario_plano_acao": "89814693000160", "nome_beneficiario_plano_acao": "MUNICIPIO DE SAO LEOPOLDO",
@@ -22,7 +24,8 @@
    "codigo_parlamentar_emenda_plano_acao": 5678, "nome_parlamentar_emenda_plano_acao": "Parlamentar Dois",
    "numero_emenda_parlamentar_plano_acao": "202556780002", "sequencial_emenda_parlamentar_plano_acao": 2,
    "codigo_emenda_parlamentar_formatado_plano_acao": "202556780002-Parlamentar Dois",
-   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 0.0, "valor_investimento_plano_acao": 300000.0},
+   "motivo_impedimento_plano_acao": null, "valor_custeio_plano_acao": 0.0, "valor_investimento_plano_acao": 300000.0,
+   "codigo_descricao_areas_politicas_publicas_plano_acao": "27-Desporto e Lazer / 812-Desporto Comunitário , 27-Desporto e Lazer / 813-Lazer"},
   {"id_plano_acao": 1004, "codigo_plano_acao": "09032025-001004", "ano_plano_acao": 2025,
    "modalidade_plano_acao": "ESPECIAL", "situacao_plano_acao": "IMPEDIDO",
    "cnpj_beneficiario_plano_acao": "89814693000160", "nome_beneficiario_plano_acao": "MUNICIPIO DE SAO LEOPOLDO",
@@ -31,5 +34,6 @@
    "numero_emenda_parlamentar_plano_acao": "202556780003", "sequencial_emenda_parlamentar_plano_acao": 3,
    "codigo_emenda_parlamentar_formatado_plano_acao": "202556780003-Parlamentar Dois",
    "motivo_impedimento_plano_acao": "Plano de trabalho rejeitado", "valor_custeio_plano_acao": 200000.0,
-   "valor_investimento_plano_acao": 0.0}
+   "valor_investimento_plano_acao": 0.0,
+   "codigo_descricao_areas_politicas_publicas_plano_acao": null}
 ]

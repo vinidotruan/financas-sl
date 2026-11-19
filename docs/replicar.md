@@ -31,6 +31,7 @@ Em ordem de peso:
 | Quem a prefeitura contratou, como e com quais aditivos? | PNCP, consulta de contratos, compras e termos | Nacional (obrigatório pela Lei 14.133) | CNPJ de cada órgão, número de controle | Igual, mas a **lista de órgãos** é sua (veja abaixo) |
 | Quanto da emenda foi empenhado e pago, e a quem? | Portal de transparência do município | Municipal | Código da emenda, CNPJ/CPF do credor | **Muda.** Depende do sistema do portal (fase 2) |
 | Quem pediu obra, placa, limpeza, poda? | Sistema legislativo da Câmara (indicações e pedidos de providência) | Municipal | Vereador, bairro | **Muda.** Depende do sistema da Câmara |
+| Para qual área vai o dinheiro da emenda? | Transferegov, plano de ação (função do orçamento) | Nacional | Plano de ação | Igual |
 | Quem indicou a emenda e qual o cargo? | Cadastro da Câmara dos Deputados e do Senado (dados abertos) | Nacional | Nome do parlamentar | Igual |
 | Quem é a empresa e ela tem sanção? | Cadastro de CNPJ (Receita) e CEIS/CNEP/CEPIM (CGU) | Nacional | CNPJ | Igual (fase 3) |
 | O que o tribunal de contas viu? | TCE do seu estado | Estadual | CNPJ, IBGE | **Muda** por estado (fase 4) |

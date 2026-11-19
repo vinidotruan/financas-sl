@@ -3,6 +3,11 @@
 create or replace macro d(x) as try_cast(left(cast(x as varchar), 10) as date);
 create or replace macro n(x) as coalesce(try_cast(x as double), 0);
 create or replace macro so_digitos(x) as regexp_replace(cast(x as varchar), '[^0-9]', '', 'g');
+-- Funções do orçamento citadas no plano, sem o código: "10-Saúde / 302-Assistência Hospitalar" vira
+-- "Saúde". O Transferegov separa as áreas com " , " (o nome de subfunção pode ter vírgula).
+create or replace macro funcoes_orcamento(x) as list_distinct(list_filter(list_transform(
+  string_split(cast(x as varchar), ' , '),
+  lambda f: regexp_replace(trim(split_part(f, '/', 1)), '^[0-9]+\s*-\s*', '')), lambda f: f <> ''));
 
 -- ===== Emendas Pix (Transferegov) =====
 create or replace table core.plano_acao as
@@ -20,7 +25,12 @@ select
   cast(codigo_parlamentar_emenda_plano_acao as varchar) as codigo_autor,
   n(valor_custeio_plano_acao)                           as valor_custeio,
   n(valor_investimento_plano_acao)                      as valor_investimento,
-  n(valor_custeio_plano_acao) + n(valor_investimento_plano_acao) as valor_indicado
+  n(valor_custeio_plano_acao) + n(valor_investimento_plano_acao) as valor_indicado,
+  -- área: a função do orçamento. Com mais de uma, a fonte não diz quanto vai para cada uma.
+  case coalesce(len(funcoes_orcamento(codigo_descricao_areas_politicas_publicas_plano_acao)), 0)
+    when 0 then 'Sem área informada'
+    when 1 then funcoes_orcamento(codigo_descricao_areas_politicas_publicas_plano_acao)[1]
+    else 'Mais de uma área' end                       as area
 from staging.tg_plano_acao_especial;
 
 -- Cadastro dos autores das emendas. O Transferegov dá o código de autor e o nome, mas não o cargo; o

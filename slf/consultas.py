@@ -198,8 +198,14 @@ class Consulta:
                                      any_value(codigo_autor) as codigo_autor, min(ano) as ano, count(*) as planos,
                                      round(sum(valor_indicado), 2) as indicado,
                                      round(sum(transferido), 2) as transferido,
-                                     round(sum(executado_relatorio), 2) as executado_relatorio
-                                  from core.rastro_plano group by codigo_emenda
+                                     round(sum(executado_relatorio), 2) as executado_relatorio,
+                                     -- valor indicado por área (função do orçamento), maior primeiro
+                                     (select list({'area': a.area, 'indicado': a.indicado}
+                                                  order by a.indicado desc, a.area)
+                                      from (select area, round(sum(valor_indicado), 2) as indicado
+                                            from core.rastro_plano x where x.codigo_emenda = r.codigo_emenda
+                                            group by area) a) as areas
+                                  from core.rastro_plano r group by codigo_emenda
                                   order by ano desc, transferido desc, codigo_emenda"""))
 
     def rastro(self, codigo: str) -> dict | None:

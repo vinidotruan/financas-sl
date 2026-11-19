@@ -278,6 +278,20 @@ ruído de ponto flutuante (como `414134.66000000003`).
 **Decisão.** Nome, UF, IBGE, CNPJ, data de início e órgãos ficam em `config/ente.yaml`. Código, regras e
 front não citam o município. Ver `docs/replicar.md`.
 
+### D36 · Emendas por área numa pizza, com as categorias da fonte · 19/11/2026 · vale
+
+**Decisão.** A tela Emendas mostra uma pizza do valor indicado por área, e a área é a função do
+orçamento que o plano de ação informa no Transferegov (`codigo_descricao_areas_politicas_publicas_plano_acao`),
+sem o código: "10-Saúde / 302-Assistência Hospitalar" vira "Saúde". Plano com mais de uma função fica
+em "Mais de uma área", porque a fonte não diz quanto vai para cada uma; plano sem área fica em "Sem
+área informada". Nenhum valor é dividido por estimativa. A pizza tem até 5 fatias com cor e "Outras";
+a legenda lista as áreas que estão dentro de "Outras", para nenhuma categoria da fonte sumir. As cores
+ficam presas às 5 maiores áreas de todas as emendas, para o filtro de ano não repintar uma área com a
+cor de outra. Ao lado, dois cartões com o indicado por cargo (deputados federais e senadores).
+
+**Alternativas.** Barras ordenadas mostrariam as 13 áreas sem agrupar e comparariam melhor valores
+próximos; o Ruan preferiu a pizza, mais fácil de ler de relance.
+
 ---
 
 ## Pedidos dos vereadores

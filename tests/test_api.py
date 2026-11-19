@@ -207,3 +207,11 @@ def test_pedidos_de_um_vereador(cliente):
     assert [x["id"] for x in v["pedidos"]] == [9007, 9005, 9004, 9003]
     assert {x["id"]: x["bairros"] for x in v["pedidos"]}[9005] == "Feitoria"
     assert cliente.get("/api/vereadores/999").status_code == 404
+
+
+def test_emendas_trazem_o_valor_por_area(cliente):
+    emendas = {e["codigo_emenda"]: e["areas"] for e in cliente.get("/api/emendas").json()}
+    assert emendas["202412340001"] == [{"area": "Saúde", "indicado": 500000.0},
+                                       {"area": "Mais de uma área", "indicado": 100000.0}]
+    assert emendas["202556780002"] == [{"area": "Desporto e Lazer", "indicado": 300000.0}]
+    assert emendas["202556780003"] == [{"area": "Sem área informada", "indicado": 200000.0}]

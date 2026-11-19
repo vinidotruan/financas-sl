@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
+import { CargosEmendas, PizzaAreas } from '../componentes/graficos'
 import { Carregado, ChipCargo, ChipsFonte, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { brl, brlCurto, data, FONTE, num, pct, VAZIO } from '../formato'
@@ -51,6 +52,16 @@ export function TelaEmendas() {
                   <div class="cartao"><span class="rotulo">Indicado</span><span class="valor">{brlCurto(indicado)}</span></div>
                   <div class="cartao"><span class="rotulo">Transferido</span><span class="valor">{brlCurto(transferido)}</span></div>
                 </div>
+                <section class="secao">
+                  <span class="rotulo">Indicado por área</span>
+                  <PizzaAreas emendas={filtradas} todas={lista} />
+                  <span class="pequeno apagado">A área é a função do orçamento que o plano de ação informa no Transferegov.</span>
+                </section>
+                <section class="secao">
+                  <span class="rotulo">Indicado por cargo</span>
+                  <CargosEmendas emendas={filtradas} />
+                </section>
+                <span class="rotulo">Emendas</span>
                 {filtradas.map((e) => <CartaoEmenda key={e.codigo_emenda} e={e} />)}
               </>
             )

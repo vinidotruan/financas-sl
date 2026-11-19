@@ -78,6 +78,8 @@ export interface Emenda {
   indicado: number
   transferido: number
   executado_relatorio: number | null
+  /** valor indicado por área (função do orçamento no plano de ação), maior primeiro */
+  areas: { area: string; indicado: number }[]
 }
 
 export interface Plano {
