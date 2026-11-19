@@ -25,9 +25,10 @@ LINKS = {
 }
 PESSOA_FISICA = "pessoa física"
 
-# 11 dígitos seguidos e isolados = CPF (CNPJ tem 14 e o código da emenda, 12). Aparece no campo
+# CPF = 11 dígitos seguidos, ou no formato 123.456.789-01, sem letra nem dígito colado (CNPJ tem 14
+# dígitos e o código da emenda, 12; ids em hash como "c89673977497c" não são CPF). Aparece no campo
 # do fornecedor PF e também no nome de MEI e empresário individual ("FULANO DE TAL 12345678901").
-_CPF = re.compile(r"(?<!\d)(\d{3})(\d{3})(\d{3})(\d{2})(?!\d)")
+_CPF = re.compile(r"(?<![0-9A-Za-z])(\d{3})\.?(\d{3})\.?(\d{3})-?(\d{2})(?![0-9A-Za-z])")
 
 
 def sem_cpf(x):
@@ -181,9 +182,9 @@ class Consulta:
     def emendas(self) -> list[dict]:
         return sem_cpf(self._q("""select codigo_emenda, any_value(codigo_formatado) as codigo,
                                      any_value(parlamentar) as parlamentar, any_value(codigo_autor) as codigo_autor,
-                                     min(ano) as ano, count(*) as planos, sum(valor_indicado) as indicado,
-                                     sum(transferido) as transferido,
-                                     sum(executado_relatorio) as executado_relatorio
+                                     min(ano) as ano, count(*) as planos, round(sum(valor_indicado), 2) as indicado,
+                                     round(sum(transferido), 2) as transferido,
+                                     round(sum(executado_relatorio), 2) as executado_relatorio
                                   from core.rastro_plano group by codigo_emenda
                                   order by ano desc, transferido desc, codigo_emenda"""))
 
@@ -195,8 +196,8 @@ class Consulta:
         ids = [p["id_plano_acao"] for p in planos]
         marcadores = ",".join("?" * len(ids))
         executados = [p["executado_relatorio"] for p in planos if p["executado_relatorio"] is not None]
-        indicado = sum(p["valor_indicado"] for p in planos)
-        transferido = sum(p["transferido"] for p in planos)
+        indicado = round(sum(p["valor_indicado"] for p in planos), 2)
+        transferido = round(sum(p["transferido"] for p in planos), 2)
         return sem_cpf({
             "codigo": codigo,
             "codigo_formatado": planos[0]["codigo_formatado"],
@@ -207,7 +208,7 @@ class Consulta:
                 {"etapa": "Indicado", "fonte": "transferegov", "valor": indicado},
                 {"etapa": "Transferido", "fonte": "transferegov", "valor": transferido},
                 {"etapa": "Executado (relatório de gestão)", "fonte": "transferegov",
-                 "valor": sum(executados) if executados else None,
+                 "valor": round(sum(executados), 2) if executados else None,
                  "nota": None if executados else "nenhum relatório de gestão entregue"},
                 {"etapa": "Empenhado", "fonte": "prefeitura", "valor": None, "nota": "portal da prefeitura, fase 2"},
                 {"etapa": "Pago", "fonte": "prefeitura", "valor": None, "nota": "portal da prefeitura, fase 2"},
@@ -224,7 +225,8 @@ class Consulta:
     def parlamentares(self) -> list[dict]:
         return sem_cpf(self._q("""select codigo_autor as codigo, any_value(parlamentar) as nome,
                                      count(distinct codigo_emenda) as emendas, count(*) as planos,
-                                     sum(valor_indicado) as indicado, sum(transferido) as transferido,
+                                     round(sum(valor_indicado), 2) as indicado,
+                                     round(sum(transferido), 2) as transferido,
                                      min(ano) as primeiro_ano, max(ano) as ultimo_ano
                                   from core.rastro_plano group by codigo_autor order by indicado desc"""))
 

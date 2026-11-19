@@ -82,7 +82,7 @@ select p.*,
             then make_date(greatest(year(t.primeira_ob) + 1, 2025), 6, 30) end as prazo_relatorio_parcial,
        z.inicio as prazo_inicio, z.fim as prazo_fim, z.situacao as situacao_plano_trabalho
 from core.plano_acao p
-left join (select id_plano_acao, sum(valor) as transferido, min(data_ob) as primeira_ob,
+left join (select id_plano_acao, round(sum(valor), 2) as transferido, min(data_ob) as primeira_ob,
                   max(data_ob) as ultima_ob
            from core.transferencia group by 1) t using (id_plano_acao)
 left join (select * from core.relatorio_gestao where entregue
@@ -147,8 +147,8 @@ create or replace table core.fornecedor as
 -- id curto pra links e nomes de arquivo: o CPF de pessoa física nunca vai pra URL nem pro nome do JSON
 select left(md5(fornecedor_ni), 12) as id, fornecedor_ni as ni,
        any_value(fornecedor_nome) as nome, any_value(tipo_pessoa) as tipo_pessoa,
-       bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, sum(valor_global) as valor_total,
-       sum(case when contratacao_direta then valor_global else 0 end) as valor_direto,
+       bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, round(sum(valor_global), 2) as valor_total,
+       round(sum(case when contratacao_direta then valor_global else 0 end), 2) as valor_direto,
        min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
 from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by fornecedor_ni;
 

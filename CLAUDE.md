@@ -7,8 +7,9 @@ comentários.
 
 - Município: IBGE `4318705`, CNPJ `89.814.693/0001-60`
 - Pasta: `~/studies/financas-sl`
-- Estado: a **fase 1** do backend foi escrita e testada com respostas falsas no formato real das APIs,
-  mas **ainda não rodou contra as APIs ao vivo**. Isso é a primeira coisa a fazer (ver "Tarefas").
+- Estado (19/11/2026): o backend da fase 1 rodou contra as APIs reais e foi corrigido (tarefa 1), e o
+  front novo está em `front/` (tarefa 2). Faltam a exportação estática (tarefa 3, `consultas.py` já
+  existe) e o GitHub Actions (tarefa 4). Andamento no artefato https://claude.ai/artifact/BhPEo8UuT1SjqTmhk4TcoX
 
 ## Objetivo desta etapa
 
@@ -27,9 +28,18 @@ uv run slf atualizar         # raw -> staging -> core -> testes -> sinais (sem c
 uv run slf atualizar --forcar  # troca o banco mesmo com teste de dados falhando
 uv run slf diario            # coletar tudo + atualizar (o que o agendamento roda)
 uv run slf status            # última coleta boa por fonte e contagem de sinais
-uv run slf servir            # API + tela em http://localhost:8765 (mostra o IP pro celular)
+uv run slf servir            # API + front (site/) em http://localhost:8765 (mostra o IP pro celular)
 SLF_MODO=publico uv run slf servir   # modo público (ver "Regras que não se quebram")
 ./scripts/agendar.sh         # launchd: slf diario todo dia às 06:10
+uv run pytest                # testes sem rede (fixtures por fonte em tests/fixtures/)
+uv run ruff check slf tests
+
+# front (Node do .nvmrc): Vite + Preact + TypeScript, build em site/
+cd front && npm install
+npm run dev                  # http://localhost:5173, usa a API do slf servir pelo proxy
+npm run build                # site/ lendo a API (é o que o slf servir serve)
+npm run build:estatico       # site/ lendo os JSON de site/data/ (slf exportar, tarefa 3)
+npx tsc --noEmit             # checagem de tipos
 ```
 
 `SLF_HOME` muda a raiz do projeto (útil em testes).
@@ -49,9 +59,11 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/processar.py` | Carrega a última coleta boa de cada fonte em `staging`, roda `core.sql`, testes, sinais |
 | `slf/core.sql` | Entidades: `plano_acao`, `emenda`, `transferencia`, `relatorio_gestao`, `prazo_plano`, `meta`, `rastro_plano`, `compra`, `contrato`, `aditivo`, `fornecedor`, `pessoal`, `receita`, `fonte` |
 | `slf/sinais.py` | Lê `slf/regras/*.yaml`, roda o SQL de cada regra, guarda histórico e aplica a revisão |
-| `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql |
-| `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido) |
-| `slf/web/index.html` | Tela provisória em JS puro. Vai ser substituída pelo front novo |
+| `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql; opcionais pra tela: `observado` ({rotulo, formato}) e `resumo` (frase com `{campo\|formato}` da evidência) |
+| `slf/consultas.py` | O conteúdo de cada rota e os filtros de privacidade (máscara de CPF, modo público). API e exportação usam o mesmo |
+| `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido), fina em cima de `consultas.py`; serve `site/` em "/" |
+| `front/` | Vite + Preact + TypeScript. `src/dados.ts` é a camada única (API ou JSON estático, por `VITE_DADOS`); rotas no hash |
+| `slf/web/index.html` | Tela provisória antiga; só aparece se `site/` não foi buildado |
 | `data/slf.duckdb` | Banco. É montado em `slf.novo.duckdb` e trocado com `os.replace` só se os testes passarem |
 | `data/revisao.json` | Status e nota que o Ruan dá a cada sinal. Fica fora do banco de propósito |
 
