@@ -206,3 +206,33 @@ export interface Fontes {
   fontes: { fonte: string; coleta: string | null; coletado_em: string | null; arquivos: number; linhas: number; link: string | null }[]
   erros_de_regra: { regra_id: string; mensagem: string }[]
 }
+
+export interface Pedidos {
+  total: number
+  temas: string[]
+  anos: number[]
+  por_tema: { ano: number; tema: string; pedidos: number }[]
+  por_vereador: { id: number; nome: string; partido: string | null; ano: number; tema: string; pedidos: number }[]
+  por_bairro: { id: number; nome: string; ano: number; tema: string; pedidos: number }[]
+  sem_bairro: { ano: number; tema: string; pedidos: number }[]
+  fontes: FonteRef[]
+}
+
+export interface Pedido {
+  id: number
+  ano: number
+  numero: number
+  especie: string
+  ementa: string
+  url: string | null
+  tema: string
+  bairros: string | null
+}
+
+export interface Vereador {
+  id: number
+  nome: string
+  partido: string | null
+  pedidos: Pedido[]
+  fontes: FonteRef[]
+}

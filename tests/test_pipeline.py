@@ -213,3 +213,45 @@ def test_historico_e_revisao(banco):
     assert str(r03["primeira_vez"]) == "2025-01-01"    # e guarda quando apareceu
     # descartado volta a novo quando o valor observado muda
     assert _ocorrencias(DB, "R08")["89814693000160-2-000003/2024"]["status"] == "novo"
+
+
+# ===== Câmara =====
+
+def test_pedidos_dos_vereadores(banco):
+    # a emenda não é pedido; os outros 6 são pedidos de providência ou indicações
+    assert _um(banco, "select count(*) from core.pedido") == (6,)
+    assert dict(duckdb.connect(str(banco), read_only=True).execute(
+        "select id, tema from core.pedido").fetchall()) == {
+        9001: "Iluminação pública", 9002: "Sinalização e trânsito", 9003: "Limpeza e capina",
+        9004: "Pavimentação e buracos", 9005: "Transporte coletivo", 9007: "Outros"}
+
+
+def test_vereador_sem_tratamento_e_coautoria(banco):
+    con = duckdb.connect(str(banco), read_only=True)
+    nomes = dict(con.execute("select id, nome from core.vereador").fetchall())
+    assert nomes == {701: "Ana Exemplo", 702: "Beto Exemplo"}
+    # o pedido 9005 é dos dois: conta para cada um
+    por_vereador = dict(con.execute("select id_vereador, count(*) from core.pedido_autor group by 1").fetchall())
+    assert por_vereador == {701: 3, 702: 4}
+
+
+def test_bairro_vem_do_filtro_da_api(banco):
+    con = duckdb.connect(str(banco), read_only=True)
+    assert sorted(con.execute("select id_pedido, id_bairro from core.pedido_bairro").fetchall()) == [
+        (9001, 1), (9002, 1), (9003, 2), (9005, 2)]
+
+
+def test_camara_pagina_de_verdade(api_falsa, monkeypatch):
+    from slf.coletores import camara
+
+    monkeypatch.setattr(camara, "PAGINA", 2)  # força várias páginas com a fixture pequena
+    col = camara.coletar()
+    proposicoes = json.loads((col.dir / "proposicoes.json").read_text(encoding="utf-8"))
+    assert len(proposicoes) == 7 and "_bairros" not in proposicoes[0]
+
+
+def test_cidade_sem_camara_configurada_pula(api_falsa, monkeypatch):
+    from slf.coletores import camara
+
+    monkeypatch.setattr(camara, "ente", lambda: {"inicio": None})
+    assert camara.coletar() is None

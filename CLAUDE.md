@@ -23,7 +23,7 @@ Antes de começar o item 3, pergunte ao Ruan a decisão de privacidade (seção 
 
 ```bash
 uv sync                      # instala dependências (uv também baixa o Python)
-uv run slf coletar [fonte]   # transferegov | siconfi | pncp; sem argumento, todas
+uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara; sem argumento, todas
 uv run slf atualizar         # raw -> staging -> core -> testes -> sinais (sem coletar)
 uv run slf atualizar --forcar  # troca o banco mesmo com teste de dados falhando
 uv run slf diario            # coletar tudo + atualizar (o que o agendamento roda)
@@ -52,12 +52,15 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 
 | Caminho | O que é |
 |---|---|
-| `config/ente.yaml` | IBGE, CNPJ, data de início e a lista de órgãos do PNCP |
+| `config/ente.yaml` | Nome, UF, IBGE, CNPJ, data de início, a lista de órgãos do PNCP e a API da Câmara. É o único lugar com a cidade |
+| `docs/decisoes.md` | Registro das decisões técnicas (Dnn), para auditoria. Toda decisão nova ou mudança de regra entra aqui |
+| `docs/replicar.md` | Como montar o painel para outra cidade: critérios de escolha de fonte e passo a passo |
 | `slf/coletores/*.py` | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
 | `slf/raw.py` | `data/raw/{fonte}/{AAAA-MM-DDTHHMMSS}/*.json` + `manifest.jsonl` (url, params, sha256, linhas) |
 | `slf/http.py` | httpx com retry (tenacity) em 429/5xx/timeout e pausa entre chamadas |
 | `slf/processar.py` | Carrega a última coleta boa de cada fonte em `staging`, roda `core.sql`, testes, sinais |
-| `slf/core.sql` | Entidades: `plano_acao`, `emenda`, `transferencia`, `relatorio_gestao`, `prazo_plano`, `meta`, `rastro_plano`, `compra`, `contrato`, `aditivo`, `fornecedor`, `pessoal`, `receita`, `fonte` |
+| `slf/core.sql` | Entidades: `plano_acao`, `emenda`, `transferencia`, `relatorio_gestao`, `prazo_plano`, `meta`, `rastro_plano`, `compra`, `contrato`, `aditivo`, `fornecedor`, `pessoal`, `receita`, `limite_pessoal`, `resultado_anual`, `proposicao`, `vereador`, `bairro`, `pedido`, `pedido_autor`, `pedido_bairro`, `tema`, `fonte` |
+| `slf/temas.yaml` | Tema dos pedidos dos vereadores por expressão na ementa; a primeira que casa vence |
 | `slf/sinais.py` | Lê `slf/regras/*.yaml`, roda o SQL de cada regra, guarda histórico e aplica a revisão |
 | `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql; opcionais pra tela: `observado` ({rotulo, formato}) e `resumo` (frase com `{campo\|formato}` da evidência) |
 | `slf/consultas.py` | O conteúdo de cada rota e os filtros de privacidade (máscara de CPF, modo público). API e exportação usam o mesmo |

@@ -4,6 +4,7 @@ import { TelaContas } from './telas/contas'
 import { TelaEmendas, TelaRastro } from './telas/emendas'
 import { TelaFichas, TelaFornecedor, TelaParlamentar } from './telas/fichas'
 import { TelaFontes } from './telas/fontes'
+import { TelaPedidos, TelaVereador } from './telas/pedidos'
 import { TelaSinal } from './telas/sinal'
 import { TelaRegra, TelaSinais } from './telas/sinais'
 
@@ -19,6 +20,8 @@ export function App() {
     case 'fichas': tela = <TelaFichas lista={rota.lista} />; break
     case 'parlamentar': tela = <TelaParlamentar key={rota.codigo} codigo={rota.codigo} />; break
     case 'fornecedor': tela = <TelaFornecedor key={rota.id} id={rota.id} />; break
+    case 'pedidos': tela = <TelaPedidos tema={rota.tema} />; break
+    case 'vereador': tela = <TelaVereador key={rota.id} id={rota.id} />; break
     case 'contas': tela = <TelaContas />; break
     case 'fontes': tela = <TelaFontes />; break
   }

@@ -103,11 +103,11 @@ body::before {
 }
 .abas ul {
   list-style: none; margin: 0 auto; padding: 0; max-width: 720px;
-  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); height: var(--altura-abas);
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); height: var(--altura-abas);
 }
 .abas a {
   height: 100%; display: grid; justify-items: center; align-content: center; gap: 3px;
-  text-decoration: none; color: var(--apagado); font-size: 11.5px; font-weight: 500;
+  text-decoration: none; color: var(--apagado); font-size: 11px; font-weight: 500;
 }
 .abas a[aria-current="page"] { color: var(--destaque); font-weight: 700; }
 .abas svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -253,3 +253,8 @@ input[type="search"] { border-radius: 999px; }
 @media (prefers-reduced-motion: reduce) { .carregando i { animation: none; } }
 
 .rodape { color: var(--apagado); font-size: 12.5px; text-align: center; padding: 8px 0 0; }
+
+select.seletor {
+  width: 100%; font: inherit; color: var(--texto); background: var(--superficie);
+  border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; min-height: 44px;
+}

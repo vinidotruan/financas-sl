@@ -175,3 +175,25 @@ def test_rastro_mostra_cada_fonte(cliente):
 
 def test_cidade_vem_da_configuracao(cliente):
     assert cliente.get("/api/fontes").json()["ente"] == {"nome": "São Leopoldo", "uf": "RS", "ibge": 4318705}
+
+
+def test_pedidos_por_vereador_tema_e_bairro(cliente):
+    p = cliente.get("/api/pedidos").json()
+    assert p["total"] == 6 and p["anos"] == [2026, 2025]
+    assert p["temas"][-1] == "Outros"
+    por_vereador = {}
+    for linha in p["por_vereador"]:
+        por_vereador[linha["nome"]] = por_vereador.get(linha["nome"], 0) + linha["pedidos"]
+    assert por_vereador == {"Ana Exemplo": 3, "Beto Exemplo": 4}
+    placas = [x for x in p["por_vereador"] if x["tema"] == "Sinalização e trânsito"]
+    assert [(x["nome"], x["pedidos"]) for x in placas] == [("Ana Exemplo", 1)]
+    assert sum(x["pedidos"] for x in p["sem_bairro"]) == 2
+    assert p["fontes"][0]["link"] == "https://www.camara.exemplo"
+
+
+def test_pedidos_de_um_vereador(cliente):
+    v = cliente.get("/api/vereadores/702").json()
+    assert v["nome"] == "Beto Exemplo" and v["partido"] == "MDB"
+    assert [x["id"] for x in v["pedidos"]] == [9007, 9005, 9004, 9003]
+    assert {x["id"]: x["bairros"] for x in v["pedidos"]}[9005] == "Feitoria"
+    assert cliente.get("/api/vereadores/999").status_code == 404

@@ -5,6 +5,13 @@ ibge: 4318705
 cnpj_municipio: "89814693000160"
 inicio: 2022-01-01
 
+# Câmara de Vereadores: pedidos de providência e indicações, pelo JSON que o site da Câmara usa.
+# São Leopoldo usa o Legiflow; o endereço da API aparece no próprio site (docs/replicar.md).
+camara:
+  sistema: legiflow
+  api: https://api.camarasaoleopoldo.rs.gov.br
+  site: https://www.camarasaoleopoldo.rs.gov.br
+
 # Órgãos cujas compras entram no PNCP. CNPJs conferidos em 18/11/2026 no cadastro do PNCP
 # (/api/pncp/v1/orgaos/{cnpj}/unidades): todas as unidades ficam em São Leopoldo.
 orgaos_pncp:

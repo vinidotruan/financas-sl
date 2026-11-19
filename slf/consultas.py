@@ -50,6 +50,14 @@ def _valor(v):
     return v
 
 
+def _link(fonte: str) -> str | None:
+    if fonte == "camara":
+        from .config import ente
+
+        return (ente().get("camara") or {}).get("site")
+    return LINKS.get(fonte)
+
+
 def _json(v):
     return json.loads(v) if isinstance(v, str) else v
 
@@ -75,7 +83,7 @@ class Consulta:
 
     def _fontes(self, nomes) -> list[dict]:
         linhas = {f["fonte"]: f for f in self._q("select * from core.fonte")}
-        return [{"nome": n, "link": LINKS.get(n), "coletado_em": linhas.get(n, {}).get("coletado_em")}
+        return [{"nome": n, "link": _link(n), "coletado_em": linhas.get(n, {}).get("coletado_em")}
                 for n in nomes]
 
     def _preparar(self, s: dict) -> dict:
@@ -120,7 +128,7 @@ class Consulta:
         cfg = ente()
         return sem_cpf({"modo": self.modo,
                         "ente": {"nome": cfg.get("nome") or "a cidade", "uf": cfg.get("uf"), "ibge": cfg.get("ibge")},
-                        "fontes": [{**f, "link": LINKS.get(f["fonte"])}
+                        "fontes": [{**f, "link": _link(f["fonte"])}
                                    for f in self._q("select * from core.fonte order by fonte")],
                         "erros_de_regra": self._q("select * from sinais.erro")})
 
@@ -283,6 +291,46 @@ class Consulta:
                 if c["pessoa_fisica"]:
                     c["fornecedor_nome"], c["fornecedor_ni"] = PESSOA_FISICA, None
         return sem_cpf(linhas)
+
+    def pedidos(self) -> dict:
+        """Pedidos dos vereadores à prefeitura (pedidos de providência e indicações), contados por
+        vereador, bairro, tema e ano. A tela soma conforme o filtro. Pedido em coautoria conta para
+        cada vereador que assina; pedido com dois bairros conta nos dois."""
+        return sem_cpf({
+            "total": self._q("select count(*) as n from core.pedido")[0]["n"],
+            "temas": [t["tema"] for t in self._q("select tema from core.tema order by ordem")],
+            "anos": [a["ano"] for a in self._q("select distinct ano from core.pedido order by ano desc")],
+            "por_tema": self._q("select ano, tema, count(*) as pedidos from core.pedido group by all order by all"),
+            "por_vereador": self._q("""select v.id, v.nome, v.partido, p.ano, p.tema, count(*) as pedidos
+                                       from core.pedido p
+                                       join core.pedido_autor a on a.id_pedido = p.id
+                                       join core.vereador v on v.id = a.id_vereador
+                                       group by all order by all"""),
+            "por_bairro": self._q("""select b.id, b.nome, p.ano, p.tema, count(*) as pedidos
+                                     from core.pedido p
+                                     join core.pedido_bairro pb on pb.id_pedido = p.id
+                                     join core.bairro b on b.id = pb.id_bairro
+                                     group by all order by all"""),
+            "sem_bairro": self._q("""select ano, tema, count(*) as pedidos from core.pedido
+                                     where id not in (select id_pedido from core.pedido_bairro)
+                                     group by all order by all"""),
+            "fontes": self._fontes(["camara"]),
+        })
+
+    def vereador(self, vid: str) -> dict | None:
+        linhas = self._q("select * from core.vereador where cast(id as varchar) = ?", [str(vid)])
+        if not linhas:
+            return None
+        pedidos = self._q("""select p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema,
+                                string_agg(distinct b.nome, ', ' order by b.nome) as bairros
+                             from core.pedido p
+                             join core.pedido_autor a on a.id_pedido = p.id
+                             left join core.pedido_bairro pb on pb.id_pedido = p.id
+                             left join core.bairro b on b.id = pb.id_bairro
+                             where a.id_vereador = ?
+                             group by p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema
+                             order by p.ano desc, p.numero desc""", [linhas[0]["id"]])
+        return sem_cpf({**linhas[0], "pedidos": pedidos, "fontes": self._fontes(["camara"])})
 
     def contas(self) -> dict:
         return sem_cpf({

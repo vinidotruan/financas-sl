@@ -1,0 +1,212 @@
+[
+ {
+  "ID": 9001,
+  "expediente": 16001,
+  "numero": 100,
+  "ano": 2025,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2025-05-10 10:00:00",
+  "ementa": "Solicita a troca de lâmpadas na Rua A, no bairro Centro.",
+  "especie": "Pedido de Providência",
+  "sigla_especie": "PDP",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 701,
+    "nome": "Ver.ª Ana Exemplo",
+    "partido": "PT",
+    "url_imagem": "https://cdn.exemplo/1.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9001",
+  "inline_proponente": "Ver.ª Ana Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": [
+   1
+  ]
+ },
+ {
+  "ID": 9002,
+  "expediente": 16002,
+  "numero": 101,
+  "ano": 2025,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2025-05-10 10:00:00",
+  "ementa": "Solicita a instalação de placa de PARE na Rua B.",
+  "especie": "Pedido de Providência",
+  "sigla_especie": "PDP",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 701,
+    "nome": "Ver.ª Ana Exemplo",
+    "partido": "PT",
+    "url_imagem": "https://cdn.exemplo/1.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9002",
+  "inline_proponente": "Ver.ª Ana Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": [
+   1
+  ]
+ },
+ {
+  "ID": 9003,
+  "expediente": 16003,
+  "numero": 50,
+  "ano": 2025,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2025-05-10 10:00:00",
+  "ementa": "Indica a capina e a limpeza da praça da Rua C.",
+  "especie": "Indicação",
+  "sigla_especie": "IND",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 702,
+    "nome": "Ver. Beto Exemplo",
+    "partido": "MDB",
+    "url_imagem": "https://cdn.exemplo/2.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9003",
+  "inline_proponente": "Ver. Beto Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": [
+   2
+  ]
+ },
+ {
+  "ID": 9004,
+  "expediente": 16004,
+  "numero": 5,
+  "ano": 2026,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2026-05-10 10:00:00",
+  "ementa": "Solicita operação tapa-buraco na Avenida D.",
+  "especie": "Pedido de Providência",
+  "sigla_especie": "PDP",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 702,
+    "nome": "Ver. Beto Exemplo",
+    "partido": "MDB",
+    "url_imagem": "https://cdn.exemplo/2.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9004",
+  "inline_proponente": "Ver. Beto Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": []
+ },
+ {
+  "ID": 9005,
+  "expediente": 16005,
+  "numero": 6,
+  "ano": 2026,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2026-05-10 10:00:00",
+  "ementa": "Solicita cobertura na parada de ônibus da Av. Feitoria.",
+  "especie": "Pedido de Providência",
+  "sigla_especie": "PDP",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 701,
+    "nome": "Ver.ª Ana Exemplo",
+    "partido": "PT",
+    "url_imagem": "https://cdn.exemplo/1.jpg"
+   },
+   {
+    "ID": 702,
+    "nome": "Ver. Beto Exemplo",
+    "partido": "MDB",
+    "url_imagem": "https://cdn.exemplo/2.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9005",
+  "inline_proponente": "Ver.ª Ana Exemplo, Ver. Beto Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": [
+   2
+  ]
+ },
+ {
+  "ID": 9006,
+  "expediente": 16006,
+  "numero": 1,
+  "ano": 2026,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2026-05-10 10:00:00",
+  "ementa": "Emenda ao PL 10/2026.",
+  "especie": "Emenda",
+  "sigla_especie": "EM",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 701,
+    "nome": "Ver.ª Ana Exemplo",
+    "partido": "PT",
+    "url_imagem": "https://cdn.exemplo/1.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9006",
+  "inline_proponente": "Ver.ª Ana Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": []
+ },
+ {
+  "ID": 9007,
+  "expediente": 16007,
+  "numero": 7,
+  "ano": 2026,
+  "id_regime_tramitacao": 1,
+  "regime_tramitacao": "Ordinária",
+  "id_destinatario": null,
+  "destinatario": null,
+  "dados_adicionais": {},
+  "updated_at": "2026-05-10 10:00:00",
+  "ementa": "Solicita providências quanto ao horário de atendimento.",
+  "especie": "Pedido de Providência",
+  "sigla_especie": "PDP",
+  "id_especie": 6,
+  "proponente": [
+   {
+    "ID": 702,
+    "nome": "Ver. Beto Exemplo",
+    "partido": "MDB",
+    "url_imagem": "https://cdn.exemplo/2.jpg"
+   }
+  ],
+  "url": "https://www.camara.exemplo/processo/9007",
+  "inline_proponente": "Ver. Beto Exemplo",
+  "resumo": "<p>resumo</p>",
+  "_bairros": []
+ }
+]

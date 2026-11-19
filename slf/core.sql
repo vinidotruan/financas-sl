@@ -192,3 +192,46 @@ select r.exercicio, u.periodo as bimestre,
        max(r.valor) filter (where r.cod_conta = 'TotalDespesas' and r.coluna ilike 'DESPESAS PAGAS ATÉ%') as despesa_paga
 from core.receita r join ultimo u on u.exercicio = r.exercicio and u.periodo = r.periodo
 group by r.exercicio, u.periodo;
+
+-- ===== Câmara de Vereadores =====
+create or replace table core.proposicao as
+select cast(id as bigint) as id, cast(ano as integer) as ano, cast(numero as integer) as numero, especie,
+       sigla_especie, trim(ementa) as ementa, url, destinatario,
+       try_cast(atualizado_em as timestamp) as atualizado_em
+from staging.cm_proposicoes
+where id is not null
+qualify row_number() over (partition by id order by atualizado_em desc nulls last) = 1;
+
+-- O nome vem com o tratamento ("Ver.ª Karina Camillo"); o id do autor é a chave.
+create or replace table core.vereador as
+select cast(id_autor as bigint) as id,
+       any_value(trim(regexp_replace(nome, '^\s*Ver(\.|eador|eadora)?\s*ª?\s*', ''))) as nome,
+       any_value(partido) as partido
+from staging.cm_autores where id_autor is not null group by 1;
+
+create or replace table core.bairro as
+select cast("ID" as bigint) as id, nome from staging.cm_bairros where "ID" is not null;
+
+-- Pedidos à prefeitura: pedidos de providência e indicações. O tema sai de slf/temas.yaml: a primeira
+-- regra (na ordem do arquivo) cuja expressão aparece na ementa; sem nenhuma, "Outros".
+create or replace table core.pedido as
+select p.id, p.ano, p.numero, p.especie, p.sigla_especie, p.ementa, p.url,
+       coalesce((select t.tema from staging.cm_temas t
+                 where regexp_matches(lower(coalesce(p.ementa, '')), t.padrao)
+                 order by t.ordem limit 1), 'Outros') as tema
+from core.proposicao p
+where p.especie in ('Pedido de Providência', 'Indicação');
+
+create or replace table core.pedido_autor as
+select distinct cast(a.id_proposicao as bigint) as id_pedido, cast(a.id_autor as bigint) as id_vereador
+from staging.cm_autores a
+join core.pedido p on p.id = cast(a.id_proposicao as bigint);
+
+create or replace table core.pedido_bairro as
+select distinct cast(v.id_proposicao as bigint) as id_pedido, cast(v.id_bairro as bigint) as id_bairro
+from staging.cm_proposicao_bairro v
+join core.pedido p on p.id = cast(v.id_proposicao as bigint);
+
+create or replace table core.tema as
+select ordem, tema from staging.cm_temas
+union all select 999, 'Outros';

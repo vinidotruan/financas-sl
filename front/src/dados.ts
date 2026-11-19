@@ -2,7 +2,7 @@
 // no site publicado lê os arquivos JSON que `slf exportar` grava em data/. Troca por configuração:
 // VITE_DADOS=estatico (npm run build:estatico) ou api (padrão).
 import type {
-  Contas, Emenda, Fontes, Fornecedor, FornecedorFicha, Parlamentar, ParlamentarFicha, Rastro, Regra, Sinal,
+  Contas, Emenda, Fontes, Pedidos, Vereador, Fornecedor, FornecedorFicha, Parlamentar, ParlamentarFicha, Rastro, Regra, Sinal,
   SinalDetalhe, Status,
 } from './tipos'
 
@@ -23,6 +23,8 @@ const rota = {
   fornecedores: (): Rota => ({ api: 'api/fornecedores', arquivo: 'fornecedores.json' }),
   fornecedor: (id: string): Rota => ({ api: `api/fornecedores/${id}`, arquivo: `fornecedores/${id}.json` }),
   contas: (): Rota => ({ api: 'api/contas', arquivo: 'contas.json' }),
+  pedidos: (): Rota => ({ api: 'api/pedidos', arquivo: 'pedidos.json' }),
+  vereador: (id: string): Rota => ({ api: `api/vereadores/${id}`, arquivo: `vereadores/${id}.json` }),
 }
 
 export class ErroDados extends Error {
@@ -60,6 +62,8 @@ export const dados = {
   fornecedores: () => buscar<Fornecedor[]>(rota.fornecedores()),
   fornecedor: (id: string) => buscar<FornecedorFicha>(rota.fornecedor(id)),
   contas: () => buscar<Contas>(rota.contas()),
+  pedidos: () => buscar<Pedidos>(rota.pedidos()),
+  vereador: (id: string) => buscar<Vereador>(rota.vereador(id)),
 }
 
 /** Revisão só existe com a API local no modo privado. No site estático ninguém grava nada. */

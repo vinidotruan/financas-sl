@@ -1,0 +1,31 @@
+# Tema de cada pedido dos vereadores, pelo texto da ementa. É uma classificação por palavra-chave,
+# feita assim de propósito: qualquer pessoa consegue ver por que um pedido caiu num tema e corrigir.
+#
+# Como funciona: a ementa vai para minúsculas e cada "padrao" é uma expressão regular procurada nela.
+# A primeira regra que casar, de cima para baixo, decide o tema; a ordem importa. Pedido que não casa
+# com nenhuma fica em "Outros". Mudou uma regra, rode `slf atualizar`.
+
+- tema: Iluminação pública
+  padrao: 'ilumina|l[aâ]mpada|lumin[aá]ria|poste de luz|refletor'
+- tema: Transporte coletivo
+  padrao: 'parada de [oô]nibus|abrigo de passageiro|[oô]nibus|linha de transporte|transporte coletivo'
+- tema: Sinalização e trânsito
+  padrao: 'sinaliza|placa|faixa de (pedestre|seguran)|quebra-mola|redutor de velocidade|lombada|sem[aá]foro|tr[aâ]nsito|estacionamento|rota[tç]'
+- tema: Pavimentação e buracos
+  padrao: 'asfalt|paviment|buraco|recape|cal[cç]amento|patrol|cascalh|saibro|meio-fio|meio fio|cal[cç]ada'
+- tema: Drenagem e esgoto
+  padrao: 'bueiro|boca de lobo|drenagem|esgoto|alagamento|desobstru|pluvial|sarjeta|valo|arroio'
+- tema: Limpeza e capina
+  padrao: 'limpeza|capina|ro[cç]ada|lixo|entulho|varri[cç]|recolhimento|lixeira|container|cont[eê]iner'
+- tema: Poda e árvores
+  padrao: 'poda|[aá]rvore|galho|supress[aã]o vegetal|arboriza'
+- tema: Praças, esporte e lazer
+  padrao: 'pra[cç]a|parque|quadra|academia ao ar livre|brinquedo|playground|campo de futebol|ginásio'
+- tema: Saúde
+  padrao: 'sa[uú]de|\bubs\b|posto de|m[eé]dic|vacina|hospital|farm[aá]cia|consulta'
+- tema: Educação
+  padrao: 'escola|\bemei\b|\bemef\b|creche|educa[cç]'
+- tema: Segurança
+  padrao: 'seguran[cç]a p[uú]blica|guarda municipal|c[aâ]mera|policiamento|videomonitoramento'
+- tema: Animais
+  padrao: 'animal|animais|cachorro|c[aã]es|gato|castra[cç]'

@@ -19,6 +19,7 @@ os.environ["SLF_MODO"] = "privado"
 (HOME / "config").mkdir()
 (HOME / "config" / "ente.yaml").write_text(
     'nome: São Leopoldo\nuf: RS\nibge: 4318705\ncnpj_municipio: "89814693000160"\ninicio: 2024-01-01\n'
+    'camara:\n  sistema: legiflow\n  api: https://api.camara.exemplo\n  site: https://www.camara.exemplo\n'
     'orgaos_pncp:\n  - cnpj: "89814693000160"\n    nome: Prefeitura Municipal de São Leopoldo\n',
     encoding="utf-8",
 )
@@ -69,8 +70,26 @@ def _pncp_contratos(params: dict) -> httpx.Response:
                                      "numeroPagina": 1, "paginasRestantes": 0, "empty": False})
 
 
+def _camara(caminho: str, params: dict) -> httpx.Response:
+    """Imita a API do Legiflow: filtros ano e id_bairro; limit acima de 100 volta ao padrão de 10."""
+    if caminho == "/bairros":
+        return httpx.Response(200, json=_fixture("camara", "bairros"))
+    linhas = _fixture("camara", "proposicoes")
+    if "ano" in params:
+        linhas = [p for p in linhas if str(p["ano"]) == params["ano"]]
+    if "id_bairro" in params:
+        linhas = [p for p in linhas if int(params["id_bairro"]) in p["_bairros"]]
+    limite = int(params.get("limit", 10))
+    limite = limite if limite <= 100 else 10
+    inicio = int(params.get("offset", 0))
+    return httpx.Response(200, json=[{k: v for k, v in p.items() if k != "_bairros"}
+                                     for p in linhas[inicio:inicio + limite]])
+
+
 def responder(request: httpx.Request) -> httpx.Response:
     caminho, params = request.url.path, dict(request.url.params)
+    if request.url.host == "api.camara.exemplo":
+        return _camara(caminho, params)
     if caminho.startswith("/transferenciasespeciais/"):
         return _postgrest(caminho.rsplit("/", 1)[1], params)
     if caminho.startswith("/ords/siconfi/tt/"):

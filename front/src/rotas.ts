@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks'
 
 // Rotas no hash (#/regra/R05): funcionam igual no `slf servir` e num site estático, sem servidor.
-export type Aba = 'sinais' | 'emendas' | 'fichas' | 'contas' | 'fontes'
+export type Aba = 'sinais' | 'emendas' | 'pedidos' | 'fichas' | 'contas' | 'fontes'
 
 export type Rota =
   | { tela: 'sinais' }
@@ -12,6 +12,8 @@ export type Rota =
   | { tela: 'fichas'; lista: 'parlamentares' | 'fornecedores' }
   | { tela: 'parlamentar'; codigo: string }
   | { tela: 'fornecedor'; id: string }
+  | { tela: 'pedidos'; tema?: string }
+  | { tela: 'vereador'; id: string }
   | { tela: 'contas' }
   | { tela: 'fontes' }
 
@@ -25,6 +27,8 @@ export function lerRota(hash: string): Rota {
     case 'fichas': return { tela, lista: arg === 'fornecedores' ? 'fornecedores' : 'parlamentares' }
     case 'parlamentar': return arg ? { tela, codigo: arg } : { tela: 'fichas', lista: 'parlamentares' }
     case 'fornecedor': return arg ? { tela, id: arg } : { tela: 'fichas', lista: 'fornecedores' }
+    case 'pedidos': return arg ? { tela, tema: arg } : { tela }
+    case 'vereador': return arg ? { tela, id: arg } : { tela: 'pedidos' }
     case 'contas': return { tela }
     case 'fontes': return { tela }
     default: return { tela: 'sinais' }
@@ -37,6 +41,7 @@ export function abaDa(rota: Rota): Aba {
     case 'regra': case 'sinal': return 'sinais'
     case 'emenda': return 'emendas'
     case 'parlamentar': case 'fornecedor': return 'fichas'
+    case 'vereador': return 'pedidos'
     default: return rota.tela
   }
 }
@@ -50,6 +55,8 @@ export const link = {
   fichas: (lista: 'parlamentares' | 'fornecedores' = 'parlamentares') => `#/fichas/${lista}`,
   parlamentar: (codigo: string) => `#/parlamentar/${codigo}`,
   fornecedor: (id: string) => `#/fornecedor/${id}`,
+  pedidos: (tema?: string) => (tema ? `#/pedidos/${encodeURIComponent(tema)}` : '#/pedidos'),
+  vereador: (id: number | string) => `#/vereador/${id}`,
   contas: () => '#/contas',
   fontes: () => '#/fontes',
 }

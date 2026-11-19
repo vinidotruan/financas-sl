@@ -264,11 +264,48 @@ front não citam o município. Ver `docs/replicar.md`.
 
 ---
 
+## Pedidos dos vereadores
+
+### D27 · Câmara pelo JSON que o próprio site usa · 19/11/2026 · vale
+
+**Problema.** Quem pede obra, placa, limpeza ou poda à prefeitura são os vereadores, por pedido de
+providência e indicação. A Câmara de São Leopoldo não tem SAPL; o site usa o sistema Legiflow.
+
+**Decisão.** O coletor lê `https://api.camarasaoleopoldo.rs.gov.br/proposicoes`, o mesmo endereço que o
+site da Câmara chama para qualquer visitante, sem login (D01). Conferido ao vivo: filtros `ano` e
+`id_bairro`, página de até 100 (`limit` maior volta ao padrão de 10), sem filtro por espécie. Vem tudo
+por ano e o core separa pedidos de providência e indicações. O endereço fica em `config/ente.yaml`;
+cidade sem Câmara configurada pula a fonte sem erro.
+
+**Onde.** `slf/coletores/camara.py`; `core.pedido`, `core.vereador`, `core.pedido_bairro` em `slf/core.sql`.
+
+### D28 · Tema por palavra-chave, num arquivo legível · 19/11/2026 · vale
+
+**Decisão.** O tema de cada pedido sai de expressões procuradas na ementa, em `slf/temas.yaml`. A
+primeira regra que casa, na ordem do arquivo, decide; sem nenhuma, "Outros". A tela avisa que a
+classificação pode errar.
+
+**Alternativas.** Modelo de linguagem para classificar (melhor em casos ambíguos, mas cada resultado
+fica difícil de explicar e de reproduzir); classificação manual (não escala para milhares de pedidos
+por ano).
+
+### D29 · Coautoria conta para cada um; bairro pelo filtro da API · 19/11/2026 · vale
+
+**Decisão.** Pedido assinado por mais de um vereador conta no ranking de cada um (a tela avisa que a
+soma pode passar do total). O bairro não vem na proposição: vem de consultar a API bairro por bairro.
+Pedido sem bairro identificado aparece contado à parte, não some.
+
+**Limite conhecido.** A API não traz se a prefeitura atendeu o pedido. O painel mostra o que foi
+pedido, não o que foi feito.
+
+---
+
 ## Em aberto
 
 - **Publicação.** Pages aberto em modo público, ou Actions só coleta e o Mac serve em modo privado.
   Decidir antes da tarefa 4.
 - **Persistência no GitHub Actions.** Release fixa, branch de dados ou cache.
 - **dbt-duckdb.** Quando o core passar de uns 40 modelos.
-- **Fontes novas.** Pedidos dos vereadores (Câmara) em andamento; cadastro de CNPJ, sanções, TCE-RS e
-  emendas estaduais nas fases seguintes.
+- **Fontes novas.** Cadastro de CNPJ, sanções, TCE-RS e emendas estaduais nas fases seguintes.
+- **Atendimento dos pedidos.** Ver se a Câmara ou a prefeitura publicam a resposta a cada pedido de
+  providência, para mostrar o que foi pedido e o que foi feito.

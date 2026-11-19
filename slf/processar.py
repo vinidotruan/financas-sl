@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 import duckdb
+import yaml
 
 from . import sinais
 from .config import DB, DB_TMP
@@ -94,7 +95,28 @@ COLUNAS["pn_compras"] = list(_achatar_pncp("compras", [{}])[0].keys())
 COLUNAS["pn_termos"] = list(_achatar_pncp("termos", [{}])[0].keys())
 
 
-PREFIXO = {"transferegov": "tg", "siconfi": "sc", "pncp": "pn"}
+# Câmara: a proposição vem com a lista de proponentes dentro; achatamos em duas tabelas.
+def _achatar_camara(nome: str, linhas: list) -> list:
+    if nome == "proposicoes":
+        return [{
+            "id": p.get("ID"), "ano": p.get("ano"), "numero": p.get("numero"), "especie": p.get("especie"),
+            "sigla_especie": p.get("sigla_especie"), "ementa": p.get("ementa"), "url": p.get("url"),
+            "destinatario": p.get("destinatario"), "atualizado_em": p.get("updated_at"),
+        } for p in linhas]
+    if nome == "autores":
+        return [{"id_proposicao": p.get("ID"), "id_autor": a.get("ID"), "nome": a.get("nome"),
+                 "partido": a.get("partido")}
+                for p in linhas for a in (p.get("proponente") or []) if isinstance(a, dict)]
+    return linhas
+
+
+COLUNAS["cm_proposicoes"] = list(_achatar_camara("proposicoes", [{}])[0].keys())
+COLUNAS["cm_autores"] = ["id_proposicao", "id_autor", "nome", "partido"]
+COLUNAS["cm_bairros"] = ["ID", "nome"]
+COLUNAS["cm_proposicao_bairro"] = ["id_proposicao", "id_bairro"]
+
+PREFIXO = {"transferegov": "tg", "siconfi": "sc", "pncp": "pn", "camara": "cm"}
+ORIGEM_ARQUIVO = {("camara", "autores"): "proposicoes"}  # tabela de staging que sai de outro arquivo
 
 
 def _carregar_tabela(con, tabela: str, arquivo: Path | None, linhas: list | None = None):
@@ -128,13 +150,23 @@ def carregar_staging(con) -> dict:
         arquivos = {p.stem: p for p in pasta.glob("*.json")} if pasta else {}
         for tabela in [t for t in COLUNAS if t.startswith(prefixo + "_")]:
             nome = tabela[len(prefixo) + 1:]
-            arq = arquivos.get(nome)
-            if fonte == "pncp":
+            arq = arquivos.get(ORIGEM_ARQUIVO.get((fonte, nome), nome))
+            if fonte in ("pncp", "camara"):
                 bruto = json.loads(arq.read_text(encoding="utf-8")) if arq else []
-                _carregar_tabela(con, tabela, None, _achatar_pncp(nome, bruto))
+                achatar = _achatar_pncp if fonte == "pncp" else _achatar_camara
+                _carregar_tabela(con, tabela, None, achatar(nome, bruto))
             else:
                 _carregar_tabela(con, tabela, arq)
+    _carregar_temas(con)
     return origem
+
+
+def _carregar_temas(con):
+    """Regras de tema dos pedidos (slf/temas.yaml): configuração versionada, não dado coletado."""
+    temas = yaml.safe_load((Path(__file__).parent / "temas.yaml").read_text(encoding="utf-8"))
+    con.execute("create or replace table staging.cm_temas (ordem integer, tema varchar, padrao varchar)")
+    for i, r in enumerate(temas):
+        con.execute("insert into staging.cm_temas values (?, ?, ?)", [i, r["tema"], r["padrao"]])
 
 
 def _status_fontes(con, origem: dict):

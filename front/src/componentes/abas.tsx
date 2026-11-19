@@ -6,6 +6,8 @@ const ICONES: Record<Aba, preact.JSX.Element> = {
   sinais: <path d="M12 3.5 2.8 19.5h18.4L12 3.5ZM12 10v4.5M12 17.2v.3" />,
   // caminho com dois pontos: o rastro do dinheiro
   emendas: <><circle cx="5.5" cy="6" r="2.5" /><circle cx="18.5" cy="18" r="2.5" /><path d="M8 6h6.5a3.5 3.5 0 0 1 0 7h-5a3.5 3.5 0 0 0 0 7H16" /></>,
+  // prancheta com pedidos
+  pedidos: <><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4" /></>,
   // duas fichas
   fichas: <><rect x="3" y="5" width="13" height="15" rx="2" /><path d="M8 3h11a2 2 0 0 1 2 2v13M6.5 10h6M6.5 14h6" /></>,
   // barras
@@ -17,6 +19,7 @@ const ICONES: Record<Aba, preact.JSX.Element> = {
 const ABAS: { aba: Aba; nome: string; href: string }[] = [
   { aba: 'sinais', nome: 'Sinais', href: link.sinais() },
   { aba: 'emendas', nome: 'Emendas', href: link.emendas() },
+  { aba: 'pedidos', nome: 'Pedidos', href: link.pedidos() },
   { aba: 'fichas', nome: 'Fichas', href: link.fichas() },
   { aba: 'contas', nome: 'Contas', href: link.contas() },
   { aba: 'fontes', nome: 'Fontes', href: link.fontes() },

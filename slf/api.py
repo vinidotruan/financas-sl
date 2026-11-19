@@ -144,6 +144,18 @@ def contratos(q: str | None = None, limite: int = 50):
         return c.contratos(q, limite)
 
 
+@app.get("/api/pedidos")
+def pedidos():
+    with _consulta() as c:
+        return c.pedidos()
+
+
+@app.get("/api/vereadores/{vid}")
+def vereador(vid: str):
+    with _consulta() as c:
+        return _ou_404(c.vereador(vid), "Vereador não encontrado")
+
+
 @app.get("/api/contas")
 def contas():
     with _consulta() as c:
