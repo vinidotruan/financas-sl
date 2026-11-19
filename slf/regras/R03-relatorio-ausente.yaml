@@ -1,22 +1,45 @@
 id: R03
 nome: Relatório de gestão ausente
-versao: 1
+versao: 2
 area: emendas
 severidade: atencao
-base_legal: Portarias do Transferegov e decisões do STF (ADPF 854) sobre prestação de contas
-limiar: prazo do plano de trabalho vencido, com dinheiro transferido e sem relatório final
-pode_ser_normal_se: A API está atrasada em relação ao sistema do Transferegov, ou o prazo foi prorrogado.
+base_legal: >
+  IN-TCU 93/2024 (arts. 3º e 8º), Nota Conjunta TCU/AGU/CGU/MGI 1/2025 e decisões do STF na
+  ADPF 854 sobre prestação de contas das transferências especiais
+limiar: >
+  dinheiro transferido e (a) nenhum relatório de gestão entregue depois de 30/06 do ano seguinte
+  ao repasse (30/06/2025 para repasses anteriores a 17/01/2024), ou (b) prazo do plano de trabalho
+  vencido sem relatório final entregue
+pode_ser_normal_se: >
+  A API está atrasada em relação ao sistema do Transferegov, o prazo foi prorrogado, ou o relatório
+  está em elaboração (a evidência mostra quantos estão). A situação CONCLUIDO_NT_TCU do plano de
+  trabalho indica a dispensa da análise do plano (STF, 24/08/2025), não do relatório de gestão.
 como_verificar: Interface do Transferegov e as listas do TCU e do STF de quem não prestou contas.
 fontes: [transferegov]
 sql: |
+  with base as (
+    select *,
+           case when relatorios_entregues = 0 and prazo_relatorio_parcial < current_date
+                  then prazo_relatorio_parcial
+                when prazo_fim < current_date and not tem_relatorio_final
+                  then prazo_fim end as prazo_vencido,
+           case when relatorios_entregues = 0 and prazo_relatorio_parcial < current_date
+                  then 'nenhum relatório de gestão entregue até o prazo do relatório parcial'
+                when prazo_fim < current_date and not tem_relatorio_final
+                  then 'prazo do plano de trabalho vencido sem relatório final' end as motivo
+    from core.rastro_plano
+    where transferido > 0
+  )
   select codigo_emenda || '/' || id_plano_acao as chave,
          codigo_formatado || ' · ' || parlamentar as titulo,
-         current_date - prazo_fim as valor_observado,
-         struct_pack(prazo_fim := prazo_fim, transferido := transferido,
+         transferido as valor_observado,
+         struct_pack(motivo := motivo, prazo_vencido := prazo_vencido,
+                     dias_em_atraso := current_date - prazo_vencido, transferido := transferido,
+                     relatorios_entregues := relatorios_entregues,
+                     relatorios_em_elaboracao := relatorios_em_elaboracao,
                      ultimo_relatorio := tipo_relatorio, data_relatorio := data_relatorio,
+                     prazo_plano := prazo_fim, situacao_plano_trabalho := situacao_plano_trabalho,
                      id_plano_acao := id_plano_acao) as evidencia,
-         prazo_fim as quando
-  from core.rastro_plano
-  where transferido > 0
-    and prazo_fim < current_date
-    and coalesce(lower(tipo_relatorio), '') not like '%final%'
+         prazo_vencido as quando
+  from base
+  where motivo is not null

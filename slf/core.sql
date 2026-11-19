@@ -10,8 +10,9 @@ select
   cast(id_plano_acao as bigint)                         as id_plano_acao,
   codigo_plano_acao                                     as codigo_plano,
   so_digitos(numero_emenda_parlamentar_plano_acao)      as codigo_emenda,
-  coalesce(codigo_emenda_parlamentar_formatado_plano_acao,
-           cast(numero_emenda_parlamentar_plano_acao as varchar)) as codigo_formatado,
+  -- como o portal da prefeitura mostra: 2026/42710013 (o "formatado" do Transferegov vem com o nome do autor)
+  left(so_digitos(numero_emenda_parlamentar_plano_acao), 4) || '/'
+    || substr(so_digitos(numero_emenda_parlamentar_plano_acao), 5) as codigo_formatado,
   cast(ano_plano_acao as integer)                       as ano,
   situacao_plano_acao                                   as situacao,
   motivo_impedimento_plano_acao                         as motivo_impedimento,
@@ -42,17 +43,16 @@ from ob
 join staging.tg_documento_habil_especial dh on cast(dh.id_dh as varchar) = cast(ob.id_dh as varchar)
 join staging.tg_empenho_especial e on cast(e.id_empenho as varchar) = cast(dh.id_empenho as varchar);
 
+-- Todos os relatórios. Valores reais (18/11/2026): tipo 'Final' ou 'Parcial'; situacao
+-- 'DISPONIBILIZADO' (entregue) ou 'EM_ELABORACAO' (rascunho, ainda não conta como entregue).
 create or replace table core.relatorio_gestao as
-select * exclude (rn) from (
-  select cast(id_plano_acao as bigint) as id_plano_acao,
-         d(data_e_hora_relatorio_gestao_novo) as data,
-         tipo_relatorio_gestao_novo as tipo,
-         situacao_relatorio_gestao_novo as situacao,
-         n(valor_executado_relatorio_gestao_novo) as valor_executado,
-         row_number() over (partition by id_plano_acao
-                            order by d(data_e_hora_relatorio_gestao_novo) desc nulls last) as rn
-  from staging.tg_relatorio_gestao_novo_especial
-) where rn = 1;
+select cast(id_plano_acao as bigint) as id_plano_acao,
+       d(data_e_hora_relatorio_gestao_novo) as data,
+       tipo_relatorio_gestao_novo as tipo,
+       situacao_relatorio_gestao_novo as situacao,
+       coalesce(upper(situacao_relatorio_gestao_novo) = 'DISPONIBILIZADO', false) as entregue,
+       try_cast(valor_executado_relatorio_gestao_novo as double) as valor_executado
+from staging.tg_relatorio_gestao_novo_especial;
 
 create or replace table core.prazo_plano as
 select cast(id_plano_acao as bigint) as id_plano_acao,
@@ -68,16 +68,30 @@ from staging.tg_executor_especial x
 left join staging.tg_meta_especial m on cast(m.id_executor as varchar) = cast(x.id_executor as varchar);
 
 -- Uma linha por plano com o funil que a tela de rastro mostra.
+-- executado_relatorio é null quando não há relatório entregue: sem relatório não é o mesmo que 0%.
+-- prazo_relatorio_parcial: IN-TCU 93/2024 (arts. 3º e 8º) e Nota Conjunta TCU/AGU/CGU/MGI 1/2025:
+-- 30/06 do ano seguinte ao repasse; para repasses anteriores a 17/01/2024, 30/06/2025.
 create or replace table core.rastro_plano as
 select p.*,
        coalesce(t.transferido, 0) as transferido, t.primeira_ob, t.ultima_ob,
        r.valor_executado as executado_relatorio, r.tipo as tipo_relatorio, r.data as data_relatorio,
-       z.inicio as prazo_inicio, z.fim as prazo_fim
+       coalesce(q.relatorios_entregues, 0) as relatorios_entregues,
+       coalesce(q.relatorios_em_elaboracao, 0) as relatorios_em_elaboracao,
+       coalesce(q.tem_final, false) as tem_relatorio_final,
+       case when t.primeira_ob is not null
+            then make_date(greatest(year(t.primeira_ob) + 1, 2025), 6, 30) end as prazo_relatorio_parcial,
+       z.inicio as prazo_inicio, z.fim as prazo_fim, z.situacao as situacao_plano_trabalho
 from core.plano_acao p
 left join (select id_plano_acao, sum(valor) as transferido, min(data_ob) as primeira_ob,
                   max(data_ob) as ultima_ob
            from core.transferencia group by 1) t using (id_plano_acao)
-left join core.relatorio_gestao r using (id_plano_acao)
+left join (select * from core.relatorio_gestao where entregue
+           qualify row_number() over (partition by id_plano_acao order by data desc nulls last) = 1
+          ) r using (id_plano_acao)
+left join (select id_plano_acao, count(*) filter (where entregue) as relatorios_entregues,
+                  count(*) filter (where not entregue) as relatorios_em_elaboracao,
+                  bool_or(entregue and lower(tipo) like '%final%') as tem_final
+           from core.relatorio_gestao group by 1) q using (id_plano_acao)
 left join core.prazo_plano z using (id_plano_acao);
 
 -- ===== Compras (PNCP) =====
@@ -137,3 +151,20 @@ create or replace table core.receita as
 select cast(exercicio as integer) as exercicio, cast(periodo as integer) as periodo, anexo,
        coluna, cod_conta, conta, n(valor) as valor
 from staging.sc_rreo;
+
+-- Despesa com pessoal sobre a RCL, uma linha por quadrimestre, pra tela de Contas.
+-- cod_conta e coluna conferidos nos 14 quadrimestres de 2022 a 2026 (RGF-Anexo 01, Poder Executivo).
+-- Limites da LRF: alerta 48,6%, prudencial 51,3%, máximo 54% (arts. 20, 22 e 59).
+create or replace table core.limite_pessoal as
+select exercicio, periodo,
+       max(valor) filter (where cod_conta = 'ReceitaCorrenteLiquidaLimiteLegal' and coluna = 'Valor') as rcl,
+       max(valor) filter (where cod_conta = 'ReceitaCorrenteLiquidaAjustada' and coluna = 'Valor') as rcl_ajustada,
+       max(valor) filter (where cod_conta = 'DespesaComPessoalTotal' and coluna = 'Valor') as despesa_pessoal,
+       max(valor) filter (where cod_conta = 'DespesaComPessoalTotal' and coluna ilike '% sobre a RCL%') as pct_rcl,
+       max(valor) filter (where cod_conta = 'LimiteDeAlertaDespesaComPessoalTotal' and coluna ilike '% sobre a RCL%') as limite_alerta,
+       max(valor) filter (where cod_conta = 'LimitePrudencialDespesaComPessoalTotal' and coluna ilike '% sobre a RCL%') as limite_prudencial,
+       max(valor) filter (where cod_conta = 'LimiteMaximoDespesaComPessoalTotal' and coluna ilike '% sobre a RCL%') as limite_maximo
+from core.pessoal
+where anexo = 'RGF-Anexo 01'
+group by exercicio, periodo
+having count(*) filter (where cod_conta = 'DespesaComPessoalTotal') > 0;

@@ -19,12 +19,17 @@ def _meses(inicio: date, fim: date):
         atual = prox
 
 
+# Limites conferidos ao vivo em 18/11/2026: tamanhoPagina vai até 500 (1000 dá 400) e a janela
+# entre dataInicial e dataFinal é de no máximo 365 dias (mais que isso dá 422). Mês sem contrato dá 204.
+TAMANHO_PAGINA = 500
+
+
 def _contratos(cli: Cliente, cnpj: str, ini: date, fim: date) -> list:
     linhas, pagina = [], 1
     while True:
         resp = cli.get_json(f"{CONSULTA}/contratos", {
             "dataInicial": ini.strftime("%Y%m%d"), "dataFinal": fim.strftime("%Y%m%d"),
-            "cnpjOrgao": cnpj, "pagina": pagina, "tamanhoPagina": 100}) or {}
+            "cnpjOrgao": cnpj, "pagina": pagina, "tamanhoPagina": TAMANHO_PAGINA}) or {}
         linhas.extend(resp.get("data") or [])
         if not resp.get("paginasRestantes"):
             return linhas
@@ -72,8 +77,12 @@ def coletar() -> Coleta:
 
         termos, falhas = [], 0
         for c in contratos:
-            cnpj = c["orgaoEntidade"]["cnpj"]
-            url = f"{PNCP}/orgaos/{cnpj}/contratos/{c['anoContrato']}/{c['sequencialContrato']}/termos"
+            # ano e sequencial do registro no PNCP, que podem diferir do anoContrato
+            partes = _partes(c.get("numeroControlePNCP"))
+            if not partes:
+                continue
+            cnpj, ano, seq = partes
+            url = f"{PNCP}/orgaos/{cnpj}/contratos/{ano}/{seq}/termos"
             try:
                 for t in cli.get_json(url) or []:
                     t["contrato_id"] = c["numeroControlePNCP"]

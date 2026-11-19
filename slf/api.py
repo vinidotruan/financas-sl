@@ -186,6 +186,7 @@ def fornecedores(limite: int = 30):
 @app.get("/api/contas")
 def contas():
     return {
+        "limite_pessoal": _q("select * from core.limite_pessoal order by exercicio desc, periodo desc"),
         "pessoal": _q("""select exercicio, periodo, coluna, conta, valor from core.pessoal
                          where conta ilike '%DESPESA TOTAL COM PESSOAL%' or conta ilike '%RECEITA CORRENTE L_QUIDA%'
                          order by exercicio desc, periodo desc, conta, coluna"""),
