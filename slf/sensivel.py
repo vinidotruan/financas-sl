@@ -2,7 +2,8 @@
 
 Um lugar só para as regras de privacidade do texto que vai para a API e para o site:
 - CPF nunca inteiro, em nenhum modo (sem_cpf percorre a resposta toda);
-- no modo público, pessoa física (inclui MEI e empresário individual) aparece como "pessoa física";
+- no modo público, pessoa física (inclui MEI e empresário individual) aparece como "pessoa física", e o
+  objeto do contrato dela não aparece (costuma trazer o nome e, às vezes, o endereço);
 - no modo público, o texto do pedido perde o contato de quem pediu (nome, telefone, CPF) e o número da
   casa quando fala de uma casa ou de um morador. O endereço do lugar do serviço (a boca de lobo, o buraco)
   fica, porque sem ele o pedido não se entende.
@@ -17,6 +18,8 @@ PESSOA_FISICA = "pessoa física"
 NOME_OMITIDO = "[nome omitido]"
 CONTATO_OMITIDO = "[contato omitido]"
 NUMERO_OMITIDO = "[nº omitido]"
+# o objeto do contrato de pessoa física costuma trazer o nome dela, às vezes o endereço
+OBJETO_OMITIDO = "objeto omitido (pessoa física)"
 
 # CPF = 11 dígitos seguidos, ou no formato 123.456.789-01, sem letra nem dígito colado (CNPJ tem 14
 # dígitos e o código da emenda, 12; ids em hash como "c89673977497c" não são CPF). Aparece no campo
@@ -33,6 +36,11 @@ def sem_cpf(x):
     if isinstance(x, list):
         return [sem_cpf(v) for v in x]
     return x
+
+
+def titulo_pessoa_fisica(chave: str) -> str:
+    """Título do sinal de contrato com pessoa física: o número do contrato, sem nome nem objeto."""
+    return f"{PESSOA_FISICA.capitalize()} · contrato {chave.rsplit('-', 1)[-1]}"
 
 
 # ===== Texto do pedido =====

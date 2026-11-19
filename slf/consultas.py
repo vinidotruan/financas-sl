@@ -14,7 +14,7 @@ import json
 from datetime import date, datetime
 from decimal import Decimal
 
-from .sensivel import PESSOA_FISICA, limpar_pedido, sem_cpf  # noqa: F401 (sem_cpf é usado pela API e pela exportação)
+from .sensivel import OBJETO_OMITIDO, PESSOA_FISICA, limpar_pedido, sem_cpf, titulo_pessoa_fisica  # noqa: F401 (sem_cpf é usado pela API e pela exportação)
 
 PUBLICOS = ("confirmado", "encaminhado")
 STATUS = ("novo", "em análise", "descartado", "confirmado", "encaminhado")
@@ -82,7 +82,7 @@ class Consulta:
             ev = s["evidencia"]
             if ev.get("pessoa_fisica") or ev.get("tipo_pessoa") == "PF":
                 ev["fornecedor"] = PESSOA_FISICA
-                s["titulo"] = "Pessoa física · " + s["titulo"].split(" · ", 1)[-1]
+                s["titulo"] = titulo_pessoa_fisica(s["chave"])
         return s
 
     def _visivel(self, s: dict) -> bool:
@@ -172,7 +172,7 @@ class Consulta:
         if contratos:
             for c in contratos:
                 if self.publico and c["pessoa_fisica"]:
-                    c.update(fornecedor_id=None, fornecedor_nome=PESSOA_FISICA)
+                    c.update(fornecedor_id=None, fornecedor_nome=PESSOA_FISICA, objeto=OBJETO_OMITIDO)
             lig["contratos"] = contratos
         return lig
 
@@ -273,9 +273,10 @@ class Consulta:
 
     def contratos(self, q: str | None = None, limite: int = 50) -> list[dict]:
         if q and self.publico:
-            # no modo público a busca é só pelo objeto: buscar pelo nome ou CPF confirmaria quem é a pessoa física
-            linhas = self._q("select * from core.contrato where objeto ilike ? order by valor_global desc limit ?",
-                             [f"%{q}%", limite])
+            # no modo público a busca é só pelo objeto e fora dos contratos de pessoa física: buscar pelo nome
+            # (que pode estar no objeto) ou pelo CPF confirmaria quem é a pessoa
+            linhas = self._q("""select * from core.contrato where objeto ilike ? and not pessoa_fisica
+                                order by valor_global desc limit ?""", [f"%{q}%", limite])
         elif q:
             linhas = self._q("""select * from core.contrato
                                 where objeto ilike ? or fornecedor_nome ilike ? or fornecedor_ni = ?
@@ -285,7 +286,7 @@ class Consulta:
         if self.publico:
             for c in linhas:
                 if c["pessoa_fisica"]:
-                    c["fornecedor_nome"], c["fornecedor_ni"] = PESSOA_FISICA, None
+                    c["fornecedor_nome"], c["fornecedor_ni"], c["objeto"] = PESSOA_FISICA, None, OBJETO_OMITIDO
         return sem_cpf(linhas)
 
     def pedidos(self) -> dict:

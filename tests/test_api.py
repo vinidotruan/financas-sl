@@ -63,17 +63,21 @@ def test_publico_so_mostra_sinal_revisado(cliente, publico):
 def test_publico_esconde_pessoa_fisica_e_mei(cliente, publico):
     _confirmar(R08_PF)
     sinal = cliente.get(f"/api/sinais/{R08_PF}").json()
-    assert sinal["titulo"].startswith("Pessoa física · ")
+    assert sinal["titulo"] == "Pessoa física · contrato 000002/2024"
     assert sinal["evidencia"]["fornecedor"] == "pessoa física"
-    assert "FULANO" not in json.dumps(sinal)
+    assert sinal["ligacoes"]["contratos"][0]["objeto"] == "objeto omitido (pessoa física)"
+    assert "FULANO" not in json.dumps(sinal).upper()  # nem no nome do fornecedor, nem no objeto
+    assert "Rua das Flores" not in json.dumps(sinal)
 
     contratos = {c["sequencial"]: c for c in cliente.get("/api/contratos").json()}
     for seq in (2, 4, 5, 6, 7):  # PF, MEI com CPF no fim, MEI no formato novo, MEI só com o nome
         assert contratos[seq]["fornecedor_nome"] == "pessoa física"
         assert contratos[seq]["fornecedor_ni"] is None
+        assert contratos[seq]["objeto"] == "objeto omitido (pessoa física)"
     assert contratos[3]["fornecedor_nome"] == "CONSTRUTORA EXEMPLO SA"
     # buscar pelo nome não confirma quem é a pessoa física
     assert cliente.get("/api/contratos", params={"q": "FULANO"}).json() == []
+    assert cliente.get("/api/contratos", params={"q": "transporte"}).json() == []  # nem pelo objeto
 
     nomes = {f["nome"] for f in cliente.get("/api/fornecedores").json()}
     assert "pessoa física" in nomes
