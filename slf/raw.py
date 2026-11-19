@@ -46,3 +46,26 @@ def ultima_coleta_boa(fonte: str) -> Path | None:
         return None
     boas = sorted(d for d in base.iterdir() if (d / "_OK").exists())
     return boas[-1] if boas else None
+
+
+def podar(manter: int = 3) -> list[Path]:
+    """Apaga coletas antigas de data/raw: mantém as `manter` últimas boas de cada fonte e apaga as
+    incompletas mais velhas que a última boa (tentativas que falharam). Uma incompleta mais nova que a
+    última boa fica, porque pode estar em andamento. Serve para o cache do GitHub Actions não crescer
+    todo dia; nada é editado, só coletas inteiras saem."""
+    import shutil
+
+    removidas: list[Path] = []
+    if not RAW.exists():
+        return removidas
+    for base in sorted(p for p in RAW.iterdir() if p.is_dir()):
+        coletas = sorted(d for d in base.iterdir() if d.is_dir())
+        boas = [d for d in coletas if (d / "_OK").exists()]
+        if not boas:
+            continue
+        ficam = set(boas[-max(manter, 1):])
+        for d in coletas:
+            if d not in ficam and d.name < boas[-1].name:
+                shutil.rmtree(d)
+                removidas.append(d)
+    return removidas

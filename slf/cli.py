@@ -47,6 +47,14 @@ def main(argv=None):
     s.add_argument("--host", default="0.0.0.0")
     s.add_argument("--porta", type=int, default=8765)
     sub.add_parser("status", help="mostra a última coleta de cada fonte e os sinais")
+    e = sub.add_parser("exportar", help="grava um JSON por rota da API, para o site estático")
+    e.add_argument("--modo", choices=("publico", "privado"), default="publico",
+                   help="publico (padrão): o que pode ir para a internet")
+    e.add_argument("--saida", default="site/data", help="pasta de saída (padrão: site/data)")
+    po = sub.add_parser("podar", help="apaga coletas antigas de data/raw, mantendo as N últimas boas de cada fonte")
+    po.add_argument("--manter", type=int, default=3)
+    r = sub.add_parser("revisao-publica", help="gera config/revisao-publica.json (sem notas) para publicar")
+    r.add_argument("--saida", default="config/revisao-publica.json")
     args = p.parse_args(argv)
 
     if args.cmd == "coletar":
@@ -69,6 +77,25 @@ def main(argv=None):
         print(f"No Mac: http://localhost:{args.porta}")
         print(f"No celular, na mesma rede: http://{_ip_local()}:{args.porta}")
         uvicorn.run("slf.api:app", host=args.host, port=args.porta)
+    if args.cmd == "exportar":
+        from pathlib import Path
+
+        from .exportar import exportar
+        contagem = exportar(Path(args.saida), args.modo)
+        print(f"Exportado em {args.saida} (modo {args.modo}): "
+              + ", ".join(f"{k} {v}" for k, v in sorted(contagem.items())))
+    if args.cmd == "podar":
+        from .raw import podar
+        removidas = podar(args.manter)
+        print(f"{len(removidas)} coletas antigas apagadas de data/raw "
+              f"(mantidas as {args.manter} últimas boas por fonte)")
+    if args.cmd == "revisao-publica":
+        from pathlib import Path
+
+        from .config import DATA
+        from .exportar import revisao_publica
+        n = revisao_publica(DATA / "revisao.json", Path(args.saida))
+        print(f"{args.saida}: {n} sinais confirmados ou encaminhados (sem notas)")
     if args.cmd == "status":
         import duckdb
 

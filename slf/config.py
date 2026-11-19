@@ -12,7 +12,9 @@ DATA = ROOT / "data"
 RAW = DATA / "raw"
 DB = DATA / "slf.duckdb"
 DB_TMP = DATA / "slf.novo.duckdb"
-REVISAO = DATA / "revisao.json"
+# status e nota de cada sinal. No GitHub Actions aponta para config/revisao-publica.json
+# (só id e status dos confirmados e encaminhados, sem nota), gerado por `slf revisao-publica`.
+REVISAO = Path(os.environ.get("SLF_REVISAO", DATA / "revisao.json"))
 REGRAS = Path(__file__).resolve().parent / "regras"
 WEB = Path(__file__).resolve().parent / "web"
 # front buildado (npm run build em front/); fica junto do código, não de SLF_HOME

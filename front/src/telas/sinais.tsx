@@ -59,10 +59,10 @@ export function TelaSinais() {
                   ))}
                 </div>
                 {com.length ? com.map((r) => <CartaoRegra key={r.id} r={r} />)
-                  : <p class="vazio">Nenhum sinal nesta área por enquanto.</p>}
+                  : <p class="vazio">{publico ? 'Nenhum sinal revisado nesta área ainda.' : 'Nenhum sinal nesta área por enquanto.'}</p>}
                 {sem.length > 0 && (
                   <section class="secao">
-                    <span class="rotulo">Sem casos hoje</span>
+                    <span class="rotulo">{publico ? 'Regras sem sinal revisado' : 'Sem casos hoje'}</span>
                     <ul class="lista">
                       {sem.map((r) => (
                         <li key={r.id}>

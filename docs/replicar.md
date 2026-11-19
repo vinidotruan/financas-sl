@@ -104,6 +104,27 @@ Aqui o endereço muda, mas o jeito de procurar é o mesmo:
 - **A privacidade.** Máscara de CPF, MEI como pessoa física e modo público valem para qualquer cidade.
 - **A arquitetura.** Raw imutável, última coleta boa, banco trocado só com os testes de dados passando.
 
+### 6. Publicar com o GitHub Actions
+
+O repositório já traz dois workflows:
+
+- `ci.yml` roda lint, testes e o build do front em todo push.
+- `coleta.yml` roda todo dia às 06:10 (horário de Brasília) e também à mão (Actions > coleta > Run
+  workflow). Coleta, monta o banco, exporta em modo público e guarda os dados no cache para o dia
+  seguinte.
+
+Para publicar o site no GitHub Pages:
+
+1. O repositório precisa ser público, no plano gratuito do GitHub.
+2. Settings > Pages > Source: **GitHub Actions**.
+3. Settings > Secrets and variables > Actions > Variables: crie `PUBLICAR_PAGES` com valor `true`.
+4. Para publicar sinais revisados: no seu computador, rode `uv run slf revisao-publica` e faça commit
+   de `config/revisao-publica.json`. Ele leva só id e status dos sinais confirmados ou encaminhados,
+   sem as notas.
+
+As APIs do governo às vezes ficam lentas para máquinas fora do Brasil, como as do GitHub. O workflow
+tem tempo limite de 3 horas e, se uma fonte falhar, usa a última coleta boa dela.
+
 ## Antes de publicar
 
 - [ ] Os três números do passo 3 batem com a fonte original.

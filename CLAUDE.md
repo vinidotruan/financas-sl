@@ -31,6 +31,9 @@ uv run slf status            # última coleta boa por fonte e contagem de sinais
 uv run slf servir            # API + front (site/) em http://localhost:8765 (mostra o IP pro celular)
 SLF_MODO=publico uv run slf servir   # modo público (ver "Regras que não se quebram")
 ./scripts/agendar.sh         # launchd: slf diario todo dia às 06:10
+uv run slf exportar [--modo publico|privado] [--saida site/data]   # um JSON por rota, para o site estático
+uv run slf revisao-publica   # config/revisao-publica.json: id e status dos confirmados, sem notas
+uv run slf podar --manter 2  # apaga coletas antigas de data/raw (o Actions usa para o cache não crescer)
 uv run pytest                # testes sem rede (fixtures por fonte em tests/fixtures/)
 uv run ruff check slf tests
 
@@ -64,6 +67,8 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/sinais.py` | Lê `slf/regras/*.yaml`, roda o SQL de cada regra, guarda histórico e aplica a revisão |
 | `slf/regras/*.yaml` | Uma regra por arquivo: id, nome, versao, area, severidade, base_legal, limiar, pode_ser_normal_se, como_verificar, fontes, sql; opcionais pra tela: `observado` ({rotulo, formato}) e `resumo` (frase com `{campo\|formato}` da evidência) |
 | `slf/consultas.py` | O conteúdo de cada rota e os filtros de privacidade (máscara de CPF, modo público). API e exportação usam o mesmo |
+| `slf/exportar.py` | Exportação estática pelas mesmas consultas da API; apaga a saída antes |
+| `.github/workflows/` | `ci.yml` (lint, testes, build) e `coleta.yml` (coleta diária, cache em `data/`, Pages só com `PUBLICAR_PAGES=true`) |
 | `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido), fina em cima de `consultas.py`; serve `site/` em "/" |
 | `front/` | Vite + Preact + TypeScript. `src/dados.ts` é a camada única (API ou JSON estático, por `VITE_DADOS`); rotas no hash |
 | `slf/web/index.html` | Tela provisória antiga; só aparece se `site/` não foi buildado |

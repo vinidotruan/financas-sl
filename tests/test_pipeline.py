@@ -257,3 +257,18 @@ def test_cidade_sem_camara_configurada_pula(api_falsa, monkeypatch):
 
     monkeypatch.setattr(camara, "ente", lambda: {"inicio": None})
     assert camara.coletar() is None
+
+
+def test_podar_mantem_as_ultimas_boas(tmp_path, monkeypatch):
+    from slf import raw
+
+    monkeypatch.setattr(raw, "RAW", tmp_path)
+    fonte = tmp_path / "pncp"
+    for nome, ok in [("2026-01-01T000000", True), ("2026-01-02T000000", False), ("2026-01-03T000000", True),
+                     ("2026-01-04T000000", True), ("2026-01-05T000000", False)]:
+        (fonte / nome).mkdir(parents=True)
+        if ok:
+            (fonte / nome / "_OK").write_text("ok")
+    raw.podar(manter=2)
+    # fica: as 2 últimas boas e a incompleta mais nova que elas (pode estar em andamento)
+    assert sorted(p.name for p in fonte.iterdir()) == ["2026-01-03T000000", "2026-01-04T000000", "2026-01-05T000000"]

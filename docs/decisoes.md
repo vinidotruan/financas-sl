@@ -316,11 +316,46 @@ pedido, não o que foi feito.
 
 ---
 
+## Publicação
+
+### D31 · Dados entre execuções no cache do Actions, não em release · 19/11/2026 · vale
+
+**Problema.** O runner do GitHub Actions começa vazio. Para o histórico de sinais (primeira vez visto)
+continuar e para valer a "última coleta boa" de uma fonte que falhou, o banco e o raw precisam passar
+de uma execução para outra. O plano original era uma release fixa com o banco como asset.
+
+**Decisão.** `data/` vai para o cache do Actions (`actions/cache`, chave nova a cada execução e
+restauração pela mais recente). O raw do PNCP traz CPF inteiro de fornecedor pessoa física: numa
+release, que fica pública se o repositório ficar público, isso republicaria os CPFs (D03). O cache só é
+lido pelos workflows do próprio repositório.
+
+**Consequência.** O cache some depois de 7 dias sem uso. Com a coleta diária ele se renova; se o
+workflow parar por mais de uma semana, a próxima execução recomeça do zero e perde a data em que cada
+sinal apareceu pela primeira vez.
+
+### D32 · Poda do raw no Actions · 19/11/2026 · vale
+
+**Decisão.** No Actions, `slf podar --manter 2` apaga coletas antigas, mantendo as 2 últimas boas de
+cada fonte, para o cache não crescer todo dia. Nada é editado (D05): só coletas inteiras saem. No Mac
+o raw fica inteiro.
+
+### D33 · Publicar é uma chave, e só em modo público · 19/11/2026 · vale
+
+**Decisão.** O workflow de coleta sempre coleta, monta, exporta e guarda os dados. Publicar no GitHub
+Pages depende da variável de repositório `PUBLICAR_PAGES = true`. O site sai sempre de
+`slf exportar --modo publico`. A revisão vem de `config/revisao-publica.json`, gerado no Mac por
+`slf revisao-publica`, que copia só id e status dos sinais confirmados ou encaminhados, sem nota. A
+exportação apaga a pasta de saída antes, para não sobrar arquivo de sinal que deixou de ser público.
+
+---
+
 ## Em aberto
 
-- **Publicação.** Pages aberto em modo público, ou Actions só coleta e o Mac serve em modo privado.
-  Decidir antes da tarefa 4.
-- **Persistência no GitHub Actions.** Release fixa, branch de dados ou cache.
+- **Repositório público.** O GitHub Pages no plano gratuito exige repositório público. Até lá, o
+  Actions só coleta (D33).
+- **Coleta incremental do PNCP.** Hoje cada execução busca de novo a compra e os termos de todos os
+  contratos (cerca de uma hora). Reaproveitar o que não mudou (pela data de atualização do contrato)
+  cortaria o tempo e os minutos do Actions.
 - **dbt-duckdb.** Quando o core passar de uns 40 modelos.
 - **Fontes novas.** Cadastro de CNPJ, sanções, TCE-RS e emendas estaduais nas fases seguintes.
 - **Atendimento dos pedidos.** Ver se a Câmara ou a prefeitura publicam a resposta a cada pedido de

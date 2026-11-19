@@ -1,0 +1,94 @@
+# Coleta diária, banco, exportação em modo público e (se ligado) publicação no GitHub Pages.
+#
+# Dados entre execuções: ficam no cache do Actions (data/), não numa release. O raw do PNCP traz CPF
+# inteiro de fornecedor pessoa física; uma release ficaria pública se o repositório ficar público, o
+# cache não (só os workflows deste repositório leem). Ver D31 em docs/decisoes.md.
+#
+# Publicação: só acontece com a variável de repositório PUBLICAR_PAGES = true (Settings > Variables).
+# O site sai sempre em modo público, com a revisão de config/revisao-publica.json (sem notas).
+name: coleta
+
+on:
+  schedule:
+    - cron: "10 9 * * *"   # 06:10 em Brasília. O cron do Actions pode atrasar.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      SLF_REVISAO: config/revisao-publica.json
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Dados da última execução (banco e última coleta boa de cada fonte)
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      - run: uv sync --locked
+
+      - name: Coletar e montar o banco
+        run: uv run slf diario
+
+      - name: Podar coletas antigas
+        if: always()
+        run: uv run slf podar --manter 2
+
+      - name: Guardar dados para a próxima execução
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: dados-${{ github.run_id }}
+
+      - name: Front estático
+        working-directory: front
+        run: npm ci && npm run build:estatico
+
+      - name: Exportar em modo público
+        run: uv run slf exportar --modo publico --saida site/data
+
+      - name: Resumo
+        run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run slf status >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v3
+        if: vars.PUBLICAR_PAGES == 'true'
+        with:
+          path: site
+
+  publicar:
+    needs: coletar
+    if: vars.PUBLICAR_PAGES == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
