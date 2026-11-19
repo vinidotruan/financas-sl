@@ -347,14 +347,17 @@ Pages depende da variável de repositório `PUBLICAR_PAGES = true`. O site sai s
 `slf revisao-publica`, que copia só id e status dos sinais confirmados ou encaminhados, sem nota. A
 exportação apaga a pasta de saída antes, para não sobrar arquivo de sinal que deixou de ser público.
 
+**Situação.** Repositório público e site no ar em https://vinidotruan.github.io/financas-sl/ desde
+19/11/2026, por decisão do Ruan. Antes de abrir, o histórico inteiro foi varrido: só CPFs de exemplo,
+nenhum segredo, nada de `data/`. A primeira coleta no GitHub levou cerca de 2 horas (o PNCP responde
+devagar para máquinas fora do Brasil), dentro do limite de 3 horas do workflow.
+
 ---
 
 ## Em aberto
 
-- **Repositório público.** O GitHub Pages no plano gratuito exige repositório público. Até lá, o
-  Actions só coleta (D33).
 - **Coleta incremental do PNCP.** Hoje cada execução busca de novo a compra e os termos de todos os
-  contratos (cerca de uma hora). Reaproveitar o que não mudou (pela data de atualização do contrato)
+  contratos (cerca de 2 horas no GitHub, perto do limite de 3). Reaproveitar o que não mudou (pela data de atualização do contrato)
   cortaria o tempo e os minutos do Actions.
 - **dbt-duckdb.** Quando o core passar de uns 40 modelos.
 - **Fontes novas.** Cadastro de CNPJ, sanções, TCE-RS e emendas estaduais nas fases seguintes.
