@@ -201,7 +201,7 @@ def carregar_staging(con) -> dict:
 def _carregar_fotos(con):
     """Fotos reduzidas em data/fotos (derivadas do raw, refeitas a cada atualizar) e a lista delas em
     staging.fotos, que o core usa para saber quem tem foto. Arquivo que não abre como imagem fica de
-    fora. Nome: vereador-{id}.jpg."""
+    fora. Nome: vereador-{id}.jpg (Câmara municipal), camara-{id}.jpg e senado-{codigo}.jpg (Congresso)."""
     from PIL import Image, ImageOps
 
     from .config import FOTOS
@@ -209,8 +209,8 @@ def _carregar_fotos(con):
     shutil.rmtree(FOTOS, ignore_errors=True)
     FOTOS.mkdir(parents=True)
     chaves = []
-    pasta = ultima_coleta_boa("camara")
-    for arq in sorted(pasta.glob("fotos/*")) if pasta else []:
+    pastas = [p for p in (ultima_coleta_boa("camara"), ultima_coleta_boa("congresso")) if p]
+    for arq in sorted(a for p in pastas for a in p.glob("fotos/*")):
         chave = arq.stem + ".jpg"
         try:
             with Image.open(arq) as img:

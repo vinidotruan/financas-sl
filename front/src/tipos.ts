@@ -128,6 +128,8 @@ export interface Parlamentar {
   uf: string | null
   /** perfil oficial na Câmara dos Deputados ou no Senado */
   link: string | null
+  /** foto oficial reduzida (camara-{id}.jpg, senado-{codigo}.jpg); null fora da UF ou sem foto */
+  foto: string | null
   emendas: number
   planos: number
   indicado: number

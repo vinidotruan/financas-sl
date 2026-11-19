@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, ChipCargo, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipCargo, Fontes, Foto, ListaSinais, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { brl, brlCurto, data, documento, linkPncp, num, pct, VAZIO } from '../formato'
 import { link } from '../rotas'
@@ -36,9 +36,14 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
                   {vis.map((p) => (
                     <li key={p.codigo}>
                       <a href={link.parlamentar(p.codigo)}>
-                        <span class="linha-topo"><span class="titulo">{p.nome} <ChipCargo cargo={p.cargo} /></span><span class="valor">{brlCurto(p.indicado)}</span></span>
-                        <span class="apagado pequeno">
-                          {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'} · {p.planos} {p.planos === 1 ? 'plano' : 'planos'} · {p.primeiro_ano === p.ultimo_ano ? p.primeiro_ano : `${p.primeiro_ano} a ${p.ultimo_ano}`}
+                        <span class="pessoa">
+                          <Foto arquivo={p.foto} nome={p.nome} />
+                          <span class="pessoa-corpo">
+                            <span class="linha-topo"><span class="titulo">{p.nome} <ChipCargo cargo={p.cargo} /></span><span class="valor">{brlCurto(p.indicado)}</span></span>
+                            <span class="apagado pequeno">
+                              {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'} · {p.planos} {p.planos === 1 ? 'plano' : 'planos'} · {p.primeiro_ano === p.ultimo_ano ? p.primeiro_ano : `${p.primeiro_ano} a ${p.ultimo_ano}`}
+                            </span>
+                          </span>
                         </span>
                       </a>
                     </li>
@@ -91,7 +96,7 @@ export function TelaParlamentar({ codigo }: { codigo: string }) {
     <Carregado estado={ficha} oque="o parlamentar">
       {(p) => (
         <>
-          <Topo titulo={p.nome} volta={link.fichas('parlamentares')} sub={
+          <Topo titulo={p.nome} volta={link.fichas('parlamentares')} avatar={<Foto arquivo={p.foto} nome={p.nome} grande />} sub={
             <>
               <ChipCargo cargo={p.cargo} />{p.cargo && ' '}
               {[p.uf, `código de autor ${p.codigo}`].filter(Boolean).join(' · ')}

@@ -225,3 +225,10 @@ def test_foto_do_vereador_na_api(cliente):
     assert r.status_code == 200 and r.headers["content-type"] == "image/jpeg"
     assert cliente.get("/api/fotos/vereador-701.jpg").status_code == 404
     assert cliente.get("/api/fotos/..%2Fslf.duckdb").status_code == 404
+
+
+def test_foto_do_parlamentar_na_api(cliente):
+    assert {p["codigo"]: p["foto"] for p in cliente.get("/api/parlamentares").json()} == {
+        "1234": "camara-1002.jpg", "5678": "senado-9001.jpg"}
+    assert cliente.get("/api/parlamentares/5678").json()["foto"] == "senado-9001.jpg"
+    assert cliente.get("/api/fotos/senado-9001.jpg").status_code == 200

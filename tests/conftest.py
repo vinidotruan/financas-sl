@@ -122,6 +122,15 @@ def responder(request: httpx.Request) -> httpx.Response:
         if caminho == "/2.jpg":
             return httpx.Response(200, content=_jpeg(300, 400), headers={"Content-Type": "image/jpeg"})
         return httpx.Response(404)
+    # fotos do Congresso: só a da deputada 1002 e a da senadora 9001 existem (a do Senado vem grande)
+    if request.url.host == "www.camara.leg.br":
+        if caminho == "/internet/deputado/bandep/1002.jpg":
+            return httpx.Response(200, content=_jpeg(200, 250), headers={"Content-Type": "image/jpeg"})
+        return httpx.Response(404)
+    if request.url.host == "www.senado.leg.br":
+        if caminho == "/senadores/img/fotos-oficiais/senador9001.jpg":
+            return httpx.Response(200, content=_jpeg(900, 1200), headers={"Content-Type": "image/jpeg"})
+        return httpx.Response(404)
     if request.url.host == "api.camara.exemplo":
         return _camara(caminho, params)
     if request.url.host in ("dadosabertos.camara.leg.br", "legis.senado.leg.br"):

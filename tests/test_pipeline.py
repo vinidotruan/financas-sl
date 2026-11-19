@@ -280,6 +280,21 @@ def test_foto_do_vereador(banco):
     reduzida = Image.open(DATA / "fotos" / "vereador-702.jpg")
     assert max(reduzida.size) <= 160 and reduzida.format == "JPEG"
 
+def test_foto_de_deputado_e_senador(banco):
+    """Só baixa foto de quem é da UF da cidade (o SP 1001 fica de fora); a que falha (1003, 9002) não
+    derruba a coleta. A foto do Senado, grande, também sai reduzida."""
+    from PIL import Image
+
+    from slf.config import DATA
+    from slf.raw import ultima_coleta_boa
+
+    con = duckdb.connect(str(banco), read_only=True)
+    fotos = dict(con.execute("select codigo_autor, foto from core.parlamentar").fetchall())
+    assert fotos == {"1234": "camara-1002.jpg", "5678": "senado-9001.jpg"}
+    assert sorted(p.name for p in (ultima_coleta_boa("congresso") / "fotos").iterdir()) == [
+        "camara-1002.jpg", "senado-9001.jpg"]
+    assert max(Image.open(DATA / "fotos" / "senado-9001.jpg").size) <= 160
+
 def test_area_de_cada_plano(banco):
     """A área é a função do orçamento que o Transferegov põe no plano, sem o código. Plano com mais de
     uma função vira "Mais de uma área" (a fonte não diz quanto vai para cada); duas subfunções da mesma

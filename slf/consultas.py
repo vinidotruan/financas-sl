@@ -246,6 +246,7 @@ class Consulta:
     def parlamentares(self) -> list[dict]:
         return sem_cpf(self._q("""select r.codigo_autor as codigo, any_value(r.parlamentar) as nome,
                                      any_value(p.cargo) as cargo, any_value(p.uf) as uf, any_value(p.link) as link,
+                                     any_value(p.foto) as foto,
                                      count(distinct r.codigo_emenda) as emendas, count(*) as planos,
                                      round(sum(r.valor_indicado), 2) as indicado,
                                      round(sum(r.transferido), 2) as transferido,
@@ -331,7 +332,9 @@ class Consulta:
 
     def fotos(self) -> list[str]:
         """Arquivos de foto que alguma tela usa (os únicos que a API serve e a exportação copia)."""
-        return [r["foto"] for r in self._q("select distinct foto from core.vereador where foto is not null order by 1")]
+        return [r["foto"] for r in self._q("""select foto from core.vereador where foto is not null
+                                              union select foto from core.parlamentar where foto is not null
+                                              order by 1""")]
 
     def vereador(self, vid: str) -> dict | None:
         linhas = self._q("select * from core.vereador where cast(id as varchar) = ?", [str(vid)])

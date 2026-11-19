@@ -76,4 +76,5 @@ def test_revisao_publica_sem_nota(tmp_path):
 
 def test_exportacao_leva_as_fotos(banco, tmp_path):
     exportar(tmp_path, "publico")
-    assert sorted(p.name for p in (tmp_path / "fotos").iterdir()) == ["vereador-702.jpg"]
+    assert sorted(p.name for p in (tmp_path / "fotos").iterdir()) == [
+        "camara-1002.jpg", "senado-9001.jpg", "vereador-702.jpg"]

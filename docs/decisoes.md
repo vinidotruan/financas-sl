@@ -380,11 +380,17 @@ liga a foto à pessoa (`vereador-{id}.jpg`). A API serve e a exportação copia 
 tela usa. Quem não tem foto na fonte aparece com as iniciais. Efeito do `?all`: quem já saiu do
 mandato passa a ter cargo e partido da fonte, não do "Ver." no nome.
 
+A coleta `congresso` faz o mesmo para deputados (a `urlFoto` do cadastro) e senadores (a foto oficial,
+`senadores/img/fotos-oficiais/senador{codigo}.jpg`), mas só para quem é da UF da cidade, para não
+baixar as quase mil fotos da Câmara a cada coleta. Autor de emenda de outra UF aparece com as iniciais.
+Nomes: `camara-{id}.jpg` e `senado-{codigo}.jpg`.
+
 **Por que copiar e não apontar para a fonte.** O site não quebra se o endereço mudar, a foto do Senado
 cai de até 330 KB para uns 7 KB e quem visita o site não carrega nada dos sites do governo.
 
 **Dados conferidos em 19/11/2026.** 49 vereadores no cadastro, 46 com foto; dos que assinam
-proposições, 32 têm foto. A API manda pelo menos um endereço com espaço no começo (tratado).
+proposições, 32 têm foto. A API manda pelo menos um endereço com espaço no começo (tratado). No
+Congresso, 54 fotos do RS (3 suplentes do Senado sem foto oficial); os 18 autores de emenda têm foto.
 
 ---
 

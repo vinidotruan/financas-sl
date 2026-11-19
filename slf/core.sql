@@ -66,7 +66,10 @@ pessoa as (
   from staging.cg_senadores where codigo is not null
 )
 select a.codigo_autor, coalesce(g.nome, a.nome_fonte) as nome, p.cargo, p.uf, p.casa, p.id_casa, p.link,
-       a.nome_fonte
+       a.nome_fonte,
+       -- foto oficial reduzida em data/fotos (só da UF da cidade; quem não tem fica com as iniciais)
+       case when p.casa || '-' || p.id_casa || '.jpg' in (select chave from staging.fotos)
+            then p.casa || '-' || p.id_casa || '.jpg' end as foto
 from autor a
 left join grafia g on chave_nome(g.nome) = chave_nome(a.nome_fonte)
 left join pessoa p on p.casa = g.casa and p.id_casa = g.id_casa
