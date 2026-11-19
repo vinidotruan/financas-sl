@@ -6,6 +6,7 @@ import '@fontsource/public-sans/latin-600.css'
 import '@fontsource/ibm-plex-mono/latin-400.css'
 import '@fontsource/ibm-plex-mono/latin-500.css'
 import '@fontsource/ibm-plex-mono/latin-600.css'
+import '../src/tokens.css'
 import '../src/estilo.css'
 import type { Preview } from '@storybook/preact-vite'
 

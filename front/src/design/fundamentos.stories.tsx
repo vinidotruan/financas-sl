@@ -4,31 +4,32 @@ import { Amostra, Grupo } from './Amostra'
 const meta: Meta = { title: 'Fundamentos', parameters: { layout: 'padded' } }
 export default meta
 
-/** As cores de hoje, como estão em estilo.css. Troque o tema na barra de cima para ver as duas versões. */
+/** As cores do painel (tokens.css), por função. Visual sóbrio: cinza na base, cor só com motivo.
+ *  Troque o tema na barra de cima para ver as duas versões. */
 export const Cores: StoryObj = {
   render: () => (
     <>
-      <Grupo titulo="Superfícies e texto">
+      <Grupo titulo="Neutros: tudo o que não precisa chamar atenção">
         <Amostra token="--fundo" nota="fundo da página" />
         <Amostra token="--superficie" nota="cartões e listas" />
         <Amostra token="--linha" nota="bordas" />
         <Amostra token="--texto" />
         <Amostra token="--apagado" nota="texto de apoio" />
-        <Amostra token="--neutro-suave" nota="chip neutro, trilho da barra" />
+        <Amostra token="--neutro-suave" nota="chip neutro, trilho da barra, caixa vazia" />
       </Grupo>
-      <Grupo titulo="Destaque">
-        <Amostra token="--destaque" nota="links, barras, filtro ativo" />
+      <Grupo titulo="Destaque: o número principal da tela, links e filtro ativo">
+        <Amostra token="--destaque" nota="número principal, links, barras" />
         <Amostra token="--destaque-suave" />
       </Grupo>
-      <Grupo titulo="Estados dos sinais">
+      <Grupo titulo="Estados dos sinais: reservados, sempre com rótulo">
         <Amostra token="--alto" />
         <Amostra token="--alto-suave" />
         <Amostra token="--atencao" />
         <Amostra token="--atencao-suave" />
-        <Amostra token="--info" nota="baixo; também chip de fonte" />
-        <Amostra token="--info-suave" />
+        <Amostra token="--baixo" />
+        <Amostra token="--baixo-suave" />
       </Grupo>
-      <Grupo titulo="Gráficos">
+      <Grupo titulo="Gráficos: categorias, validadas para daltonismo">
         <Amostra token="--s1" />
         <Amostra token="--s2" />
         <Amostra token="--s3" />

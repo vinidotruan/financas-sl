@@ -1,0 +1,53 @@
+/* Variáveis de design do painel (D39). Visual sóbrio: base cinza neutra e cor só com motivo.
+   Cada cor tem uma função; o tema escuro redefine os mesmos nomes. Contraste de texto conferido nos dois
+   temas (mínimo 4,5:1). Os componentes leem só daqui: nada de cor solta no estilo. */
+:root {
+  /* neutros: tudo o que não precisa chamar atenção */
+  --fundo: #f6f7f8;
+  --superficie: #ffffff;
+  --linha: #e1e3e6;
+  --texto: #17191c;
+  --apagado: #5d636b;          /* texto de apoio: 6,1:1 */
+  --neutro-suave: #edeef0;     /* chip neutro, trilho de barra, caixa vazia */
+
+  /* destaque: o número principal da tela, links, filtro ativo, barras de ranking */
+  --destaque: #0a7a52;         /* 5,4:1 */
+  --destaque-suave: #e6f2ee;
+
+  /* estados dos sinais: reservados, sempre com rótulo */
+  --alto: #b42318;
+  --alto-suave: #fde8e7;
+  --atencao: #b54708;
+  --atencao-suave: #fdefe3;
+  --baixo: #475467;
+  --baixo-suave: #eaecf0;
+
+  /* gráficos: paleta categórica validada para daltonismo; "outras" em cinza */
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s-outras: #8c939a;
+
+  --f-titulo: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-texto: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --altura-abas: 62px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fundo: #141517; --superficie: #1c1e21; --linha: #2e3135; --texto: #ecedef; --apagado: #a2a7ae;
+    --neutro-suave: #2a2d31;
+    --destaque: #3dd68c; --destaque-suave: #213830;
+    --alto: #f59a8f; --alto-suave: #3a1b19; --atencao: #f2b37a; --atencao-suave: #3a2614;
+    --baixo: #b3bccb; --baixo-suave: #262b33;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s-outras: #6b7178;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --fundo: #141517; --superficie: #1c1e21; --linha: #2e3135; --texto: #ecedef; --apagado: #a2a7ae;
+  --neutro-suave: #2a2d31;
+  --destaque: #3dd68c; --destaque-suave: #213830;
+  --alto: #f59a8f; --alto-suave: #3a1b19; --atencao: #f2b37a; --atencao-suave: #3a2614;
+  --baixo: #b3bccb; --baixo-suave: #262b33;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s-outras: #6b7178;
+  color-scheme: dark;
+}

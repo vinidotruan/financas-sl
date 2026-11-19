@@ -1,43 +1,5 @@
 /* Celular primeiro: uma coluna de até 720px, cabeçalho preso no topo e abas presas embaixo.
-   Paleta e fontes do desenho (opção C). Cores só por token; o tema escuro redefine os tokens. */
-:root {
-  --fundo: #f4f7f5;
-  --superficie: #ffffff;
-  --texto: #17211d;
-  --apagado: #56665f;
-  --linha: #d6dfda;
-  --destaque: #1d6b58;
-  --alto: #a3301d;
-  --atencao: #8f5a00;
-  --info: #2c5a88;
-  --destaque-suave: color-mix(in srgb, var(--destaque) 12%, var(--superficie));
-  --alto-suave: color-mix(in srgb, var(--alto) 11%, var(--superficie));
-  --atencao-suave: color-mix(in srgb, var(--atencao) 12%, var(--superficie));
-  --info-suave: color-mix(in srgb, var(--info) 12%, var(--superficie));
-  --neutro-suave: color-mix(in srgb, var(--apagado) 10%, var(--superficie));
-  --f-titulo: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --f-texto: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --altura-abas: 62px;
-  /* fatias da pizza: paleta categórica validada (daltonismo e contraste) contra --superficie */
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s-outras: #a3aea9;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --fundo: #111714; --superficie: #18201c; --texto: #e3eae6; --apagado: #9bada5; --linha: #2b3732;
-    --destaque: #5fc3a5; --alto: #f29482; --atencao: #e6ad47; --info: #92bae8;
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s-outras: #5f6d67;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --fundo: #111714; --superficie: #18201c; --texto: #e3eae6; --apagado: #9bada5; --linha: #2b3732;
-  --destaque: #5fc3a5; --alto: #f29482; --atencao: #e6ad47; --info: #92bae8;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s-outras: #5f6d67;
-  color-scheme: dark;
-}
-
+   As cores, fontes e medidas vêm de tokens.css (D39); aqui só os componentes. */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -141,11 +103,11 @@ a.cartao { color: inherit; text-decoration: none; }
 a.cartao:hover { border-color: var(--destaque); }
 .faixa { border-left: 4px solid var(--atencao); }
 .faixa.alto { border-left-color: var(--alto); }
-.faixa.baixo { border-left-color: var(--info); }
+.faixa.baixo { border-left-color: var(--baixo); }
 .faixa.zero { border-left-color: var(--linha); }
 .sev { font-family: var(--f-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--atencao); }
 .sev.alto { color: var(--alto); }
-.sev.baixo { color: var(--info); }
+.sev.baixo { color: var(--baixo); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
@@ -154,13 +116,13 @@ a.cartao:hover { border-color: var(--destaque); }
   line-height: 1; padding: 5px 8px; border-radius: 999px; white-space: nowrap;
   background: var(--neutro-suave); color: var(--apagado);
 }
-.chip.fonte { background: var(--info-suave); color: var(--info); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
+.chip.fonte { background: var(--neutro-suave); color: var(--apagado); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
 .chip.alto { background: var(--alto-suave); color: var(--alto); }
 .chip.atencao { background: var(--atencao-suave); color: var(--atencao); }
 .chip.ok { background: var(--destaque-suave); color: var(--destaque); }
 /* cargo de quem assina ou indica: contorno em vez de fundo, para não parecer status de sinal */
 .chip.cargo {
-  background: transparent; color: var(--destaque); box-shadow: inset 0 0 0 1px currentColor;
+  background: transparent; color: var(--texto); box-shadow: inset 0 0 0 1px var(--linha);
   font-family: var(--f-texto); font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
   padding: 3px 7px; vertical-align: 1px;
 }
@@ -175,7 +137,7 @@ a.cartao:hover { border-color: var(--destaque); }
 .linha-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .linha-topo > :first-child { min-width: 0; }
 .valor { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
-.valor-grande { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 24px; line-height: 1.15; }
+.valor-grande { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 24px; line-height: 1.15; color: var(--destaque); }
 
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .trio .cartao { padding: 10px 12px; gap: 2px; }
@@ -233,7 +195,7 @@ a.cartao:hover { border-color: var(--destaque); }
 .botao:disabled { opacity: 0.55; cursor: default; }
 
 .aviso { background: var(--atencao-suave); border-radius: 10px; padding: 12px 14px; font-size: 14px; display: grid; gap: 4px; }
-.aviso.info { background: var(--info-suave); }
+.aviso.info { background: var(--neutro-suave); }
 .vazio { color: var(--apagado); background: var(--neutro-suave); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
 
 /* passos do rastro */
