@@ -3,8 +3,29 @@ ibge: 4318705
 cnpj_municipio: "89814693000160"
 inicio: 2022-01-01
 
-# Órgãos cujas compras entram no PNCP. Adicione a Fundação Hospital Centenário
-# e as outras fundações e autarquias: o CNPJ aparece na página do órgão em pncp.gov.br.
+# Órgãos cujas compras entram no PNCP. CNPJs conferidos em 18/11/2026 no cadastro do PNCP
+# (/api/pncp/v1/orgaos/{cnpj}/unidades): todas as unidades ficam em São Leopoldo.
 orgaos_pncp:
   - cnpj: "89814693000160"
     nome: Prefeitura Municipal de São Leopoldo
+  - cnpj: "92931245000150"
+    nome: Fundação Hospital Centenário
+  - cnpj: "50144885000170"
+    nome: Fundação Municipal de Saúde de São Leopoldo
+  - cnpj: "88368386000130"
+    nome: SEMAE (Serviço Municipal de Água e Esgotos)
+  - cnpj: "88369426000168"
+    nome: Câmara Municipal de São Leopoldo
+
+# Sem nenhuma unidade cadastrada no PNCP em 18/11/2026, então nunca publicaram nada lá.
+# Descomente se começarem a publicar (cada órgão custa umas 60 chamadas por coleta).
+#  - cnpj: "16814479000130"
+#    nome: Fundação Centro de Eventos São Leopoldo
+#  - cnpj: "89814693000240"
+#    nome: Município de São Leopoldo (filial 0002)
+#  - cnpj: "89814693000321"
+#    nome: Município de São Leopoldo (filial 0003)
+#  - cnpj: "89814693000402"
+#    nome: Município de São Leopoldo (filial 0004)
+#  - cnpj: "89814693000593"
+#    nome: Município de São Leopoldo (filial 0005)
