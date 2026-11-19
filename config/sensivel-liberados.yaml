@@ -1,0 +1,6 @@
+# Falsos positivos da conferência de dados sensíveis (`slf conferir`, D40), aprovados pelo Ruan.
+# A chave são os 12 primeiros caracteres do sha1 do texto, como o `slf conferir` mostra. Se o texto
+# mudar na fonte, a chave muda e a conferência volta a mostrar o trecho, para ser olhado de novo.
+liberados:
+  - chave: d45c3d33911c
+    motivo: número de série de equipamento no formato de CPF, em contrato de empresa (fornecedor cbf26434db4d)

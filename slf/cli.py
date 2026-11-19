@@ -54,6 +54,10 @@ def main(argv=None):
     e.add_argument("--saida", default="site/data", help="pasta de saída (padrão: site/data)")
     po = sub.add_parser("podar", help="apaga coletas antigas de data/raw, mantendo as N últimas boas de cada fonte")
     po.add_argument("--manter", type=int, default=3)
+    cf = sub.add_parser("conferir", help="procura dado sensível nos JSON exportados, antes de publicar (D40)")
+    cf.add_argument("--pasta", default="site/data", help="pasta exportada (padrão: site/data)")
+    cf.add_argument("--liberados", default="config/sensivel-liberados.yaml",
+                    help="falsos positivos aprovados, pela chave (padrão: config/sensivel-liberados.yaml)")
     r = sub.add_parser("revisao-publica", help="gera config/revisao-publica.json (sem notas) para publicar")
     r.add_argument("--saida", default="config/revisao-publica.json")
     args = p.parse_args(argv)
@@ -90,6 +94,16 @@ def main(argv=None):
         removidas = podar(args.manter)
         print(f"{len(removidas)} coletas antigas apagadas de data/raw "
               f"(mantidas as {args.manter} últimas boas por fonte)")
+    if args.cmd == "conferir":
+        from pathlib import Path
+
+        from .sensivel import conferir, ler_liberados
+        achados = conferir(Path(args.pasta), ler_liberados(Path(args.liberados)))
+        for a in achados:
+            print(f"{a.regra}: {a.arquivo} {a.caminho} (chave {a.chave}) …{a.trecho}…")
+        print(f"{len(achados)} trechos parecem dado sensível em {args.pasta}." if achados
+              else f"Nada parece dado sensível em {args.pasta}.")
+        sys.exit(1 if achados else 0)
     if args.cmd == "revisao-publica":
         from pathlib import Path
 

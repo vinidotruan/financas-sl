@@ -12,7 +12,13 @@ Quem decide se uma pessoa física é MEI é o core.sql (pela forma do nome); aqu
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import re
+from dataclasses import dataclass
+from pathlib import Path
+
+import yaml
 
 PESSOA_FISICA = "pessoa física"
 NOME_OMITIDO = "[nome omitido]"
@@ -54,8 +60,9 @@ _TELEFONE = re.compile(r"\(\d{2}\)\s?9?\d{4}-?\d{4}(?!\d)|(?<![\d/.-])9\d{4}-\d{
 _CPF_MASCARADO = re.compile(r"\*{3}\.\d{3}\.\d{3}-\*{2}")
 
 # o texto fala de uma casa ou de quem mora nela: aí o número do endereço identifica a pessoa. Não contam
-# lugar público ("casa de bombas", "Casa do Imigrante") nem "moradores" no plural, que é a comunidade.
-_CASA = re.compile(r"\b(casa(?!\s+(?:de\s+bombas|(?-i:d[oa]s?\s+[A-ZÁÉÍÓÚ])))|resid[eê]ncia|morador|moradora"
+# lugar público ("casa de bombas", "Casa do Imigrante", "Casa de Passagem") nem "moradores" no plural,
+# que é a comunidade.
+_CASA = re.compile(r"\b(casa(?!\s+(?:de\s+bombas|(?-i:d[eoa]s?\s+[A-ZÁÉÍÓÚ])))|resid[eê]ncia|morador|moradora"
                    r"|residente)\b", re.I)
 _NUMERO_COM_ROTULO = re.compile(r"\b(?:n[º°;]\.?|nro\.?|n[úu]mero)\s*\d+(?:\.\d{3})*(?![\d/])", re.I)
 _CASA_NUMERO = re.compile(r"\b(casa)\s+\d+(?![\d/])", re.I)
@@ -76,5 +83,95 @@ def limpar_pedido(texto: str | None) -> str | None:
     if _CASA.search(t):
         t = _NUMERO_COM_ROTULO.sub(NUMERO_OMITIDO, t)
         t = _CASA_NUMERO.sub(lambda m: f"{m[1]} {NUMERO_OMITIDO}", t)
-        t = _LOGRADOURO_NUMERO.sub(lambda m: f"{m[1]}{m[2]}{NUMERO_OMITIDO}", t)
+        # de novo até parar: "Rua X 5 (Vila Y) 47" tem dois números para a mesma rua
+        for _ in range(3):
+            antes, t = t, _LOGRADOURO_NUMERO.sub(lambda m: f"{m[1]}{m[2]}{NUMERO_OMITIDO}", t)
+            if t == antes:
+                break
     return t
+
+
+# ===== Conferência do que vai para o site =====
+# Última barreira: varre os arquivos exportados atrás do que as regras acima deveriam ter tirado. O
+# relatório vai para o log do GitHub, que é público, então mostra só a forma do trecho (dígitos viram #
+# e nomes viram iniciais) e uma chave: o sha1 do texto, usada na lista de falsos positivos liberados.
+
+_CPF_INTEIRO = _CPF
+_MEI_NOVO = re.compile(r"^\s*\d{2}\.?\d{3}\.?\d{3}\s+[^\d\s]")
+_ROTULO_CONTATO = re.compile(r"\b(solicitante|requerente|contato|telefone|fone|celular|whatsapp)\s*:(?!\s*\[)", re.I)
+_NUMERO_DE_CASA = (_NUMERO_COM_ROTULO, _CASA_NUMERO, _LOGRADOURO_NUMERO)
+
+
+@dataclass(frozen=True)
+class Achado:
+    arquivo: str
+    caminho: str
+    regra: str
+    trecho: str
+    chave: str
+
+
+def _forma(texto: str, ini: int, fim: int) -> str:
+    """O trecho em volta do achado sem o dado: dígitos viram # e palavras com maiúscula, iniciais."""
+    pedaço = texto[max(0, ini - 40): fim + 40]
+    pedaço = re.sub(r"\d", "#", pedaço)
+    return re.sub(r"\b([A-ZÀ-Ú])[A-Za-zÀ-ú]+", r"\1.", pedaço)
+
+
+def _regras(texto: str, caminho: str):
+    m = _CPF_INTEIRO.search(texto)
+    if m:
+        yield "CPF inteiro", m
+    m = _CPF_MASCARADO.search(texto)
+    if m:
+        yield "CPF mascarado", m
+    m = _MEI_NOVO.search(texto)
+    if m:
+        yield "MEI com o nome do dono", m
+    m = _ROTULO_CONTATO.search(texto)
+    if m:
+        yield "contato de quem pediu", m
+    m = _TELEFONE.search(texto)
+    if m:
+        yield "telefone", m
+    # casa de morador só no texto do pedido, que é onde a limpeza atua; no objeto de contrato de empresa,
+    # "a casa a ser locada" é um prédio alugado para serviço público
+    if caminho.endswith("ementa") and _CASA.search(texto):
+        for rx in _NUMERO_DE_CASA:
+            m = rx.search(texto)
+            if m:
+                yield "número da casa de morador", m
+                break
+
+
+def _textos(dado, caminho: str = ""):
+    if isinstance(dado, str):
+        yield caminho, dado
+    elif isinstance(dado, dict):
+        for k, v in dado.items():
+            yield from _textos(v, f"{caminho}.{k}" if caminho else k)
+    elif isinstance(dado, list):
+        for i, v in enumerate(dado):
+            yield from _textos(v, f"{caminho}[{i}]")
+
+
+def conferir(pasta: Path, liberados: set[str] | frozenset[str] = frozenset()) -> list[Achado]:
+    """Tudo o que parece dado sensível nos JSON da pasta, menos o que foi liberado pela chave."""
+    achados = []
+    for arq in sorted(pasta.rglob("*.json")):
+        nome = arq.relative_to(pasta).as_posix()
+        for caminho, texto in _textos(json.loads(arq.read_text(encoding="utf-8"))):
+            chave = hashlib.sha1(texto.encode("utf-8")).hexdigest()[:12]
+            if chave in liberados:
+                continue
+            for regra, m in _regras(texto, caminho):
+                achados.append(Achado(nome, caminho, regra, _forma(texto, m.start(), m.end()), chave))
+    return achados
+
+
+def ler_liberados(arquivo: Path) -> set[str]:
+    """Chaves aprovadas como falso positivo (config/sensivel-liberados.yaml)."""
+    if not arquivo.exists():
+        return set()
+    dado = yaml.safe_load(arquivo.read_text(encoding="utf-8")) or {}
+    return {str(item["chave"]) for item in dado.get("liberados") or []}

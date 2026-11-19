@@ -34,6 +34,7 @@ SLF_MODO=publico uv run slf servir   # modo público (ver "Regras que não se qu
 ./scripts/agendar.sh         # launchd: slf diario todo dia às 06:10
 uv run slf exportar [--modo publico|privado] [--saida site/data]   # um JSON por rota, para o site estático
 uv run slf revisao-publica   # config/revisao-publica.json: id e status dos confirmados, sem notas
+uv run slf conferir [--pasta site/data]   # procura dado sensível no export (D40); falsos positivos em config/sensivel-liberados.yaml
 uv run slf podar --manter 2  # apaga coletas antigas de data/raw (o Actions usa para o cache não crescer)
 uv run pytest                # testes sem rede (fixtures por fonte em tests/fixtures/)
 uv run ruff check slf tests
