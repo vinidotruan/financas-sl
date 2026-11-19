@@ -1,6 +1,7 @@
 """Coleta nas fixtures -> raw -> staging -> core -> testes de dados -> sinais."""
 from __future__ import annotations
 
+import collections
 import hashlib
 import json
 import shutil
@@ -137,6 +138,36 @@ def test_uma_fonte_falhar_nao_para_as_outras(api_falsa, monkeypatch):
     processar.atualizar()
     assert _um(DB, "select coleta from core.fonte where fonte = 'siconfi'") == (None,)
     assert _um(DB, "select count(*) from core.plano_acao") == (4,)
+
+
+def test_pncp_tenta_de_novo_e_registra_o_que_falhou(api_falsa, monkeypatch):
+    import httpx
+    from conftest import responder
+
+    import slf.http
+    from slf.coletores import pncp
+
+    monkeypatch.setattr(pncp.time, "sleep", lambda s: None)
+    vezes = collections.Counter()
+
+    def instavel(request):
+        caminho = request.url.path
+        vezes[caminho] += 1
+        if caminho.endswith("/compras/2024/13") and vezes[caminho] == 1:
+            return httpx.Response(404)  # falha uma vez e volta na segunda tentativa
+        if caminho.endswith("/compras/2024/12"):
+            return httpx.Response(404)  # falha sempre
+        return responder(request)
+
+    monkeypatch.setattr(slf.http.httpx, "Client",
+                        lambda **kw: httpx._client.Client(transport=httpx.MockTransport(instavel), **kw))
+    col = pncp.coletar()
+    compras = json.loads((col.dir / "compras.json").read_text(encoding="utf-8"))
+    assert {c["sequencialCompra"] for c in compras} == {10, 11, 13}
+    falhas = json.loads((col.dir / "falhas.json").read_text(encoding="utf-8"))
+    assert [(f["etapa"], f["chave"]) for f in falhas] == [("compra", "89814693000160-1-000012/2024")]
+    assert falhas[0]["erro"].startswith("HTTPStatusError")
+    assert (col.dir / "_OK").exists()
 
 
 def test_coleta_sem_ok_e_ignorada(banco):

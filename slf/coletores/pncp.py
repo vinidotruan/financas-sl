@@ -1,6 +1,7 @@
 """PNCP: contratos, a compra de origem de cada um e os termos aditivos. API aberta."""
 from __future__ import annotations
 
+import time
 from datetime import date, timedelta
 
 from ..config import ente
@@ -46,6 +47,29 @@ def _partes(numero_controle: str):
         return None
 
 
+def _cada_um(chaves: list, buscar, pausa_antes_de_repetir: float = 30) -> tuple[list, list]:
+    """Chama buscar(chave) para cada chave. As que falham (já depois do retry do cliente) ganham
+    uma segunda tentativa no fim, quando a API costuma ter se recuperado. Devolve (linhas, falhas)."""
+    linhas, falhas = [], []
+    for chave in chaves:
+        if not _partes(chave):
+            continue
+        try:
+            linhas += buscar(chave)
+        except Exception:
+            falhas.append(chave)
+    if not falhas:
+        return linhas, []
+    time.sleep(pausa_antes_de_repetir)
+    restantes = []
+    for chave in falhas:
+        try:
+            linhas += buscar(chave)
+        except Exception as e:
+            restantes.append({"chave": chave, "erro": f"{type(e).__name__}: {e}"[:300]})
+    return linhas, restantes
+
+
 def coletar() -> Coleta:
     cfg = ente()
     col = Coleta("pncp")
@@ -60,37 +84,31 @@ def coletar() -> Coleta:
         contratos = list({c["numeroControlePNCP"]: c for c in contratos}.values())
         col.salvar("contratos", contratos, f"{CONSULTA}/contratos")
 
-        compras, falhas = [], 0
-        for chave in sorted({c.get("numeroControlePncpCompra") for c in contratos} - {None}):
-            partes = _partes(chave)
-            if not partes:
-                continue
-            cnpj, ano, seq = partes
-            try:
-                compra = cli.get_json(f"{CONSULTA}/orgaos/{cnpj}/compras/{ano}/{seq}")
-                if compra:
-                    compras.append(compra)
-            except Exception:
-                falhas += 1
-        col.salvar("compras", compras, f"{CONSULTA}/orgaos/{{cnpj}}/compras/{{ano}}/{{seq}}")
-        print(f"  pncp: {len(compras)} compras ({falhas} falhas)")
+        def buscar_compra(chave):
+            cnpj, ano, seq = _partes(chave)
+            compra = cli.get_json(f"{CONSULTA}/orgaos/{cnpj}/compras/{ano}/{seq}")
+            return [compra] if compra else []
 
-        termos, falhas = [], 0
-        for c in contratos:
+        def buscar_termos(chave):
             # ano e sequencial do registro no PNCP, que podem diferir do anoContrato
-            partes = _partes(c.get("numeroControlePNCP"))
-            if not partes:
-                continue
-            cnpj, ano, seq = partes
-            url = f"{PNCP}/orgaos/{cnpj}/contratos/{ano}/{seq}/termos"
-            try:
-                for t in cli.get_json(url) or []:
-                    t["contrato_id"] = c["numeroControlePNCP"]
-                    termos.append(t)
-            except Exception:
-                falhas += 1
+            cnpj, ano, seq = _partes(chave)
+            termos = cli.get_json(f"{PNCP}/orgaos/{cnpj}/contratos/{ano}/{seq}/termos") or []
+            for t in termos:
+                t["contrato_id"] = chave
+            return termos
+
+        chaves_compra = sorted({c.get("numeroControlePncpCompra") for c in contratos} - {None})
+        compras, falhas_compras = _cada_um(chaves_compra, buscar_compra)
+        col.salvar("compras", compras, f"{CONSULTA}/orgaos/{{cnpj}}/compras/{{ano}}/{{seq}}")
+        print(f"  pncp: {len(compras)} compras ({len(falhas_compras)} falhas)")
+
+        termos, falhas_termos = _cada_um([c["numeroControlePNCP"] for c in contratos], buscar_termos)
         col.salvar("termos", termos, f"{PNCP}/orgaos/{{cnpj}}/contratos/{{ano}}/{{seq}}/termos")
-        print(f"  pncp: {len(termos)} termos aditivos ({falhas} falhas)")
+        print(f"  pncp: {len(termos)} termos aditivos ({len(falhas_termos)} falhas)")
+
+        # o que falhou mesmo na segunda tentativa fica registrado na coleta, com o motivo
+        col.salvar("falhas", [{"etapa": "compra", **f} for f in falhas_compras]
+                   + [{"etapa": "termos", **f} for f in falhas_termos])
         col.concluir()
     finally:
         cli.fechar()

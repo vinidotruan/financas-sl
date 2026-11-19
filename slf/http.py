@@ -27,9 +27,12 @@ class Cliente:
     def get_json(self, url: str, params: dict | None = None):
         time.sleep(self.pausa)
         r = self.http.get(url, params=params)
-        if r.status_code == 204 or not r.content:
-            return None
+        if r.status_code == 204:
+            return None  # "sem dados" de verdade (o PNCP responde assim para mês ou contrato sem nada)
+        # o status vem antes do corpo vazio: um 404 ou 500 sem corpo é erro, não "sem dados"
         r.raise_for_status()
+        if not r.content:
+            return None
         return r.json()
 
     def fechar(self):
