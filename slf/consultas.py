@@ -93,7 +93,8 @@ class Consulta:
                                 o.valor_observado, o.quando, o.primeira_vez, o.ultima_vez, o.ativo, o.status,
                                 o.nota, o.evidencia
                              from sinais.ocorrencia o join sinais.regra r on r.id = o.regra_id
-                             where (o.ativo or not ?) and ({onde})""", [ativos, *(params or [])])
+                             where (o.ativo or not ?) and ({onde})
+                             order by o.id""", [ativos, *(params or [])])
         linhas = [s for s in (self._preparar(s) for s in linhas) if self._visivel(s)]
         linhas.sort(key=lambda s: s["primeira_vez"] or "", reverse=True)
         linhas.sort(key=lambda s: (SEVERIDADE.get(s["severidade"], 9), s["status"] != "novo"))
@@ -167,7 +168,7 @@ class Consulta:
         contratos = self._q("""select c.id, c.objeto, c.valor_global, f.id as fornecedor_id, c.fornecedor_nome,
                                   c.pessoa_fisica
                                from core.contrato c left join core.fornecedor f on f.ni = c.fornecedor_ni
-                               where c.id = ? or c.compra_id = ? order by c.valor_global desc""",
+                               where c.id = ? or c.compra_id = ? order by c.valor_global desc, c.id""",
                             [s["chave"], s["chave"]])
         if contratos:
             for c in contratos:
@@ -177,9 +178,9 @@ class Consulta:
         return lig
 
     def emendas(self) -> list[dict]:
-        return sem_cpf(self._q("""select codigo_emenda, any_value(codigo_formatado) as codigo,
-                                     any_value(parlamentar) as parlamentar, any_value(cargo_parlamentar) as cargo,
-                                     any_value(codigo_autor) as codigo_autor, min(ano) as ano, count(*) as planos,
+        return sem_cpf(self._q("""select codigo_emenda, min(codigo_formatado) as codigo,
+                                     min(parlamentar) as parlamentar, min(cargo_parlamentar) as cargo,
+                                     min(codigo_autor) as codigo_autor, min(ano) as ano, count(*) as planos,
                                      round(sum(valor_indicado), 2) as indicado,
                                      round(sum(transferido), 2) as transferido,
                                      round(sum(executado_relatorio), 2) as executado_relatorio,
@@ -220,23 +221,23 @@ class Consulta:
             ],
             "planos": planos,
             "transferencias": self._q(f"select * from core.transferencia where id_plano_acao in ({marcadores}) "
-                                      "order by data_ob", ids),
+                                      "order by data_ob, id_dh, numero_empenho, id_plano_acao", ids),
             "metas": self._q(f"select * from core.meta where id_plano_acao in ({marcadores}) "
-                             "order by id_plano_acao, nome_meta", ids),
+                             "order by all", ids),
             "sinais": self._ocorrencias("o.chave like ?", [codigo + "/%"]),
             "fontes": self._fontes(["transferegov"]),
         })
 
     def parlamentares(self) -> list[dict]:
-        return sem_cpf(self._q("""select r.codigo_autor as codigo, any_value(r.parlamentar) as nome,
-                                     any_value(p.cargo) as cargo, any_value(p.uf) as uf, any_value(p.link) as link,
-                                     any_value(p.foto) as foto,
+        return sem_cpf(self._q("""select r.codigo_autor as codigo, min(r.parlamentar) as nome,
+                                     min(p.cargo) as cargo, min(p.uf) as uf, min(p.link) as link,
+                                     min(p.foto) as foto,
                                      count(distinct r.codigo_emenda) as emendas, count(*) as planos,
                                      round(sum(r.valor_indicado), 2) as indicado,
                                      round(sum(r.transferido), 2) as transferido,
                                      min(r.ano) as primeiro_ano, max(r.ano) as ultimo_ano
                                   from core.rastro_plano r left join core.parlamentar p using (codigo_autor)
-                                  group by r.codigo_autor order by indicado desc"""))
+                                  group by r.codigo_autor order by indicado desc, codigo"""))
 
     def parlamentar(self, codigo: str) -> dict | None:
         linhas = [p for p in self.parlamentares() if str(p["codigo"]) == str(codigo)]
@@ -250,7 +251,7 @@ class Consulta:
                         "fontes": self._fontes(["transferegov", "congresso"])})
 
     def fornecedores(self, limite: int | None = None) -> list[dict]:
-        sql = "select * from core.fornecedor order by valor_total desc"
+        sql = "select * from core.fornecedor order by valor_total desc, id"
         linhas = self._q(sql + (" limit ?" if limite else ""), [limite] if limite else [])
         for f in linhas:
             f["pct_direto"] = f["valor_direto"] / f["valor_total"] if f["valor_total"] else None
@@ -265,7 +266,7 @@ class Consulta:
         contratos = self._q("""select id, compra_id, orgao_nome, unidade, ano, objeto, categoria, modalidade, amparo,
                                   contratacao_direta, emergencial, valor_inicial, valor_global, data_assinatura,
                                   vigencia_fim
-                               from core.contrato where fornecedor_ni = ? order by data_assinatura desc""",
+                               from core.contrato where fornecedor_ni = ? order by data_assinatura desc, id""",
                             [f["ni"]])
         chaves = [c["id"] for c in contratos] + [c["compra_id"] for c in contratos if c["compra_id"]]
         sinais = self._ocorrencias(f"o.chave in ({','.join('?' * len(chaves))})", chaves) if chaves else []
@@ -276,13 +277,13 @@ class Consulta:
             # no modo público a busca é só pelo objeto e fora dos contratos de pessoa física: buscar pelo nome
             # (que pode estar no objeto) ou pelo CPF confirmaria quem é a pessoa
             linhas = self._q("""select * from core.contrato where objeto ilike ? and not pessoa_fisica
-                                order by valor_global desc limit ?""", [f"%{q}%", limite])
+                                order by valor_global desc, id limit ?""", [f"%{q}%", limite])
         elif q:
             linhas = self._q("""select * from core.contrato
                                 where objeto ilike ? or fornecedor_nome ilike ? or fornecedor_ni = ?
-                                order by valor_global desc limit ?""", [f"%{q}%", f"%{q}%", q, limite])
+                                order by valor_global desc, id limit ?""", [f"%{q}%", f"%{q}%", q, limite])
         else:
-            linhas = self._q("select * from core.contrato order by valor_global desc limit ?", [limite])
+            linhas = self._q("select * from core.contrato order by valor_global desc, id limit ?", [limite])
         if self.publico:
             for c in linhas:
                 if c["pessoa_fisica"]:
@@ -335,7 +336,7 @@ class Consulta:
                              where a.id_vereador = ?
                              group by p.id, p.ano, p.numero, p.especie, p.ementa, p.url, p.tema, p.situacao,
                                       p.situacao_data
-                             order by p.ano desc, p.numero desc""", [linhas[0]["id"]])
+                             order by p.ano desc, p.numero desc, p.id""", [linhas[0]["id"]])
         if self.publico:
             for p in pedidos:
                 p["ementa"] = limpar_pedido(p["ementa"])

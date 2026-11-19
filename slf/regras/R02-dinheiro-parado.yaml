@@ -22,12 +22,12 @@ sql: |
          executado_relatorio / transferido as valor_observado,
          struct_pack(transferido := transferido, executado_relatorio := executado_relatorio,
                      ultimo_relatorio := tipo_relatorio, data_relatorio := data_relatorio,
-                     primeira_transferencia := primeira_ob, dias_desde_a_transferencia := current_date - primeira_ob,
+                     primeira_transferencia := primeira_ob, dias_desde_a_transferencia := hoje() - primeira_ob,
                      situacao_plano_trabalho := situacao_plano_trabalho,
                      id_plano_acao := id_plano_acao) as evidencia,
          primeira_ob as quando
   from core.rastro_plano
   where transferido > 0
-    and current_date - primeira_ob > 180
+    and hoje() - primeira_ob > 180
     and executado_relatorio is not null
     and executado_relatorio < 0.10 * transferido

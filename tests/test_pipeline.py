@@ -5,6 +5,7 @@ import collections
 import hashlib
 import json
 import shutil
+from datetime import date
 
 import duckdb
 import pytest
@@ -421,3 +422,36 @@ def test_podar_mantem_as_ultimas_boas(tmp_path, monkeypatch):
     raw.podar(manter=2)
     # fica: as 2 últimas boas e a incompleta mais nova que elas (pode estar em andamento)
     assert sorted(p.name for p in fonte.iterdir()) == ["2026-01-03T000000", "2026-01-04T000000", "2026-01-05T000000"]
+
+
+# ===== Resultado repetível (D43) =====
+
+def _exportar_tudo(pasta):
+    from slf.exportar import exportar
+
+    exportar(pasta, "publico")
+    return {p.relative_to(pasta).as_posix(): p.read_bytes() for p in sorted(pasta.rglob("*")) if p.is_file()}
+
+
+def test_processar_de_novo_da_o_mesmo_resultado(banco, tmp_path):
+    primeira = _exportar_tudo(tmp_path / "a")
+    processar.atualizar()
+    segunda = _exportar_tudo(tmp_path / "b")
+    assert primeira.keys() == segunda.keys()
+    assert [arq for arq in primeira if primeira[arq] != segunda[arq]] == []
+
+
+def test_data_de_referencia_e_a_da_coleta_e_nao_a_de_hoje(banco):
+    # rodar o processamento outro dia, sobre as mesmas coletas, tem que dar o mesmo resultado
+    for manifesto in RAW.rglob("manifest.jsonl"):
+        itens = [json.loads(linha) for linha in manifesto.read_text(encoding="utf-8").splitlines() if linha]
+        manifesto.write_text("".join(json.dumps({**i, "coletado_em": "2025-12-31T10:00:00"}) + "\n" for i in itens),
+                             encoding="utf-8")
+    processar.atualizar()
+    assert _um(DB, "select data from core.referencia") == (date(2025, 12, 31),)
+    assert _um(DB, "select max(ultima_vez) from sinais.ocorrencia where ativo") == (date(2025, 12, 31),)
+
+
+def test_nome_do_fornecedor_e_o_do_contrato_mais_recente(banco):
+    # o mesmo CNPJ com dois nomes: vale o do contrato assinado por último, sempre o mesmo a cada processamento
+    assert _um(banco, "select nome from core.fornecedor where ni = '55666777000188'") == ("PEDRO EXEMPLO",)

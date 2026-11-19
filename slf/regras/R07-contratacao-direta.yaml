@@ -12,7 +12,7 @@ resumo: "{diretos} de {contratos} contratos sem licitação no ano: {valor_diret
 fontes: [pncp]
 sql: |
   select orgao_cnpj || '/' || ano as chave,
-         any_value(orgao_nome) || ' · ' || ano as titulo,
+         min(orgao_nome) || ' · ' || ano as titulo,
          sum(case when contratacao_direta then valor_global else 0 end) / nullif(sum(valor_global), 0)
            as valor_observado,
          struct_pack(contratos := count(*), diretos := count(*) filter (where contratacao_direta),

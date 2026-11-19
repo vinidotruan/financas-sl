@@ -312,6 +312,13 @@ def atualizar(forcar: bool = False) -> None:
         sql_core = (Path(__file__).parent / "core.sql").read_text(encoding="utf-8")
         con.execute(sql_core)
         _status_fontes(con, origem)
+        # D43: a data de referência é a da coleta mais recente usada, não a de hoje. Processar de novo
+        # sobre as mesmas coletas, em outro dia, dá o mesmo resultado. As regras usam hoje() no lugar de
+        # current_date.
+        con.execute("""create or replace table core.referencia as
+                       select coalesce(cast(max(cast(coletado_em as timestamp)) as date), current_date) as data
+                       from core.fonte""")
+        con.execute("create or replace macro hoje() as (select data from core.referencia)")
         for nome, sql in AVISOS:
             if n := con.execute(sql).fetchone()[0]:
                 print(f"  aviso: {nome}: {n}")

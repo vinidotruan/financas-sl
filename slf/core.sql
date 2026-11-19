@@ -43,7 +43,7 @@ create or replace macro chave_nome(x) as lower(strip_accents(trim(cast(x as varc
 
 create or replace table core.parlamentar as
 with autor as (
-  select codigo_autor, any_value(parlamentar) as nome_fonte
+  select codigo_autor, arg_max(parlamentar, (ano, parlamentar)) as nome_fonte
   from core.plano_acao where codigo_autor is not null group by 1
 ),
 grafia as (
@@ -78,9 +78,9 @@ qualify row_number() over (partition by a.codigo_autor
                                     p.legislatura desc nulls last, p.casa, g.leg_nome desc nulls last) = 1;
 
 create or replace table core.emenda as
-select e.codigo_emenda, any_value(e.codigo_formatado) as codigo_formatado,
-       any_value(coalesce(p.nome, e.parlamentar)) as parlamentar, any_value(p.cargo) as cargo_parlamentar,
-       any_value(e.codigo_autor) as codigo_autor, min(e.ano) as ano, count(*) as planos,
+select e.codigo_emenda, min(e.codigo_formatado) as codigo_formatado,
+       arg_max(coalesce(p.nome, e.parlamentar), (e.ano, coalesce(p.nome, e.parlamentar))) as parlamentar,
+       min(p.cargo) as cargo_parlamentar, min(e.codigo_autor) as codigo_autor, min(e.ano) as ano, count(*) as planos,
        sum(e.valor_indicado) as valor_indicado
 from core.plano_acao e left join core.parlamentar p using (codigo_autor)
 group by e.codigo_emenda;
@@ -88,7 +88,8 @@ group by e.codigo_emenda;
 -- Empenho federal -> documento hábil -> ordem bancária: é a transferência que chegou ao município.
 create or replace table core.transferencia as
 with ob as (
-  select id_dh, min(d(data_emissao_ob)) as data_ob, any_value(numero_ordem_bancaria) as numero_ob
+  select id_dh, min(d(data_emissao_ob)) as data_ob,
+         arg_min(numero_ordem_bancaria, (d(data_emissao_ob), numero_ordem_bancaria)) as numero_ob
   from staging.tg_ordem_pagamento_ordem_bancaria_especial
   where numero_ordem_bancaria is not null
   group by id_dh
@@ -114,7 +115,7 @@ create or replace table core.prazo_plano as
 select cast(id_plano_acao as bigint) as id_plano_acao,
        min(d(data_inicio_execucao_plano_trabalho)) as inicio,
        max(d(data_fim_execucao_plano_trabalho)) as fim,
-       any_value(situacao_plano_trabalho) as situacao
+       max(situacao_plano_trabalho) as situacao
 from staging.tg_plano_trabalho_especial group by 1;
 
 create or replace table core.meta as
@@ -207,7 +208,8 @@ from staging.pn_termos where contrato_id is not null;
 create or replace table core.fornecedor as
 -- id curto pra links e nomes de arquivo: o CPF de pessoa física nunca vai pra URL nem pro nome do JSON
 select left(md5(fornecedor_ni), 12) as id, fornecedor_ni as ni,
-       any_value(fornecedor_nome) as nome, any_value(tipo_pessoa) as tipo_pessoa,
+       arg_max(fornecedor_nome, (data_assinatura, fornecedor_nome)) as nome,
+       arg_max(tipo_pessoa, (data_assinatura, tipo_pessoa)) as tipo_pessoa,
        bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, round(sum(valor_global), 2) as valor_total,
        round(sum(case when contratacao_direta then valor_global else 0 end), 2) as valor_direto,
        min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
@@ -275,11 +277,14 @@ qualify row_number() over (partition by id order by atualizado_em desc nulls las
 -- A foto é a do cadastro, reduzida em data/fotos; quem não tem fica sem (o painel mostra as iniciais).
 create or replace table core.vereador as
 with assinou as (
-  select cast(id_autor as bigint) as id, any_value(nome) as bruto, any_value(partido) as partido
+  select cast(id_autor as bigint) as id,
+         -- o nome e o partido do pedido mais recente (o partido muda com o tempo)
+         arg_max(nome, (cast(id_proposicao as bigint), nome)) as bruto,
+         arg_max(partido, (cast(id_proposicao as bigint), partido)) as partido
   from staging.cm_autores where id_autor is not null group by 1
 ),
 cadastro as (
-  select cast("ID" as bigint) as id, any_value(cargo) as cargo, any_value(partido) as partido
+  select cast("ID" as bigint) as id, max(cargo) as cargo, max(partido) as partido
   from staging.cm_parlamentares where "ID" is not null group by 1
 )
 select a.id,
@@ -314,7 +319,8 @@ select p.id, p.ano, p.numero, p.especie, p.sigla_especie, p.ementa, p.url,
                  order by t.ordem limit 1), 'Outros') as tema,
        tr.nome as situacao, d(tr.data) as situacao_data
 from core.proposicao p
-left join (select cast(id as bigint) as id, any_value(nome) as nome, any_value(data) as data
+left join (select cast(id as bigint) as id, arg_max(nome, (verificado_em, data, nome)) as nome,
+                  arg_max(data, (verificado_em, data, nome)) as data
            from staging.cm_tramitacoes where id is not null group by 1) tr on tr.id = p.id
 where p.especie in ('Pedido de Providência', 'Indicação');
 

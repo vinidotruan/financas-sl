@@ -522,6 +522,27 @@ tem o seu (`pages`). Os dados brutos continuam só no cache, porque têm CPF (D3
 **Consequência.** Mudança só de tela vai ao ar sem reprocessar. O pacote de dados é a peça que a etapa
 seguinte (resultado repetível, com o pacote numa Release do GitHub) vai publicar.
 
+### D43 · Resultado repetível: as mesmas coletas dão o mesmo resultado · 19/11/2026 · em andamento
+
+**Problema.** Para alguém aplicar método científico nos dados (refazer as contas, testar outra regra,
+usar em outra cidade), o mesmo ponto de partida tem que dar o mesmo resultado. Não dava: as regras R02 e
+R03 e a data dos sinais usavam o dia em que o processamento rodava; 25 `any_value` no SQL escolhiam
+qualquer linha no empate (o nome de um fornecedor com dois nomes podia trocar de uma rodada para outra);
+e listas com valores empatados (dois parlamentares com o mesmo valor indicado) saíam em ordem diferente.
+
+**Decisão (pedido do Ruan).**
+- **Data de referência** (`core.referencia`): a data da coleta mais recente usada. As regras usam `hoje()`
+  no lugar de `current_date`, e os sinais gravam essa data. Processar de novo em outro dia, sobre as
+  mesmas coletas, dá o mesmo resultado.
+- **Escolhas fixas** no lugar de `any_value`: o nome, o partido ou o tipo do registro mais recente
+  (`arg_max` por data, com o próprio valor no desempate); `min` quando o valor é o mesmo em todas as linhas.
+- **Toda ordenação termina num campo único** (id, código), para empate não trocar a ordem.
+- Conferido nos dados reais: processar duas vezes dá os mesmos 563 arquivos, byte a byte.
+
+**Próximas partes.** Proveniência em cada publicação (commit, versão das regras, data de referência,
+coleta e sha256 de cada arquivo); refazer a partir dela; pacote de dados abertos numa Release do GitHub
+(o Zenodo pode arquivar cada release com DOI, ligado pelo Ruan na conta dele); `docs/metodologia.md`.
+
 ---
 
 ## Em aberto

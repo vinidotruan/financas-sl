@@ -21,13 +21,13 @@ fontes: [transferegov]
 sql: |
   with base as (
     select *,
-           case when relatorios_entregues = 0 and prazo_relatorio_parcial < current_date
+           case when relatorios_entregues = 0 and prazo_relatorio_parcial < hoje()
                   then prazo_relatorio_parcial
-                when prazo_fim < current_date and not tem_relatorio_final
+                when prazo_fim < hoje() and not tem_relatorio_final
                   then prazo_fim end as prazo_vencido,
-           case when relatorios_entregues = 0 and prazo_relatorio_parcial < current_date
+           case when relatorios_entregues = 0 and prazo_relatorio_parcial < hoje()
                   then 'nenhum relatório de gestão entregue até o prazo do relatório parcial'
-                when prazo_fim < current_date and not tem_relatorio_final
+                when prazo_fim < hoje() and not tem_relatorio_final
                   then 'prazo do plano de trabalho vencido sem relatório final' end as motivo
     from core.rastro_plano
     where transferido > 0
@@ -36,7 +36,7 @@ sql: |
          codigo_formatado || ' · ' || parlamentar as titulo,
          transferido as valor_observado,
          struct_pack(motivo := motivo, prazo_vencido := prazo_vencido,
-                     dias_em_atraso := current_date - prazo_vencido, transferido := transferido,
+                     dias_em_atraso := hoje() - prazo_vencido, transferido := transferido,
                      relatorios_entregues := relatorios_entregues,
                      relatorios_em_elaboracao := relatorios_em_elaboracao,
                      ultimo_relatorio := tipo_relatorio, data_relatorio := data_relatorio,

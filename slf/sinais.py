@@ -37,7 +37,11 @@ def ler_revisao() -> dict:
 
 
 def rodar(con, banco_anterior: Path) -> int:
-    hoje = date.today()
+    # a data de referência das coletas (D43); sem ela (banco montado à mão), a de hoje
+    try:
+        hoje = con.execute("select data from core.referencia").fetchone()[0]
+    except duckdb.CatalogException:
+        hoje = date.today()
     con.execute("create schema if not exists sinais")
     con.execute("""create or replace table sinais.regra (id varchar primary key, nome varchar, versao integer,
         area varchar, severidade varchar, base_legal varchar, limiar varchar, pode_ser_normal_se varchar,
