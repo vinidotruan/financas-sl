@@ -3,8 +3,12 @@ nome: Licitação publicada depois de fechar
 versao: 1
 area: compras
 severidade: atencao
-base_legal: Lei 14.133/2021, arts. 54 e 174 (divulgação obrigatória no PNCP)
-limiar: publicação no PNCP depois do encerramento do prazo de propostas
+base_legal: >
+  Lei 14.133/2021, arts. 54 e 174 (divulgação obrigatória no PNCP) e art. 75, § 3º (a dispensa
+  com disputa também exige aviso publicado antes das propostas)
+limiar: >
+  primeira publicação da compra no PNCP depois do encerramento do prazo de propostas
+  (licitação ou dispensa com disputa; inexigibilidade não tem disputa e fica de fora)
 pode_ser_normal_se: O edital saiu em outro meio e o PNCP serviu só de registro posterior.
 como_verificar: Data de publicação no Diário Oficial Leopoldense e a plataforma usada na licitação.
 fontes: [pncp]
