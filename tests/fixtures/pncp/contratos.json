@@ -186,5 +186,146 @@
   "emendaParlamentar": null,
   "receita": false,
   "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000005/2025",
+  "numeroControlePncpCompra": "89814693000160-1-000013/2024",
+  "anoContrato": 2025,
+  "sequencialContrato": 5,
+  "numeroContratoEmpenho": "5/2025",
+  "processo": "105/2025",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Compras"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "44555666000177",
+  "nomeRazaoSocialFornecedor": "44.555.666 JOANA EXEMPLO",
+  "objetoContrato": "Serviço de pintura de sala de aula",
+  "valorInicial": 1000.0,
+  "valorGlobal": 1000.0,
+  "valorParcela": 1000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 1000.0,
+  "dataAssinatura": "2025-03-10",
+  "dataVigenciaInicio": "2025-03-10",
+  "dataVigenciaFim": "2025-12-31",
+  "dataPublicacaoPncp": "2025-03-10T09:00:00",
+  "dataAtualizacao": "2025-03-10T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000006/2025",
+  "numeroControlePncpCompra": "89814693000160-1-000013/2024",
+  "anoContrato": 2025,
+  "sequencialContrato": 6,
+  "numeroContratoEmpenho": "6/2025",
+  "processo": "106/2025",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Compras"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "55666777000188",
+  "nomeRazaoSocialFornecedor": "PEDRO EXEMPLO 22233344455",
+  "objetoContrato": "Conserto de portão",
+  "valorInicial": 2000.0,
+  "valorGlobal": 2000.0,
+  "valorParcela": 2000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 2000.0,
+  "dataAssinatura": "2025-03-10",
+  "dataVigenciaInicio": "2025-03-10",
+  "dataVigenciaFim": "2025-12-31",
+  "dataPublicacaoPncp": "2025-03-10T09:00:00",
+  "dataAtualizacao": "2025-03-10T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
+ },
+ {
+  "numeroControlePNCP": "89814693000160-2-000007/2025",
+  "numeroControlePncpCompra": "89814693000160-1-000013/2024",
+  "anoContrato": 2025,
+  "sequencialContrato": 7,
+  "numeroContratoEmpenho": "7/2025",
+  "processo": "107/2025",
+  "orgaoEntidade": {
+   "cnpj": "89814693000160",
+   "razaoSocial": "MUNICIPIO DE SAO LEOPOLDO",
+   "poderId": "N",
+   "esferaId": "M"
+  },
+  "unidadeOrgao": {
+   "codigoUnidade": "1",
+   "nomeUnidade": "Prefeitura Municipal de São Leopoldo",
+   "municipioNome": "São Leopoldo",
+   "codigoIbge": "4318705",
+   "ufSigla": "RS",
+   "ufNome": "Rio Grande do Sul"
+  },
+  "tipoContrato": {
+   "id": 1,
+   "nome": "Contrato (termo inicial)"
+  },
+  "categoriaProcesso": {
+   "id": 8,
+   "nome": "Compras"
+  },
+  "tipoPessoa": "PJ",
+  "niFornecedor": "55666777000188",
+  "nomeRazaoSocialFornecedor": "PEDRO EXEMPLO",
+  "objetoContrato": "Conserto de cerca",
+  "valorInicial": 3000.0,
+  "valorGlobal": 3000.0,
+  "valorParcela": 3000.0,
+  "numeroParcelas": 1,
+  "valorAcumulado": 3000.0,
+  "dataAssinatura": "2025-03-10",
+  "dataVigenciaInicio": "2025-03-10",
+  "dataVigenciaFim": "2025-12-31",
+  "dataPublicacaoPncp": "2025-03-10T09:00:00",
+  "dataAtualizacao": "2025-03-10T09:00:00",
+  "emendaParlamentar": null,
+  "receita": false,
+  "numeroRetificacao": 0
  }
 ]

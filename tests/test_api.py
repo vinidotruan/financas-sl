@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from slf.config import REVISAO
 
-CPFS = ("12345678901", "98765432100")  # PF e o CPF no nome do MEI, nas fixtures
+CPFS = ("12345678901", "98765432100", "22233344455")  # PF e o CPF no nome dos MEIs, nas fixtures
 R08_PF = hashlib.md5(b"R08|89814693000160-2-000002/2024").hexdigest()
 R07 = hashlib.md5(b"R07|89814693000160/2024").hexdigest()
 
@@ -68,7 +68,7 @@ def test_publico_esconde_pessoa_fisica_e_mei(cliente, publico):
     assert "FULANO" not in json.dumps(sinal)
 
     contratos = {c["sequencial"]: c for c in cliente.get("/api/contratos").json()}
-    for seq in (2, 4):  # PF e MEI
+    for seq in (2, 4, 5, 6, 7):  # PF, MEI com CPF no fim, MEI no formato novo, MEI só com o nome
         assert contratos[seq]["fornecedor_nome"] == "pessoa física"
         assert contratos[seq]["fornecedor_ni"] is None
     assert contratos[3]["fornecedor_nome"] == "CONSTRUTORA EXEMPLO SA"
@@ -76,7 +76,8 @@ def test_publico_esconde_pessoa_fisica_e_mei(cliente, publico):
     assert cliente.get("/api/contratos", params={"q": "FULANO"}).json() == []
 
     nomes = {f["nome"] for f in cliente.get("/api/fornecedores").json()}
-    assert "pessoa física" in nomes and not any("MARIA" in n or "FULANO" in n for n in nomes)
+    assert "pessoa física" in nomes
+    assert not any(dono in n for n in nomes for dono in ("MARIA", "FULANO", "JOANA", "PEDRO"))
 
 
 def test_publico_nao_edita(cliente, publico):

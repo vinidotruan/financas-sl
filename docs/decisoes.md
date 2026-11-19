@@ -308,6 +308,21 @@ preenchidos), marca-texto (azul-tinta com grifo amarelo) e Rio dos Sinos (faixa 
 **Entregas.** 1) Storybook com o que existe hoje; 2) cores por função no visual sóbrio; 3) escala de
 texto; 4) o site usando só as variáveis.
 
+### D40 · Dados sensíveis: um módulo para esconder e conferir · 19/11/2026 · em andamento
+
+**Problema.** A revisão de 19/11 achou no ar dois MEIs com o nome do dono. Desde 2023 a Receita monta o
+nome do MEI como "raiz do CNPJ + nome do dono" ("12.345.678 FULANO DE TAL"), e a regra só conhecia o
+formato antigo, com o CPF no fim. Achou também contato de morador no texto de pedidos e o objeto de
+contrato de pessoa física passando inteiro no modo público. As regras de privacidade estavam espalhadas
+e nada conferia o que ia para a internet.
+
+**Decisão.** Um módulo de dados sensíveis, pedido pelo Ruan, em micro entregas: 1) MEI nos dois formatos
+e pessoa física decidida por fornecedor (basta um contrato denunciar o dono para todos esconderem o
+nome); 2) contato e casa de morador no texto dos pedidos (o endereço do lugar do serviço fica, o número
+sai quando o texto liga o endereço a uma casa ou a um morador); 3) uma conferência de tudo o que vai
+para o site antes de publicar, com uma lista de falsos positivos aprovada pelo Ruan; 4) objeto de
+contrato de pessoa física.
+
 ---
 
 ## Pedidos dos vereadores

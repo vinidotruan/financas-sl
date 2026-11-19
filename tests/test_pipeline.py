@@ -103,6 +103,17 @@ def test_mei_conta_como_pessoa_fisica(banco):
     assert _um(banco, "select pessoa_fisica from core.contrato where sequencial = 3") == (False,)
 
 
+def test_mei_no_formato_novo_conta_como_pessoa_fisica(banco):
+    # desde 2023 a Receita monta o nome do MEI como "raiz do CNPJ + nome do dono"
+    assert _um(banco, "select tipo_pessoa, pessoa_fisica from core.contrato where sequencial = 5") == ("PJ", True)
+    assert _um(banco, "select pessoa_fisica from core.fornecedor where ni = '44555666000177'") == (True,)
+
+
+def test_pessoa_fisica_vale_para_todos_os_contratos_do_fornecedor(banco):
+    # o mesmo MEI num contrato com o CPF no fim e noutro só com o nome: os dois contam como pessoa física
+    assert _um(banco, "select bool_and(pessoa_fisica) from core.contrato where sequencial in (6, 7)") == (True,)
+
+
 # ===== SICONFI =====
 
 def test_contas(banco):
@@ -177,7 +188,7 @@ def test_coleta_sem_ok_e_ignorada(banco):
     pasta.mkdir()
     (pasta / "contratos.json").write_text("[]")
     processar.atualizar()
-    assert _um(DB, "select count(*) from core.contrato") == (4,)
+    assert _um(DB, "select count(*) from core.contrato") == (7,)
 
 
 def test_teste_duro_barra_a_troca_do_banco(banco):

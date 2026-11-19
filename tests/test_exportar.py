@@ -47,11 +47,12 @@ def test_exportacao_igual_a_api(banco, tmp_path, monkeypatch, modo):
         esperado = cliente.get(_rota_de(arq)).json()
         assert json.loads((tmp_path / arq).read_text(encoding="utf-8")) == esperado, arq
     corpo = "".join((tmp_path / a).read_text(encoding="utf-8") for a in arquivos)
-    assert not re.search(r"(?<![0-9A-Za-z])(12345678901|98765432100)(?![0-9A-Za-z])", corpo)
+    assert not re.search(r"(?<![0-9A-Za-z])(12345678901|98765432100|22233344455)(?![0-9A-Za-z])", corpo)
     if modo == "publico":
         assert "nota privada" not in corpo
         assert [a for a in arquivos if a.startswith("sinais/")] == [f"sinais/{R07}.json"]
-        assert "FULANO" not in corpo and "MARIA EXEMPLO" not in corpo
+        for dono in ("FULANO", "MARIA EXEMPLO", "JOANA EXEMPLO", "PEDRO EXEMPLO"):
+            assert dono not in corpo, dono
 
 
 def test_exportacao_apaga_o_que_sobrou(banco, tmp_path):

@@ -164,10 +164,14 @@ create or replace table core.contrato as
 select c.id, c.compra_id, so_digitos(c.orgao_cnpj) as orgao_cnpj, c.orgao_nome, c.unidade,
        cast(c.ano as integer) as ano, cast(c.sequencial as integer) as sequencial, c.tipo, c.categoria,
        c.processo, c.tipo_pessoa, so_digitos(c.fornecedor_ni) as fornecedor_ni, c.fornecedor_nome,
-       -- MEI e empresário individual vêm como PJ, mas a razão social termina no CPF do dono
-       -- ("FULANO DE TAL 12345678901"); contam como pessoa física. A fase 3 troca pela natureza jurídica.
+       -- MEI e empresário individual vêm como PJ, mas o nome é o do dono; contam como pessoa física.
+       -- Formato antigo: CPF no fim ("FULANO DE TAL 12345678901"). Formato da Receita desde 2023: raiz
+       -- do CNPJ na frente ("12.345.678 FULANO DE TAL"). A fase 3 troca pela natureza jurídica.
+       -- Depois do core.fornecedor, um contrato herda pessoa física de outro contrato do mesmo fornecedor.
        coalesce(c.tipo_pessoa = 'PF'
-                or regexp_matches(coalesce(c.fornecedor_nome, ''), '(^|[^0-9])[0-9]{11}\s*$'), false)
+                or regexp_matches(coalesce(c.fornecedor_nome, ''), '(^|[^0-9])[0-9]{11}\s*$')
+                or regexp_matches(coalesce(c.fornecedor_nome, ''), '^\s*[0-9]{2}\.?[0-9]{3}\.?[0-9]{3}\s+[^0-9\s]'),
+                false)
          as pessoa_fisica,
        c.objeto, n(c.valor_inicial) as valor_inicial, n(c.valor_global) as valor_global,
        d(c.data_assinatura) as data_assinatura, d(c.vigencia_inicio) as vigencia_inicio,
@@ -208,6 +212,11 @@ select left(md5(fornecedor_ni), 12) as id, fornecedor_ni as ni,
        round(sum(case when contratacao_direta then valor_global else 0 end), 2) as valor_direto,
        min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
 from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by fornecedor_ni;
+
+-- Pessoa física se decide por fornecedor: o mesmo MEI aparece com o nome em formatos diferentes, e
+-- basta um contrato denunciar o dono para todos esconderem o nome.
+update core.contrato set pessoa_fisica = true
+where not pessoa_fisica and fornecedor_ni in (select ni from core.fornecedor where pessoa_fisica);
 
 -- ===== Contas (SICONFI) =====
 create or replace table core.pessoal as
