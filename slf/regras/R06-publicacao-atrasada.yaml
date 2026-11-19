@@ -10,7 +10,7 @@ limiar: >
   primeira publicação da compra no PNCP depois do encerramento do prazo de propostas
   (licitação ou dispensa com disputa; inexigibilidade não tem disputa e fica de fora)
 pode_ser_normal_se: O edital saiu em outro meio e o PNCP serviu só de registro posterior.
-como_verificar: Data de publicação no Diário Oficial Leopoldense e a plataforma usada na licitação.
+como_verificar: Data de publicação no diário oficial do município e a plataforma usada na licitação.
 observado: {rotulo: Dias entre o fim das propostas e a publicação, formato: dias}
 resumo: "As propostas fecharam em {encerramento|data} e a compra entrou no PNCP em {publicado|data}."
 fontes: [pncp]

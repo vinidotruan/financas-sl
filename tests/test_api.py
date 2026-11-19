@@ -171,3 +171,7 @@ def test_rastro_mostra_cada_fonte(cliente):
     assert valores["Indicado"]["valor"] == 600_000 and valores["Transferido"]["valor"] == 600_000
     assert valores["Executado (relatório de gestão)"]["valor"] == 5_000
     assert valores["Pago"]["valor"] is None and "fase 2" in valores["Pago"]["nota"]
+
+
+def test_cidade_vem_da_configuracao(cliente):
+    assert cliente.get("/api/fontes").json()["ente"] == {"nome": "São Leopoldo", "uf": "RS", "ibge": 4318705}

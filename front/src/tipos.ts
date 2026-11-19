@@ -202,6 +202,7 @@ export interface Contas {
 
 export interface Fontes {
   modo: 'privado' | 'publico'
+  ente: { nome: string; uf: string | null; ibge: number | null }
   fontes: { fonte: string; coleta: string | null; coletado_em: string | null; arquivos: number; linhas: number; link: string | null }[]
   erros_de_regra: { regra_id: string; mensagem: string }[]
 }

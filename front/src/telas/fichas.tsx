@@ -99,7 +99,7 @@ export function TelaParlamentar({ codigo }: { codigo: string }) {
               <div class="cartao"><span class="rotulo">Transferido</span><span class="valor">{brlCurto(p.transferido)}</span></div>
             </div>
             <section class="secao">
-              <span class="rotulo">Emendas para São Leopoldo</span>
+              <span class="rotulo">Emendas para a cidade</span>
               <ul class="lista">
                 {p.emendas_lista.map((e) => (
                   <li key={e.codigo_emenda}>

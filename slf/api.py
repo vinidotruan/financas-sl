@@ -26,7 +26,7 @@ class RespostaSemCpf(JSONResponse):
         return super().render(sem_cpf(content))
 
 
-app = FastAPI(title="Finanças de São Leopoldo", version="0.2", default_response_class=RespostaSemCpf)
+app = FastAPI(title="Finanças municipais", version="0.2", default_response_class=RespostaSemCpf)
 _trava = threading.Lock()
 
 

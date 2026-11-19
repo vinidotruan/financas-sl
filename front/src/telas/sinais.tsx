@@ -35,7 +35,7 @@ export function TelaSinais() {
 
   return (
     <>
-      <Topo titulo="Sinais pra olhar" sub="Pontos de atenção nos dados públicos de São Leopoldo" />
+      <Topo titulo="Sinais pra olhar" sub={`Pontos de atenção nos dados públicos de ${fontes.dados?.ente.nome ?? "da cidade"}`} />
       <main class="conteudo">
         {publico && (
           <p class="aviso info">

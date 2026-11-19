@@ -18,7 +18,7 @@ os.environ["SLF_HOME"] = str(HOME)
 os.environ["SLF_MODO"] = "privado"
 (HOME / "config").mkdir()
 (HOME / "config" / "ente.yaml").write_text(
-    'ibge: 4318705\ncnpj_municipio: "89814693000160"\ninicio: 2024-01-01\n'
+    'nome: São Leopoldo\nuf: RS\nibge: 4318705\ncnpj_municipio: "89814693000160"\ninicio: 2024-01-01\n'
     'orgaos_pncp:\n  - cnpj: "89814693000160"\n    nome: Prefeitura Municipal de São Leopoldo\n',
     encoding="utf-8",
 )

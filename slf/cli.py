@@ -36,7 +36,7 @@ def _ip_local() -> str:
 
 
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="slf", description="Finanças de São Leopoldo")
+    p = argparse.ArgumentParser(prog="slf", description="Finanças municipais: coleta, sinais e painel")
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("coletar", help="baixa os dados das fontes")
     c.add_argument("fontes", nargs="*", help="transferegov, siconfi, pncp (padrão: todas)")

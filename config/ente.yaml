@@ -1,4 +1,6 @@
-# Município analisado
+# Município analisado. Para outra cidade, troque estes campos e a lista de órgãos (docs/replicar.md).
+nome: São Leopoldo
+uf: RS
 ibge: 4318705
 cnpj_municipio: "89814693000160"
 inicio: 2022-01-01

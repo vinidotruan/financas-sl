@@ -115,7 +115,11 @@ class Consulta:
     # ===== rotas =====
 
     def fontes(self) -> dict:
+        from .config import ente
+
+        cfg = ente()
         return sem_cpf({"modo": self.modo,
+                        "ente": {"nome": cfg.get("nome") or "a cidade", "uf": cfg.get("uf"), "ibge": cfg.get("ibge")},
                         "fontes": [{**f, "link": LINKS.get(f["fonte"])}
                                    for f in self._q("select * from core.fonte order by fonte")],
                         "erros_de_regra": self._q("select * from sinais.erro")})
