@@ -144,11 +144,13 @@ select contrato_id, tipo, numero, d(data_assinatura) as data_assinatura,
 from staging.pn_termos where contrato_id is not null;
 
 create or replace table core.fornecedor as
-select fornecedor_ni as ni, any_value(fornecedor_nome) as nome, any_value(tipo_pessoa) as tipo_pessoa,
+-- id curto pra links e nomes de arquivo: o CPF de pessoa física nunca vai pra URL nem pro nome do JSON
+select left(md5(fornecedor_ni), 12) as id, fornecedor_ni as ni,
+       any_value(fornecedor_nome) as nome, any_value(tipo_pessoa) as tipo_pessoa,
        bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, sum(valor_global) as valor_total,
        sum(case when contratacao_direta then valor_global else 0 end) as valor_direto,
        min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
-from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by 1;
+from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by fornecedor_ni;
 
 -- ===== Contas (SICONFI) =====
 create or replace table core.pessoal as
@@ -177,3 +179,16 @@ from core.pessoal
 where anexo = 'RGF-Anexo 01'
 group by exercicio, periodo
 having count(*) filter (where cod_conta = 'DespesaComPessoalTotal') > 0;
+
+-- Receita realizada e despesa do ano, do último bimestre publicado (RREO Anexo 01).
+-- Ano em curso aparece com o bimestre mais recente; a tela avisa que é parcial.
+create or replace table core.resultado_anual as
+with ultimo as (select exercicio, max(periodo) as periodo from core.receita group by 1)
+select r.exercicio, u.periodo as bimestre,
+       max(r.valor) filter (where r.cod_conta = 'TotalReceitas' and r.coluna ilike 'Até o Bimestre%') as receita_realizada,
+       max(r.valor) filter (where r.cod_conta = 'TotalReceitas' and r.coluna ilike 'PREVISÃO ATUALIZADA%') as receita_prevista,
+       max(r.valor) filter (where r.cod_conta = 'TotalDespesas' and r.coluna ilike 'DESPESAS EMPENHADAS ATÉ%') as despesa_empenhada,
+       max(r.valor) filter (where r.cod_conta = 'TotalDespesas' and r.coluna ilike 'DESPESAS LIQUIDADAS ATÉ%') as despesa_liquidada,
+       max(r.valor) filter (where r.cod_conta = 'TotalDespesas' and r.coluna ilike 'DESPESAS PAGAS ATÉ%') as despesa_paga
+from core.receita r join ultimo u on u.exercicio = r.exercicio and u.periodo = r.periodo
+group by r.exercicio, u.periodo;

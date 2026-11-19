@@ -15,6 +15,8 @@ DB_TMP = DATA / "slf.novo.duckdb"
 REVISAO = DATA / "revisao.json"
 REGRAS = Path(__file__).resolve().parent / "regras"
 WEB = Path(__file__).resolve().parent / "web"
+# front buildado (npm run build em front/); fica junto do código, não de SLF_HOME
+SITE = Path(os.environ.get("SLF_SITE", Path(__file__).resolve().parent.parent / "site"))
 
 # "privado" mostra tudo e permite marcar status; "publico" mascara pessoa física
 # e só mostra sinais revisados.

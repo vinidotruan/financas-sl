@@ -7,6 +7,8 @@ base_legal: Lei 14.133/2021, arts. 72 a 75 (licitação é a regra; contrataçã
 limiar: mais de 50% do valor contratado no ano sem licitação, por órgão
 pode_ser_normal_se: Ano de calamidade (2024, enchente) ou serviços de fornecedor exclusivo.
 como_verificar: Lista dos maiores contratos diretos do ano e as justificativas de cada um.
+observado: {rotulo: Valor contratado sem licitação, formato: pct}
+resumo: "{diretos} de {contratos} contratos sem licitação no ano: {valor_direto|brl} de {valor_total|brl}."
 fontes: [pncp]
 sql: |
   select orgao_cnpj || '/' || ano as chave,

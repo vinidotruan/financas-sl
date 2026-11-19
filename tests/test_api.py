@@ -103,3 +103,71 @@ def test_rastro_da_emenda(cliente):
 def test_contas(cliente):
     linha = cliente.get("/api/contas").json()["limite_pessoal"][0]
     assert (linha["pct_rcl"], linha["limite_maximo"]) == (40.4, 54.0)
+
+
+def test_regras_com_contagem_e_texto_da_tela(cliente):
+    regras = {r["id"]: r for r in cliente.get("/api/regras").json()}
+    assert regras["R08"]["ativos"] == 2 and regras["R02"]["ativos"] == 1
+    assert regras["R03"]["observado"] == {"rotulo": "Transferido sem prestação de contas", "formato": "brl"}
+    assert "{prazo_vencido|data}" in regras["R03"]["resumo"]
+    assert "sql" not in regras["R03"]
+
+
+def test_regras_no_publico_contam_so_os_revisados(cliente, publico):
+    _confirmar(R07)
+    regras = {r["id"]: r for r in cliente.get("/api/regras").json()}
+    assert regras["R07"]["ativos"] == 1 and regras["R08"]["ativos"] == 0
+
+
+def test_nota_nao_sai_no_publico(cliente, monkeypatch):
+    import slf.api
+
+    REVISAO.write_text(json.dumps({R07: {"status": "confirmado", "nota": "conversa com fulano", "valor": 0.55}}),
+                       encoding="utf-8")
+    assert cliente.get(f"/api/sinais/{R07}").json()["nota"] == "conversa com fulano"
+    monkeypatch.setattr(slf.api, "MODO", "publico")
+    assert cliente.get(f"/api/sinais/{R07}").json()["nota"] is None
+
+
+def test_sinal_leva_ao_contrato_e_ao_fornecedor(cliente):
+    lig = cliente.get(f"/api/sinais/{R08_PF}").json()["ligacoes"]
+    assert [c["id"] for c in lig["contratos"]] == ["89814693000160-2-000002/2024"]
+    fid = lig["contratos"][0]["fornecedor_id"]
+    assert fid and fid != "12345678901"
+
+
+def test_ficha_de_fornecedor(cliente, publico):
+    pj = [f for f in cliente.get("/api/fornecedores").json() if f["nome"] == "CONSTRUTORA EXEMPLO SA"][0]
+    ficha = cliente.get(f"/api/fornecedores/{pj['id']}").json()
+    assert ficha["contratos"] == 1 and ficha["contratos_lista"][0]["objeto"] == "Reforma de escola municipal"
+    assert ficha["sinais"] == []  # no modo público, só sinais revisados aparecem
+
+
+def test_ficha_de_pessoa_fisica(cliente, monkeypatch):
+    import slf.api
+
+    fornecedores = cliente.get("/api/fornecedores").json()
+    ids = {f["nome"]: f["id"] for f in fornecedores}
+    pf, mei = ids["FULANO DE TAL"], ids["MARIA EXEMPLO ***.654.321-**"]
+    corpo = cliente.get(f"/api/fornecedores/{pf}")
+    assert corpo.status_code == 200 and "12345678901" not in corpo.text
+    assert len(corpo.json()["sinais"]) == 1  # o R08 do contrato dele
+    monkeypatch.setattr(slf.api, "MODO", "publico")
+    assert cliente.get(f"/api/fornecedores/{pf}").status_code == 404
+    assert cliente.get(f"/api/fornecedores/{mei}").status_code == 404
+    assert all(f["id"] is None for f in cliente.get("/api/fornecedores").json() if f["nome"] == "pessoa física")
+
+
+def test_ficha_de_parlamentar(cliente):
+    lista = cliente.get("/api/parlamentares").json()
+    assert [(p["nome"], p["emendas"], p["planos"]) for p in lista][0] == ("Parlamentar Um", 1, 2)
+    ficha = cliente.get("/api/parlamentares/1234").json()
+    assert [e["codigo"] for e in ficha["emendas_lista"]] == ["2024/12340001"]
+    assert {s["regra_id"] for s in ficha["sinais"]} == {"R02", "R03"}
+
+
+def test_rastro_mostra_cada_fonte(cliente):
+    valores = {v["etapa"]: v for v in cliente.get("/api/emendas/202412340001/rastro").json()["valores"]}
+    assert valores["Indicado"]["valor"] == 600_000 and valores["Transferido"]["valor"] == 600_000
+    assert valores["Executado (relatório de gestão)"]["valor"] == 5_000
+    assert valores["Pago"]["valor"] is None and "fase 2" in valores["Pago"]["nota"]

@@ -15,6 +15,8 @@ pode_ser_normal_se: >
   está em elaboração (a evidência mostra quantos estão). A situação CONCLUIDO_NT_TCU do plano de
   trabalho indica a dispensa da análise do plano (STF, 24/08/2025), não do relatório de gestão.
 como_verificar: Interface do Transferegov e as listas do TCU e do STF de quem não prestou contas.
+observado: {rotulo: Transferido sem prestação de contas, formato: brl}
+resumo: "{motivo|frase}. O prazo venceu em {prazo_vencido|data}, há {dias_em_atraso} dias, com {transferido|brl} transferidos."
 fontes: [transferegov]
 sql: |
   with base as (

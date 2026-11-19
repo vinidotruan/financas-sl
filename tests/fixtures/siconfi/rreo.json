@@ -49,5 +49,39 @@
   "conta": "Saúde",
   "coluna": "DESPESAS EMPENHADAS ATÉ O BIMESTRE (b)",
   "valor": 1.0
+ },
+ {
+  "exercicio": 2024,
+  "demonstrativo": "RREO",
+  "periodo": 6,
+  "periodicidade": "B",
+  "instituicao": "Prefeitura Municipal de São Leopoldo - RS",
+  "cod_ibge": 4318705,
+  "uf": "RS",
+  "populacao": 217409,
+  "anexo": "RREO-Anexo 01",
+  "esfera": "M",
+  "rotulo": "Padrão",
+  "cod_conta": "TotalReceitas",
+  "conta": "TOTAL DAS RECEITAS (V) = (III + IV)",
+  "coluna": "Até o Bimestre (c)",
+  "valor": 1500000000.0
+ },
+ {
+  "exercicio": 2024,
+  "demonstrativo": "RREO",
+  "periodo": 6,
+  "periodicidade": "B",
+  "instituicao": "Prefeitura Municipal de São Leopoldo - RS",
+  "cod_ibge": 4318705,
+  "uf": "RS",
+  "populacao": 217409,
+  "anexo": "RREO-Anexo 01",
+  "esfera": "M",
+  "rotulo": "Padrão",
+  "cod_conta": "TotalDespesas",
+  "conta": "TOTAL DAS DESPESAS (XII) = (X + XI)",
+  "coluna": "DESPESAS PAGAS ATÉ O BIMESTRE (j)",
+  "valor": 1400000000.0
  }
 ]

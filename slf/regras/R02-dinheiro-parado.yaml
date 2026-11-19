@@ -13,6 +13,8 @@ pode_ser_normal_se: >
   de gestão está atrasado em relação ao gasto real. Na fase 2 o portal da prefeitura
   mostra o empenhado e o pago de verdade.
 como_verificar: Cronograma do plano de trabalho e situação das licitações ligadas à emenda.
+observado: {rotulo: Executado segundo o último relatório, formato: pct}
+resumo: "O relatório {ultimo_relatorio} de {data_relatorio|data} mostra {executado_relatorio|brl} executados de {transferido|brl} transferidos, {dias_desde_a_transferencia} dias depois da transferência."
 fontes: [transferegov]
 sql: |
   select codigo_emenda || '/' || id_plano_acao as chave,

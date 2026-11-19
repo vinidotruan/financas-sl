@@ -12,6 +12,10 @@ from .config import REGRAS, REVISAO
 
 CAMPOS_REGRA = ["id", "nome", "versao", "area", "severidade", "base_legal", "limiar",
                 "pode_ser_normal_se", "como_verificar", "fontes", "sql"]
+# Opcionais, só para a tela: "observado" diz o que é o valor observado ({rotulo, formato}) e
+# "resumo" é a frase do que foi visto, com campos da evidência: "{transferido|brl} em {prazo|data}".
+# Formatos: brl, pct (fração vira %), dias, data, int, texto.
+CAMPOS_TELA = ["observado", "resumo"]
 
 
 def carregar_regras() -> list[dict]:
@@ -37,15 +41,17 @@ def rodar(con, banco_anterior: Path) -> int:
     con.execute("create schema if not exists sinais")
     con.execute("""create or replace table sinais.regra (id varchar primary key, nome varchar, versao integer,
         area varchar, severidade varchar, base_legal varchar, limiar varchar, pode_ser_normal_se varchar,
-        como_verificar varchar, fontes varchar[], sql varchar)""")
+        como_verificar varchar, fontes varchar[], sql varchar, observado json, resumo varchar)""")
     con.execute("""create or replace table sinais.ocorrencia (id varchar primary key, regra_id varchar,
         regra_versao integer, chave varchar, titulo varchar, valor_observado double, evidencia json,
         quando date, primeira_vez date, ultima_vez date, ativo boolean, status varchar, nota varchar)""")
     con.execute("create or replace table sinais.erro (regra_id varchar, mensagem varchar)")
 
     for r in carregar_regras():
-        con.execute("insert into sinais.regra values (?,?,?,?,?,?,?,?,?,?,?)",
-                    [r[c] for c in CAMPOS_REGRA])
+        con.execute("insert into sinais.regra values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    [r[c] for c in CAMPOS_REGRA]
+                    + [json.dumps(r["observado"], ensure_ascii=False) if r.get("observado") else None,
+                       r.get("resumo")])
         try:
             con.execute(f"create or replace temp table _r as {r['sql']}")
             con.execute("""insert into sinais.ocorrencia

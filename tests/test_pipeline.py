@@ -109,7 +109,9 @@ def test_contas(banco):
     assert _um(banco, "select exercicio, periodo, pct_rcl, limite_alerta, limite_prudencial, limite_maximo "
                       "from core.limite_pessoal") == (2024, 3, 40.4, 48.6, 51.3, 54.0)
     # o coletor pede só o RREO Anexo 01
-    assert _um(banco, "select count(*), count(distinct anexo) from core.receita") == (2, 1)
+    assert _um(banco, "select count(*), count(distinct anexo) from core.receita") == (4, 1)
+    assert _um(banco, "select exercicio, bimestre, receita_realizada, despesa_paga from core.resultado_anual") \
+        == (2024, 6, 1_500_000_000, 1_400_000_000)
 
 
 def test_nenhuma_regra_falhou(banco):

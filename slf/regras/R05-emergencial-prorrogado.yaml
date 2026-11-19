@@ -9,6 +9,8 @@ pode_ser_normal_se: >
   A prorrogação ficou dentro do teto de 1 ano, ou valeu o regime de calamidade
   (MP 1.221/2024 e Lei 14.981/2024). A leitura do aditivo é feita pelo texto e pode errar.
 como_verificar: Justificativa de cada aditivo e se a licitação definitiva foi aberta.
+observado: {rotulo: Valor acrescido ao contrato, formato: brl}
+resumo: "Contrato emergencial com {aditivos_de_prazo} termo(s) aditivo(s) que mudam a vigência. Valor inicial {valor_inicial|brl}, valor global {valor_global|brl}."
 fontes: [pncp]
 sql: |
   select c.id as chave,
