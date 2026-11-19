@@ -32,6 +32,11 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
             {(ps) => {
               const vis = ps.filter((p) => !termo || semAcento(p.nome).includes(termo))
               return vis.length ? (
+                <>
+                <p class="apagado pequeno">
+                  Quanto cada deputado federal e senador indicou para a cidade em emendas Pix (transferências
+                  especiais), do maior valor para o menor, e quanto disso já foi transferido.
+                </p>
                 <ul class="lista">
                   {vis.map((p) => (
                     <li key={p.codigo}>
@@ -39,9 +44,9 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
                         <span class="pessoa">
                           <Foto arquivo={p.foto} nome={p.nome} />
                           <span class="pessoa-corpo">
-                            <span class="linha-topo"><span class="titulo">{p.nome} <ChipCargo cargo={p.cargo} /></span><span class="valor">{brlCurto(p.indicado)}</span></span>
+                            <span class="linha-topo"><span class="titulo">{p.nome} <ChipCargo cargo={p.cargo} /></span><ValorRotulado valor={p.indicado} rotulo="indicados" /></span>
                             <span class="apagado pequeno">
-                              {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'} · {p.planos} {p.planos === 1 ? 'plano' : 'planos'} · {p.primeiro_ano === p.ultimo_ano ? p.primeiro_ano : `${p.primeiro_ano} a ${p.ultimo_ano}`}
+                              {p.transferido ? `${brlCurto(p.transferido)} transferidos` : 'nada transferido ainda'} · {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'} · {p.planos} {p.planos === 1 ? 'plano' : 'planos'} · {p.primeiro_ano === p.ultimo_ano ? p.primeiro_ano : `${p.primeiro_ano} a ${p.ultimo_ano}`}
                             </span>
                           </span>
                         </span>
@@ -49,6 +54,7 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
                     </li>
                   ))}
                 </ul>
+                </>
               ) : <p class="vazio">Ninguém com esse nome.</p>
             }}
           </Carregado>
@@ -60,13 +66,15 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
               return vis.length ? (
                 <>
                   <p class="apagado pequeno">
-                    {vis.length > mostrados.length ? `Mostrando os ${mostrados.length} maiores de ${num(vis.length)}. Use a busca para achar os outros.` : `${num(vis.length)} fornecedores, do maior valor contratado para o menor.`}
+                    Quanto cada empresa ou pessoa tem em contratos com os órgãos da cidade (valor global, já com
+                    os aditivos), do maior para o menor.{' '}
+                    {vis.length > mostrados.length ? `Mostrando os ${mostrados.length} maiores de ${num(vis.length)}; use a busca para achar os outros.` : `${num(vis.length)} fornecedores.`}
                   </p>
                   <ul class="lista">
                     {mostrados.map((f, i) => {
                       const conteudo = (
                         <>
-                          <span class="linha-topo"><span class="titulo">{f.nome}</span><span class="valor">{brlCurto(f.valor_total)}</span></span>
+                          <span class="linha-topo"><span class="titulo">{f.nome}</span><ValorRotulado valor={f.valor_total} rotulo="contratados" /></span>
                           <span class="apagado pequeno">
                             {f.contratos} {f.contratos === 1 ? 'contrato' : 'contratos'} · {pct(f.pct_direto)} sem licitação
                           </span>
@@ -186,5 +194,15 @@ export function TelaFornecedor({ id }: { id: string }) {
         </>
       )}
     </Carregado>
+  )
+}
+
+/** Valor da lista com o que ele é, embaixo: "R$ 2,69 mi / indicados" */
+function ValorRotulado({ valor, rotulo }: { valor: number; rotulo: string }) {
+  return (
+    <span class="valor-rotulado">
+      <span class="valor">{brlCurto(valor)}</span>
+      <span class="rotulo-valor">{rotulo}</span>
+    </span>
   )
 }

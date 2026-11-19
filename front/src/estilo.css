@@ -135,6 +135,9 @@ a.cartao:hover { border-color: var(--destaque); }
 .linha-topo { display: flex; justify-content: space-between; align-items: baseline; gap: var(--e-3); }
 .linha-topo > :first-child { min-width: 0; }
 .valor { font-family: var(--f-titulo); font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+/* valor de lista com o que ele é logo embaixo ("indicados", "contratados") */
+.valor-rotulado { display: grid; justify-items: end; flex-shrink: 0; }
+.valor-rotulado .rotulo-valor { font-size: var(--t-mini); color: var(--apagado); line-height: 1.2; }
 .valor-grande { font-family: var(--f-titulo); font-variant-numeric: tabular-nums; font-weight: 700; font-size: var(--t-numero); line-height: 1.1; letter-spacing: -0.02em; color: var(--destaque); }
 
 .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e-2); }
