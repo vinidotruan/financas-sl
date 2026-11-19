@@ -376,8 +376,8 @@ pedido, meio segundo cada, mais de hora e meia para todos.
 **Decisão.** A coleta da Câmara consulta no máximo 2.000 pedidos por vez (`SLF_CAMARA_TRAMITACOES`) e
 reaproveita o resto da coleta anterior (`tramitacoes.json`, com a data em que cada um foi visto).
 Ordem: os pedidos sem situação, do mais novo ao mais antigo; os que ainda andam na Câmara (comissão,
-pauta, parecer), sempre; os parados ("Encaminhado para o Executivo", "Arquivado"), uma vez por mês. A
-publicação rápida (D35) não consulta nenhum, só reaproveita, porque não guarda o cache. Cinco falhas
+pauta, parecer), sempre; os parados ("Encaminhado para o Executivo", "Arquivado"), uma vez por mês. Só a
+coleta diária consulta; o processar e o publicar (D42) não coletam nada. Cinco falhas
 seguidas param as consultas daquela coleta. A tela do vereador mostra "Na Câmara: passo em data".
 
 **Limite.** O passo é da Câmara, não diz se a prefeitura atendeu: 87% de uma amostra de 60 estava em
@@ -486,7 +486,7 @@ exportação apaga a pasta de saída antes, para não sobrar arquivo de sinal qu
 nenhum segredo, nada de `data/`. A primeira coleta no GitHub levou cerca de 2 horas (o PNCP responde
 devagar para máquinas fora do Brasil), dentro do limite de 3 horas do workflow.
 
-### D35 · Publicação rápida a cada push, sem refazer a coleta inteira · 19/11/2026 · vale
+### D35 · Publicação rápida a cada push, sem refazer a coleta inteira · 19/11/2026 · substituída por D42
 
 **Problema.** O site só mudava na coleta diária, que leva cerca de 2 horas por causa do PNCP. Uma
 mudança de tela ou de regra esperava até o dia seguinte para ir ao ar.
@@ -500,6 +500,27 @@ coleta boa dela.
 
 **Consequência.** Entregas pequenas vão ao ar no mesmo dia. Se o cache estiver vazio (mais de 7 dias
 sem coleta diária), a publicação rápida falha de propósito em vez de publicar um site sem dados.
+
+### D42 · Coletar, processar e publicar em etapas separadas · 19/11/2026 · vale
+
+**Problema.** Cada publicação refazia tudo: recoletava Câmara e Congresso, remontava o banco, rodava as
+regras, exportava e montava o front, mesmo para mudar um texto da tela. E a coleta diária fazia as três
+coisas num workflow só, então nenhuma etapa podia ser repetida sozinha.
+
+**Decisão (pedido do Ruan).** Três workflows encadeados, ligados pelo cache do Actions:
+1. `coleta.yml` (diária, 06:10): só baixa os dados brutos de todas as fontes e guarda em `dados-`.
+2. `processar.yml`: depois da coleta e depois do CI verde num push para `main`. Monta o banco a partir da
+   última coleta boa de cada fonte, roda as regras, exporta em modo público, confere os dados sensíveis
+   (D40) e guarda o **pacote de dados públicos** (`pacote-`, com o commit que o gerou) e o banco
+   (`banco-`, de onde vem o histórico dos sinais). No push, só reprocessa se mudou `slf/`, `config/`,
+   `pyproject.toml` ou `uv.lock` desde o commit do pacote anterior.
+3. `publicar.yml`: depois do processar. Monta o front e o Storybook com o último pacote e publica.
+
+Coletar e processar dividem o grupo de concorrência `dados` (nunca processa durante a coleta); publicar
+tem o seu (`pages`). Os dados brutos continuam só no cache, porque têm CPF (D31).
+
+**Consequência.** Mudança só de tela vai ao ar sem reprocessar. O pacote de dados é a peça que a etapa
+seguinte (resultado repetível, com o pacote numa Release do GitHub) vai publicar.
 
 ---
 

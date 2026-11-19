@@ -1,16 +1,13 @@
-# Publicação rápida no GitHub Pages, para entregar mudança de código sem esperar a coleta diária.
+# Publicar: monta o site (front e Storybook) com o último pacote de dados públicos e põe no GitHub Pages.
+# Não coleta nem processa nada (D42): roda depois do processar. Mudança só de tela vai ao ar sem reprocessar.
 #
-# Roda depois que o CI passa num push para main (ou à mão). Não refaz a coleta inteira, que leva
-# cerca de 2 horas por causa do PNCP: parte dos dados da última execução (cache do Actions), recoleta
-# só as fontes rápidas (Câmara e Congresso), remonta o banco, exporta em modo público e publica.
-# Não salva o cache: quem guarda os dados entre execuções é a coleta diária (coleta.yml).
-#
-# Usa o mesmo grupo de concorrência da coleta diária, para as duas nunca publicarem ao mesmo tempo.
+# Só publica com a variável de repositório PUBLICAR_PAGES = true (Settings > Variables). O pacote já saiu
+# em modo público e passou pela conferência de dados sensíveis no processar (D40).
 name: publicar
 
 on:
   workflow_run:
-    workflows: [ci]
+    workflows: [processar]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -19,64 +16,39 @@ permissions:
   contents: read
 
 concurrency:
-  group: coleta
+  group: pages
   cancel-in-progress: false
 
 jobs:
   montar:
-    # Só push deste repositório para main com o CI verde. Um pull request de fork com um branch
-    # chamado main também dispara o workflow_run, por isso o filtro de evento e de repositório.
     if: >-
       vars.PUBLICAR_PAGES == 'true' &&
-      (github.event_name == 'workflow_dispatch' ||
-       (github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_repository.full_name == github.repository))
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      SLF_REVISAO: config/revisao-publica.json
-      PYTHONUNBUFFERED: "1"
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: front/package-lock.json
 
-      - name: Dados da última coleta diária
-        id: dados
+      - name: Último pacote de dados públicos
+        id: pacote
         uses: actions/cache/restore@v5
         with:
-          path: data
-          key: dados-${{ github.run_id }}
-          restore-keys: dados-
+          path: pacote
+          key: pacote-${{ github.run_id }}
+          restore-keys: pacote-
 
-      - name: Sem dados no cache, nada a publicar
-        if: steps.dados.outputs.cache-matched-key == ''
+      - name: Sem pacote no cache, nada a publicar
+        if: steps.pacote.outputs.cache-matched-key == ''
         run: |
-          echo "Cache de dados vazio: rode a coleta diária primeiro." >> "$GITHUB_STEP_SUMMARY"
+          echo "Sem pacote de dados: rode o processar primeiro." >> "$GITHUB_STEP_SUMMARY"
           exit 1
-
-      - run: uv sync --locked
-
-      # Fonte fora do ar não segura a publicação: o banco usa a última coleta boa dela.
-      # A situação dos pedidos (uma consulta por pedido) vem toda da coleta diária: aqui só reaproveita,
-      # porque esta execução não guarda o cache e a consulta se perderia.
-      - name: Recoletar as fontes rápidas
-        continue-on-error: true
-        env:
-          SLF_CAMARA_TRAMITACOES: "0"
-        run: uv run slf coletar camara congresso
-
-      - name: Montar o banco
-        run: uv run slf atualizar
 
       - name: Front estático
         working-directory: front
@@ -87,25 +59,10 @@ jobs:
         working-directory: front
         run: npm run build-storybook -- -o ../site/storybook
 
-      - name: Exportar em modo público
-        run: uv run slf exportar --modo publico --saida site/data
-
-      # D40: nada que pareça dado sensível vai ao ar. Achou, a publicação para e o site fica como estava;
-      # o relatório mostra só a forma do trecho (o log é público). Falso positivo: config/sensivel-liberados.yaml
-      - name: Conferir dados sensíveis
+      - name: Dados
         run: |
-          if ! uv run slf conferir --pasta site/data > conferencia.txt; then
-            { echo '### Publicação parada: dado sensível no export (D40)'; echo '```'; cat conferencia.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            cat conferencia.txt
-            exit 1
-          fi
-          cat conferencia.txt
-
-      - name: Resumo
-        run: |
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          uv run slf status >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cp -R pacote site/data
+          echo "Site do commit $(git rev-parse --short HEAD) com o pacote de dados do commit $(cut -c1-7 pacote/commit.txt)." >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-pages-artifact@v4
         with:

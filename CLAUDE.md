@@ -71,7 +71,7 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/consultas.py` | O conteúdo de cada rota e onde o modo público se aplica. API e exportação usam o mesmo |
 | `slf/sensivel.py` | As regras de dados sensíveis (D40): máscara de CPF, "pessoa física" e o texto dos pedidos sem contato nem número de casa de morador |
 | `slf/exportar.py` | Exportação estática pelas mesmas consultas da API; apaga a saída antes |
-| `.github/workflows/` | `ci.yml` (lint, testes, build), `coleta.yml` (coleta diária, cache em `data/`, Pages só com `PUBLICAR_PAGES=true`) e `publicar.yml` (publicação rápida depois do CI verde em `main`, D35) |
+| `.github/workflows/` | `ci.yml` (lint, testes, build), e três etapas encadeadas (D42): `coleta.yml` (diária, só dados brutos no cache), `processar.yml` (banco, regras, exportação pública e conferência) e `publicar.yml` (front e pacote de dados no Pages, só com `PUBLICAR_PAGES=true`) |
 | `slf/api.py` | FastAPI só leitura (conexão `read_only` a cada pedido), fina em cima de `consultas.py`; serve `site/` em "/" |
 | `front/` | Vite + Preact + TypeScript. `src/dados.ts` é a camada única (API ou JSON estático, por `VITE_DADOS`); rotas no hash |
 | `slf/web/index.html` | Tela provisória antiga; só aparece se `site/` não foi buildado |
@@ -175,10 +175,10 @@ de privacidade.
 ### 4. GitHub Actions
 
 - `ci.yml`: em push e pull request, `uv sync`, ruff, pytest (com as fixtures, sem rede).
-- `coleta.yml`: `schedule` com cron em UTC (`10 9 * * *` = 06:10 em Brasília) e `workflow_dispatch`.
-  Roda `slf diario`, `slf exportar --modo publico`, builda o front e publica.
-- `publicar.yml`: depois do CI verde num push para `main`, recoleta Câmara e Congresso, monta,
-  exporta e publica em minutos, a partir do cache da coleta diária (D35).
+- Três etapas encadeadas (D42): `coleta.yml` (cron `10 9 * * *` = 06:10 em Brasília, só baixa os dados
+  brutos para o cache `dados-`) → `processar.yml` (depois da coleta e do CI verde em `main`: banco, regras,
+  exportação pública, `slf conferir`; guarda `pacote-` e `banco-`; no push só reprocessa se mudou `slf/`,
+  `config/`, `pyproject.toml` ou `uv.lock`) → `publicar.yml` (front, Storybook e o último pacote no Pages).
 - Design system: `cd front && npm run storybook` (porta 6006); o build sai em `/storybook/` no site (D39).
 - **Persistência entre execuções:** o runner começa vazio a cada vez. Proposta: guardar `data/raw`
   recente e `data/slf.duckdb` como asset de uma release fixa (ex. `dados-latest`) com `gh release`,

@@ -1,0 +1,149 @@
+# Processar: monta o banco a partir da última coleta boa de cada fonte, roda as regras, exporta em modo
+# público, confere os dados sensíveis (D40) e guarda o pacote de dados públicos no cache (D42). Guarda
+# também o banco, de onde vem o histórico dos sinais na próxima vez.
+#
+# Roda depois da coleta diária e depois do CI verde num push para main. No push, só reprocessa se mudou o
+# código que trata os dados (slf/, config/, pyproject.toml, uv.lock) desde o commit do pacote anterior;
+# mudança só de tela reaproveita o pacote, e o publicar vai ao ar sem reprocessar nada.
+name: processar
+
+on:
+  workflow_run:
+    workflows: [coleta, ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dados
+  cancel-in-progress: false
+
+jobs:
+  processar:
+    # Coleta concluída, ou CI verde num push deste repositório para main. Um pull request de fork com um
+    # branch chamado main também dispara o workflow_run, por isso o filtro de evento e de repositório.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       (github.event.workflow_run.name == 'coleta' || github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SLF_REVISAO: config/revisao-publica.json
+      PYTHONUNBUFFERED: "1"
+    steps:
+      # CI: o commit que passou no CI. Coleta e pedido à mão: o main de agora.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.name == 'ci' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Pacote de dados anterior
+        uses: actions/cache/restore@v5
+        with:
+          path: pacote
+          key: pacote-${{ github.run_id }}
+          restore-keys: pacote-
+
+      - name: Decidir se reprocessa
+        id: decidir
+        env:
+          EVENTO: ${{ github.event_name }}
+          ORIGEM: ${{ github.event.workflow_run.name }}
+        run: |
+          anterior=$(cat pacote/commit.txt 2>/dev/null || true)
+          motivo=""
+          if [ "$EVENTO" = "workflow_dispatch" ]; then motivo="pedido à mão"
+          elif [ "$ORIGEM" = "coleta" ]; then motivo="coleta nova"
+          elif [ -z "$anterior" ]; then motivo="não havia pacote anterior"
+          elif ! git cat-file -e "${anterior}^{commit}" 2>/dev/null; then motivo="o commit do pacote anterior sumiu"
+          elif ! git diff --quiet "$anterior" HEAD -- slf config pyproject.toml uv.lock; then
+            motivo="mudou o código que trata os dados desde ${anterior:0:7}"
+          fi
+          if [ -n "$motivo" ]; then
+            echo "reprocessar=true" >> "$GITHUB_OUTPUT"
+            echo "**Reprocessa:** $motivo." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "reprocessar=false" >> "$GITHUB_OUTPUT"
+            echo "**Não reprocessa:** nada mudou no código que trata os dados desde ${anterior:0:7}; o publicar usa o pacote dele." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: astral-sh/setup-uv@v7
+        if: steps.decidir.outputs.reprocessar == 'true'
+        with:
+          enable-cache: true
+
+      - name: Dados da última coleta
+        id: dados
+        if: steps.decidir.outputs.reprocessar == 'true'
+        uses: actions/cache/restore@v5
+        with:
+          path: data
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+
+      # O histórico dos sinais (primeira vez, reabertura do descartado, D17) vem do banco anterior. Quem
+      # guarda o banco é o processar (cache banco-); sem ele, vale o que veio no cache da coleta.
+      - name: Banco anterior (histórico dos sinais)
+        if: steps.decidir.outputs.reprocessar == 'true'
+        uses: actions/cache/restore@v5
+        with:
+          path: data/slf.duckdb
+          key: banco-${{ github.run_id }}
+          restore-keys: banco-
+
+      - name: Sem dados no cache, nada a processar
+        if: steps.decidir.outputs.reprocessar == 'true' && steps.dados.outputs.cache-matched-key == ''
+        run: |
+          echo "Cache de dados vazio: rode a coleta primeiro." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Montar o banco
+        if: steps.decidir.outputs.reprocessar == 'true'
+        run: uv sync --locked && uv run slf atualizar
+
+      # antes da exportação e da conferência: o histórico vale mesmo se a publicação parar
+      - name: Guardar o banco para o próximo processar
+        if: steps.decidir.outputs.reprocessar == 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: data/slf.duckdb
+          key: banco-${{ github.run_id }}
+
+      - name: Exportar em modo público
+        if: steps.decidir.outputs.reprocessar == 'true'
+        run: |
+          rm -rf pacote
+          uv run slf exportar --modo publico --saida pacote
+          git rev-parse HEAD > pacote/commit.txt
+
+      # D40: nada que pareça dado sensível vai ao ar. Achou, o processar falha, o publicar não roda e o
+      # site fica como estava; o relatório mostra só a forma do trecho (o log é público).
+      # Falso positivo: config/sensivel-liberados.yaml
+      - name: Conferir dados sensíveis
+        if: steps.decidir.outputs.reprocessar == 'true'
+        run: |
+          if ! uv run slf conferir --pasta pacote > conferencia.txt; then
+            { echo '### Publicação parada: dado sensível no export (D40)'; echo '```'; cat conferencia.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            cat conferencia.txt
+            exit 1
+          fi
+          cat conferencia.txt
+
+      - name: Resumo
+        if: steps.decidir.outputs.reprocessar == 'true'
+        run: |
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          uv run slf status >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar o pacote para o publicar
+        if: steps.decidir.outputs.reprocessar == 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: pacote
+          key: pacote-${{ github.run_id }}

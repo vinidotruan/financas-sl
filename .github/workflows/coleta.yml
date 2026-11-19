@@ -1,11 +1,9 @@
-# Coleta diária, banco, exportação em modo público e (se ligado) publicação no GitHub Pages.
+# Coletar: baixa os dados brutos de todas as fontes e guarda no cache do Actions. Só isso (D42).
+# Depois dela vêm, encadeados, o processar (processar.yml: banco, regras, exportação pública e
+# conferência) e o publicar (publicar.yml: site no GitHub Pages).
 #
 # Dados entre execuções: ficam no cache do Actions (data/), não numa release. O raw do PNCP traz CPF
-# inteiro de fornecedor pessoa física; uma release ficaria pública se o repositório ficar público, o
-# cache não (só os workflows deste repositório leem). Ver D31 em docs/decisoes.md.
-#
-# Publicação: só acontece com a variável de repositório PUBLICAR_PAGES = true (Settings > Variables).
-# O site sai sempre em modo público, com a revisão de config/revisao-publica.json (sem notas).
+# inteiro de fornecedor pessoa física; só os workflows deste repositório leem o cache. Ver D31.
 name: coleta
 
 on:
@@ -16,8 +14,9 @@ on:
 permissions:
   contents: read
 
+# o mesmo grupo do processar: nunca processa enquanto a coleta ainda grava no cache
 concurrency:
-  group: coleta
+  group: dados
   cancel-in-progress: false
 
 jobs:
@@ -25,20 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
-      SLF_REVISAO: config/revisao-publica.json
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: front/package-lock.json
 
-      - name: Dados da última execução (banco e última coleta boa de cada fonte)
+      - name: Dados da última execução (última coleta boa de cada fonte)
         uses: actions/cache/restore@v5
         with:
           path: data
@@ -47,64 +40,18 @@ jobs:
 
       - run: uv sync --locked
 
-      - name: Coletar e montar o banco
-        run: uv run slf diario
+      # Fonte fora do ar não segura as outras: o processar usa a última coleta boa dela.
+      - name: Coletar todas as fontes
+        continue-on-error: true
+        run: uv run slf coletar
 
       - name: Podar coletas antigas
         if: always()
         run: uv run slf podar --manter 2
 
-      - name: Guardar dados para a próxima execução
+      - name: Guardar dados para o processar e a próxima coleta
         if: always()
         uses: actions/cache/save@v5
         with:
           path: data
           key: dados-${{ github.run_id }}
-
-      - name: Front estático
-        working-directory: front
-        run: npm ci && npm run build:estatico
-
-      # o design system (Storybook) vai junto, em /storybook/; depois do front, que esvazia site/
-      - name: Design system
-        working-directory: front
-        run: npm run build-storybook -- -o ../site/storybook
-
-      - name: Exportar em modo público
-        run: uv run slf exportar --modo publico --saida site/data
-
-      # D40: nada que pareça dado sensível vai ao ar. Achou, a publicação para e o site fica como estava;
-      # o relatório mostra só a forma do trecho (o log é público). Falso positivo: config/sensivel-liberados.yaml
-      - name: Conferir dados sensíveis
-        run: |
-          if ! uv run slf conferir --pasta site/data > conferencia.txt; then
-            { echo '### Publicação parada: dado sensível no export (D40)'; echo '```'; cat conferencia.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-            cat conferencia.txt
-            exit 1
-          fi
-          cat conferencia.txt
-
-      - name: Resumo
-        run: |
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          uv run slf status >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-pages-artifact@v4
-        if: vars.PUBLICAR_PAGES == 'true'
-        with:
-          path: site
-
-  publicar:
-    needs: coletar
-    if: vars.PUBLICAR_PAGES == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    steps:
-      - id: deploy
-        uses: actions/deploy-pages@v5
