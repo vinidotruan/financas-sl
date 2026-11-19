@@ -108,6 +108,18 @@ jobs:
         if: steps.decidir.outputs.reprocessar == 'true'
         run: uv sync --locked && uv run slf atualizar
 
+      # Fonte sem nenhuma coleta no cache tira uma parte do site (as fotos e os cargos, em 19/11): para e o
+      # site fica como estava. Resolve com a coleta à mão só dessa fonte (coleta.yml, entrada "fontes").
+      - name: Toda fonte tem coleta
+        if: steps.decidir.outputs.reprocessar == 'true'
+        run: |
+          faltam=$(uv run python -c "import duckdb; c = duckdb.connect('data/slf.duckdb', read_only=True); print(' '.join(r[0] for r in c.execute('select fonte from core.fonte where coleta is null order by 1').fetchall()))")
+          if [ -n "$faltam" ]; then
+            echo "### Publicação parada: sem nenhuma coleta de $faltam no cache. Rode a coleta à mão com fontes: $faltam" >> "$GITHUB_STEP_SUMMARY"
+            echo "sem coleta: $faltam"
+            exit 1
+          fi
+
       # antes da exportação e da conferência: o histórico vale mesmo se a publicação parar
       - name: Guardar o banco para o próximo processar
         if: steps.decidir.outputs.reprocessar == 'true'

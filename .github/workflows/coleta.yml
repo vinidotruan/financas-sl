@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: "10 9 * * *"   # 06:10 em Brasília. O cron do Actions pode atrasar.
   workflow_dispatch:
+    inputs:
+      fontes:
+        description: "Fontes separadas por espaço, para coletar só algumas (vazio: todas)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -41,9 +46,11 @@ jobs:
       - run: uv sync --locked
 
       # Fonte fora do ar não segura as outras: o processar usa a última coleta boa dela.
-      - name: Coletar todas as fontes
+      - name: Coletar
         continue-on-error: true
-        run: uv run slf coletar
+        env:
+          FONTES: ${{ inputs.fontes }}
+        run: uv run slf coletar $FONTES
 
       - name: Podar coletas antigas
         if: always()
