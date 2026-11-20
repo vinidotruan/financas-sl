@@ -83,7 +83,15 @@ rodapé do Início.
 - Atraso: o município manda os dados ao Tribunal com meses de atraso (em 19/11/2026, o arquivo de 2026
   ia só até 27/02/2026). A tela sempre diz até quando o dado vai.
 - O CNPJ vem sem zeros à esquerda (Caixa aparece como `360305000104`): normalizar para 14 dígitos.
-- Dados medidos (prefeitura, 2025): R$ 1,197 bi pagos, 965 credores PJ. 2026 até fevereiro: R$ 281 mi.
+- **Pagamento conta no ano da data dele, lido do arquivo daquele ano.** O arquivo de um ano traz o
+  histórico inteiro dos empenhos que andaram nele, inclusive pagamentos de anos anteriores (o de 2025 tem
+  R$ 174,9 mi pagos em 2024): somar o arquivo todo conta dinheiro duas vezes. Valores com ponto decimal;
+  há estorno com valor negativo, que entra na soma. CPF vem com 8 a 11 dígitos e CNPJ com 5 a 14 (sem os
+  zeros à esquerda). Credor PJ com nome de MEI no formato novo ("12.345.678 NOME") é pessoa física, pela
+  mesma regra do PNCP (D40): 66 linhas assim no arquivo de 2025 da prefeitura.
+- Dados medidos (prefeitura, pagamentos datados em 2025): R$ 944,6 mi. Empresas que mais receberam:
+  Green Card R$ 29,5 mi, IDEAS R$ 28,4 mi, Instaladora Elétrica Mercúrio R$ 24,7 mi, Construsinos R$ 17,4 mi,
+  RGE Sul R$ 16,9 mi.
 
 ## Restrições (valem do projeto)
 
