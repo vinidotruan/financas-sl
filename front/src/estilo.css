@@ -231,6 +231,25 @@ table.compacta th, table.compacta td { padding: var(--e-2) var(--e-3); }
 .medidor-escala { position: relative; height: 16px; font-size: var(--t-mini); font-variant-numeric: tabular-nums; color: var(--apagado); }
 .medidor-escala span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 
+/* Início (D44): um cartão por pergunta, com o número grande, as barras e o link do detalhe */
+.pergunta > h2.rotulo { margin: 0; }
+/* item de grade cresce com o conteúdo; sem isso, nome comprido de empresa estoura a tela */
+.pergunta > *, .barras-valor > li, .barras-valor > li > a > *, .barras-valor .item-barra > * { min-width: 0; }
+.pergunta.tracejado { border-style: dashed; background: transparent; }
+.valor-grande.apagado { color: var(--apagado); font-size: var(--t-titulo); }
+.pergunta .ver { font-size: var(--t-apoio); font-weight: 600; justify-self: start; }
+.barras-valor { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e-2); }
+.barras-valor > li > a, .barras-valor .item-barra { display: grid; gap: var(--e-1); color: inherit; text-decoration: none; min-width: 0; }
+.barras-valor > li > a:hover .nome { text-decoration: underline; }
+.barras-valor .linha-topo { font-size: var(--t-apoio); }
+.barras-valor .nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barras-valor .num { white-space: nowrap; flex-shrink: 0; }
+.barras-valor .barra { display: block; height: 6px; }
+.barra.progresso { height: 10px; border-radius: var(--raio-pilula); }
+.barra.progresso > i { border-radius: var(--raio-pilula); }
+.situacoes { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rodape-inicio { text-align: center; margin: 0; }
+
 .grafico svg { width: 100%; height: auto; display: block; }
 .grafico .eixo { font-family: var(--f-texto); font-size: var(--t-mini); font-variant-numeric: tabular-nums; fill: var(--apagado); }
 .grafico .grade { stroke: var(--linha); stroke-width: 1; }

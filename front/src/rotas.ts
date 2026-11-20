@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'preact/hooks'
 
 // Rotas no hash (#/regra/R05): funcionam igual no `slf servir` e num site estático, sem servidor.
-export type Aba = 'sinais' | 'emendas' | 'pedidos' | 'fichas' | 'contas' | 'fontes'
+export type Aba = 'inicio' | 'emendas' | 'pedidos' | 'fichas' | 'contas' | 'sinais'
 
 export type Rota =
+  | { tela: 'inicio' }
   | { tela: 'sinais' }
   | { tela: 'regra'; id: string }
   | { tela: 'sinal'; id: string }
@@ -20,6 +21,8 @@ export type Rota =
 export function lerRota(hash: string): Rota {
   const [tela, arg] = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)
   switch (tela) {
+    case 'inicio': return { tela }
+    case 'sinais': return { tela }
     case 'regra': return arg ? { tela, id: arg } : { tela: 'sinais' }
     case 'sinal': return arg ? { tela, id: arg } : { tela: 'sinais' }
     case 'emendas': return { tela }
@@ -31,7 +34,7 @@ export function lerRota(hash: string): Rota {
     case 'vereador': return arg ? { tela, id: arg } : { tela: 'pedidos' }
     case 'contas': return { tela }
     case 'fontes': return { tela }
-    default: return { tela: 'sinais' }
+    default: return { tela: 'inicio' }
   }
 }
 
@@ -42,11 +45,13 @@ export function abaDa(rota: Rota): Aba {
     case 'emenda': return 'emendas'
     case 'parlamentar': case 'fornecedor': return 'fichas'
     case 'vereador': return 'pedidos'
+    case 'fontes': return 'inicio'
     default: return rota.tela
   }
 }
 
 export const link = {
+  inicio: () => '#/',
   sinais: () => '#/sinais',
   regra: (id: string) => `#/regra/${id}`,
   sinal: (id: string) => `#/sinal/${id}`,

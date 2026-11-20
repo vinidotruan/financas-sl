@@ -253,3 +253,22 @@ export interface Vereador {
   pedidos: Pedido[]
   fontes: FonteRef[]
 }
+
+/** A aba Início (D44): /api/inicio e inicio.json */
+export interface Inicio {
+  data_referencia: string
+  /** null quando o TCE-RS ainda não trouxe um ano com dezembro */
+  recebeu: {
+    ano: number
+    total: number
+    empresas: { id: string; nome: string; valor: number }[]
+    ano_corrente: number
+    ate: string | null
+  } | null
+  emendas: { indicado: number; transferido: number }
+  parados: { dias: number; total: number; por_situacao: { situacao: string; pedidos: number }[]; sem_situacao: number }
+  partidos: { partido: string; pedidos: number }[]
+  bairros: { id: number; nome: string; pedidos: number }[]
+  folha: LimitePessoal | null
+  fontes: FonteRef[]
+}

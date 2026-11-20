@@ -556,6 +556,35 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
   que testa, o limiar, o que pode explicar e como refutar. Um teste confere que cada regra, na versão
   atual, está lá.
 
+
+### D44 · Aba Início e a fonte TCE-RS (pagamentos por credor) · 19/11/2026 · vale
+
+**Problema.** A primeira tela do site (Sinais) abria vazia no ar, porque os sinais esperam revisão. O
+Ruan quer que quem abre o site saiba em 10 segundos o que importa sobre o dinheiro da cidade: quem mais
+recebeu da prefeitura, o que está parado, o maior salário e o que mais eu sugerisse.
+
+**Decisão (esboço A, escolhido pelo Ruan).** Uma aba **Início**, a primeira da barra, com sete
+cartões-pergunta: quem mais recebeu da prefeitura (ano completo mais recente, só empresas, sem repasses),
+quanto das emendas chegou, pedidos parados na Câmara (comissão, pauta ou parecer há mais de 60 dias;
+"Encaminhado para o Executivo" não conta, porque é o último passo que a Câmara registra), partido que mais
+pediu (o partido **da época** do pedido, contado uma vez por partido; comissão e Mesa Diretora não
+contam), bairros que mais pedem, folha sobre a receita com as linhas da LRF, e o maior salário como "em
+breve". Abas: Início · Emendas · Pedidos · Fichas · Contas · Sinais; Fontes virou link no rodapé do
+Início. Design e plano em `docs/superpowers/specs/2026-11-19-aba-inicio-design.md` e
+`docs/superpowers/plans/2026-11-19-aba-inicio.md`.
+
+**Fonte nova: TCE-RS** (`slf/coletores/tce.py`), despesa orçamentária por empenhos, um zip por órgão e
+ano (códigos em `config/ente.yaml`, `tce_rs`). Regras: pagamento conta no ano da data dele, lido do
+arquivo daquele ano (o arquivo de um ano traz o histórico dos empenhos que andaram nele: R$ 174,9 mi de
+2024 dentro do de 2025); CPF e CNPJ voltam a 11 e 14 dígitos; MEI pelo nome é pessoa física (mesma regra
+do PNCP, unificada pelo documento entre as duas fontes); o histórico do empenho não entra no banco;
+repasses (órgão público, banco, previdência, tributo retido) pela lista `slf/repasses.yaml`.
+
+**O que ficou de fora.** Salário: o portal da prefeitura (Thema GRP) só entrega a folha e os pagamentos
+do mês com um login embutido na página, e a regra do projeto é não automatizar login; vem por Lei de
+Acesso à Informação ou download à mão. "Este mês": o TCE-RS chega com meses de atraso (em 19/11/2026, o
+ano de 2026 ia até 27/02).
+
 ---
 
 ## Em aberto

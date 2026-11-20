@@ -2,7 +2,7 @@
 // no site publicado lê os arquivos JSON que `slf exportar` grava em data/. Troca por configuração:
 // VITE_DADOS=estatico (npm run build:estatico) ou api (padrão).
 import type {
-  Contas, Emenda, Fontes, Pedidos, Vereador, Fornecedor, FornecedorFicha, Parlamentar, ParlamentarFicha, Rastro, Regra, Sinal,
+  Contas, Emenda, Fontes, Inicio, Pedidos, Vereador, Fornecedor, FornecedorFicha, Parlamentar, ParlamentarFicha, Rastro, Regra, Sinal,
   SinalDetalhe, Status,
 } from './tipos'
 
@@ -13,6 +13,7 @@ interface Rota { api: string; arquivo: string }
 
 const rota = {
   fontes: (): Rota => ({ api: 'api/fontes', arquivo: 'fontes.json' }),
+  inicio: (): Rota => ({ api: 'api/inicio', arquivo: 'inicio.json' }),
   regras: (): Rota => ({ api: 'api/regras', arquivo: 'regras.json' }),
   sinais: (): Rota => ({ api: 'api/sinais', arquivo: 'sinais.json' }),
   sinal: (id: string): Rota => ({ api: `api/sinais/${id}`, arquivo: `sinais/${id}.json` }),
@@ -57,6 +58,7 @@ export function urlFoto(arquivo: string): string {
 
 export const dados = {
   fontes: () => buscar<Fontes>(rota.fontes()),
+  inicio: () => buscar<Inicio>(rota.inicio()),
   regras: () => buscar<Regra[]>(rota.regras()),
   sinais: () => buscar<Sinal[]>(rota.sinais()),
   sinal: (id: string) => buscar<SinalDetalhe>(rota.sinal(id)),

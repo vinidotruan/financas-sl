@@ -140,5 +140,5 @@ export const SEVERIDADE: Record<string, string> = { alto: 'Alto', atencao: 'Aten
 export const AREA: Record<string, string> = { emendas: 'Emendas', compras: 'Compras', contas: 'Contas' }
 export const FONTE: Record<string, string> = {
   transferegov: 'Transferegov', siconfi: 'SICONFI', pncp: 'PNCP', prefeitura: 'Prefeitura', camara: 'Câmara',
-  congresso: 'Congresso',
+  congresso: 'Congresso', tce: 'TCE-RS',
 }

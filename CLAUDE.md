@@ -62,6 +62,7 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `docs/decisoes.md` | Registro das decisões técnicas (Dnn), para auditoria. Toda decisão nova ou mudança de regra entra aqui |
 | `docs/replicar.md` | Como montar o painel para outra cidade: critérios de escolha de fonte e passo a passo |
 | `docs/metodologia.md` | Do dado bruto ao sinal, resultado repetível (D43), como refazer as contas e cada regra (um teste confere a versão) |
+| `front/src/telas/inicio.tsx` | A aba Início, primeira do site (D44): sete cartões-pergunta lidos de `/api/inicio` (`inicio.json`); componentes em `componentes/cartoes.tsx` |
 | `slf/pacote.py` | Pacote de dados abertos: tabelas tratadas em Parquet, modo público, com proveniência (`slf pacote`, D43) |
 | `slf/coletores/*.py` (`tce`: TCE-RS, empenhos e pagamentos por órgão e ano, D44) | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
 | `slf/raw.py` | `data/raw/{fonte}/{AAAA-MM-DDTHHMMSS}/*.json` + `manifest.jsonl` (url, params, sha256, linhas) |

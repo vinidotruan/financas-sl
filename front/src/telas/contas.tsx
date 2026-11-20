@@ -1,24 +1,16 @@
 import { useCarregar } from '../componentes/carregar'
+import { MedidorLRF } from '../componentes/medidor'
 import { Carregado, Fontes, Rodape, Topo } from '../componentes/pecas'
 import { dados } from '../dados'
 import { brl, brlCurto, pctDireto } from '../formato'
 import type { LimitePessoal, ResultadoAnual } from '../tipos'
 
-const ESCALA_MAX = 60 // o medidor vai de 0% a 60% da RCL
-
 function Medidor({ ultimo }: { ultimo: LimitePessoal }) {
-  const pos = (v: number | null) => `${((v ?? 0) / ESCALA_MAX) * 100}%`
   return (
     <div class="cartao">
       <span class="rotulo">Pessoal sobre a RCL · {ultimo.periodo}º quadrimestre de {ultimo.exercicio}</span>
       <span class="valor-grande">{pctDireto(ultimo.pct_rcl)}</span>
-      <div class="medidor" role="img"
-        aria-label={`${pctDireto(ultimo.pct_rcl)} da receita corrente líquida. Limites da LRF: alerta ${pctDireto(ultimo.limite_alerta, 1)}, prudencial ${pctDireto(ultimo.limite_prudencial, 1)}, máximo ${pctDireto(ultimo.limite_maximo, 0)}.`}>
-        <i style={{ width: pos(ultimo.pct_rcl) }} />
-        <b style={{ left: pos(ultimo.limite_alerta) }} />
-        <b style={{ left: pos(ultimo.limite_prudencial) }} />
-        <b class="max" style={{ left: pos(ultimo.limite_maximo) }} />
-      </div>
+      <MedidorLRF ultimo={ultimo} />
       <p class="apagado pequeno">
         Limites da LRF: alerta {pctDireto(ultimo.limite_alerta, 1)}, prudencial {pctDireto(ultimo.limite_prudencial, 1)},
         máximo {pctDireto(ultimo.limite_maximo, 0)} (arts. 20, 22 e 59).

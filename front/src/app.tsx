@@ -4,6 +4,7 @@ import { TelaContas } from './telas/contas'
 import { TelaEmendas, TelaRastro } from './telas/emendas'
 import { TelaFichas, TelaFornecedor, TelaParlamentar } from './telas/fichas'
 import { TelaFontes } from './telas/fontes'
+import { TelaInicio } from './telas/inicio'
 import { TelaPedidos, TelaVereador } from './telas/pedidos'
 import { TelaSinal } from './telas/sinal'
 import { TelaRegra, TelaSinais } from './telas/sinais'
@@ -12,6 +13,7 @@ export function App() {
   const rota = useRota()
   let tela
   switch (rota.tela) {
+    case 'inicio': tela = <TelaInicio />; break
     case 'sinais': tela = <TelaSinais />; break
     case 'regra': tela = <TelaRegra key={rota.id} id={rota.id} />; break
     case 'sinal': tela = <TelaSinal key={rota.id} id={rota.id} />; break
