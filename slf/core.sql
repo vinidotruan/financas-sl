@@ -371,6 +371,15 @@ select distinct cast(a.id_proposicao as bigint) as id_pedido, cast(a.id_autor as
 from staging.cm_autores a
 join core.pedido p on p.id = cast(a.id_proposicao as bigint);
 
+-- Partido de cada pedido: o do autor naquela proposição, nunca o de hoje (o vereador pode ter trocado
+-- de partido depois). Um pedido conta uma vez por partido; comissão e Mesa Diretora não contam (D44).
+create or replace table core.pedido_partido as
+select distinct cast(a.id_proposicao as bigint) as id_pedido, trim(a.partido) as partido
+from staging.cm_autores a
+join core.pedido p on p.id = cast(a.id_proposicao as bigint)
+left join core.vereador v on v.id = cast(a.id_autor as bigint)
+where coalesce(trim(a.partido), '') <> '' and coalesce(v.cargo, '') not in ('Comissão', 'Mesa Diretora');
+
 -- Bairro do pedido: o que a API da Câmara liga (fonte "camara") e o que a ementa diz logo depois da
 -- palavra "bairro" (fonte "ementa"), pelo nome oficial ou por um apelido de slf/bairros.yaml.
 create or replace table core.pedido_bairro as

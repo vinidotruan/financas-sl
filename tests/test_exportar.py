@@ -20,6 +20,7 @@ ROTAS = {
     "emendas.json": "/api/emendas", "parlamentares.json": "/api/parlamentares",
     "fornecedores.json": "/api/fornecedores", "contas.json": "/api/contas", "pedidos.json": "/api/pedidos",
     "proveniencia.json": "/api/proveniencia",
+    "inicio.json": "/api/inicio",
 }
 
 

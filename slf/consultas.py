@@ -23,6 +23,7 @@ from .sensivel import OBJETO_OMITIDO, PESSOA_FISICA, limpar_pedido, sem_cpf, tit
 PUBLICOS = ("confirmado", "encaminhado")
 STATUS = ("novo", "em análise", "descartado", "confirmado", "encaminhado")
 SEVERIDADE = {"alto": 0, "atencao": 1, "baixo": 2}
+DIAS_PARADO = 60  # pedido parado: na Câmara (comissão, pauta) há mais disso (D44)
 LINKS = {
     "transferegov": "https://api.transferegov.gestao.gov.br/transferenciasespeciais/",
     "siconfi": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
@@ -158,6 +159,55 @@ class Consulta:
             "fontes": [{**f, "arquivos": [{k: v for k, v in a.items() if k != "coleta"}
                                           for a in arquivos.get(f["fonte"], [])]}
                        for f in self._q("select fonte, coleta, coletado_em from core.fonte order by fonte")],
+        })
+
+    def inicio(self) -> dict:
+        """A aba Início (D44): quem mais recebeu da prefeitura, quanto das emendas chegou, pedidos parados
+        na Câmara, partidos e bairros que mais pedem e a folha perto do limite. Tudo com a data do dado."""
+        from .config import ente
+
+        tce = ente().get("tce_rs") or {}
+        prefeitura = int(tce.get("prefeitura") or (tce.get("orgaos") or [{"codigo": 0}])[0]["codigo"])
+        referencia = self._q("select data from core.referencia")[0]["data"]
+        ano = self._q("select max(ano) as ano from core.despesa_mes where orgao = ? and mes = 12",
+                      [prefeitura])[0]["ano"]
+        recebeu = None
+        if ano:
+            corrente = int(referencia[:4])
+            recebeu = {
+                "ano": ano,
+                "total": self._q("select sum(pago) as v from core.despesa_mes where orgao = ? and ano = ?",
+                                 [prefeitura, ano])[0]["v"],
+                "empresas": self._q("""select left(md5(ni), 12) as id, nome, pago as valor from core.credor_ano
+                                       where orgao = ? and ano = ? and not pessoa_fisica and not repasse
+                                       order by pago desc, ni limit 5""", [prefeitura, ano]),
+                "ano_corrente": corrente,
+                "ate": self._q("select max(data) as d from core.despesa where orgao = ? and ano = ?",
+                               [prefeitura, corrente])[0]["d"],
+            }
+        emendas = self.emendas()
+        parados = self._q(f"""select situacao, count(*) as pedidos from core.pedido
+                              where situacao is not null
+                                and situacao not in ('Encaminhado para o Executivo', 'Arquivado')
+                                and hoje() - situacao_data > {DIAS_PARADO}
+                              group by situacao order by pedidos desc, situacao""")
+        return sem_cpf({
+            "data_referencia": referencia,
+            "recebeu": recebeu,
+            "emendas": {"indicado": sum(e["indicado"] for e in emendas),
+                        "transferido": sum(e["transferido"] for e in emendas)},
+            "parados": {"dias": DIAS_PARADO, "total": sum(p["pedidos"] for p in parados),
+                        "por_situacao": parados,
+                        "sem_situacao": self._q("select count(*) as n from core.pedido "
+                                                "where situacao is null")[0]["n"]},
+            "partidos": self._q("""select partido, count(distinct id_pedido) as pedidos from core.pedido_partido
+                                   group by partido order by pedidos desc, partido limit 5"""),
+            "bairros": self._q("""select b.id, b.nome, count(distinct pb.id_pedido) as pedidos
+                                  from core.pedido_bairro pb join core.bairro b on b.id = pb.id_bairro
+                                  group by b.id, b.nome order by pedidos desc, b.id limit 5"""),
+            "folha": (self._q("select * from core.limite_pessoal order by exercicio desc, periodo desc limit 1")
+                      or [None])[0],
+            "fontes": self._fontes(["tce", "transferegov", "camara", "siconfi"]),
         })
 
     def regras(self) -> list[dict]:

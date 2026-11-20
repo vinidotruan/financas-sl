@@ -276,3 +276,76 @@ def test_proveniencia_diz_de_onde_veio_cada_numero(cliente):
     assert contratos["sha256"] == hashlib.sha256(bruto).hexdigest()
     assert contratos["linhas"] == 7
     assert p["commit"] is None or len(p["commit"]) == 40
+
+
+# ===== Início (D44) =====
+
+def _referencia_em(data_hora: str) -> None:
+    """Fixa a data de referência reescrevendo a hora das coletas e processa de novo."""
+    from slf import processar
+    from slf.config import RAW
+
+    for manifesto in RAW.rglob("manifest.jsonl"):
+        itens = [json.loads(linha) for linha in manifesto.read_text(encoding="utf-8").splitlines() if linha]
+        manifesto.write_text("".join(json.dumps({**i, "coletado_em": data_hora}) + "\n" for i in itens),
+                             encoding="utf-8")
+    processar.atualizar()
+
+
+def test_inicio_quem_mais_recebeu(cliente):
+    _referencia_em("2026-11-19T10:00:00")
+    r = cliente.get("/api/inicio").json()["recebeu"]
+    # 2025 é o último ano com pagamento em dezembro; o total inclui pessoa física e repasses
+    assert (r["ano"], r["total"]) == (2025, 1925000)
+    assert [(e["nome"], e["valor"]) for e in r["empresas"]] == [
+        ("GREEN EXEMPLO REFEICOES LTDA", 400000), ("CONSTRUTORA EXEMPLO SA", 200000)]
+    assert r["empresas"][0]["id"] == hashlib.md5(b"11222333000144").hexdigest()[:12]
+    assert (r["ano_corrente"], r["ate"]) == (2026, "2026-02-20")
+
+
+def test_inicio_partido_da_epoca(cliente):
+    # a Ana é PSOL no cadastro de hoje e PT nos pedidos; a comissão do 9007 não conta
+    assert cliente.get("/api/inicio").json()["partidos"] == [
+        {"partido": "MDB", "pedidos": 4}, {"partido": "PT", "pedidos": 3}]
+
+
+def test_pedido_de_dois_do_mesmo_partido_conta_uma_vez(cliente):
+    import shutil
+
+    from slf import processar
+    from slf.config import RAW
+    from slf.raw import ultima_coleta_boa
+
+    nova = RAW / "camara" / "2099-01-01T000000"
+    shutil.copytree(ultima_coleta_boa("camara"), nova)
+    arq = nova / "proposicoes.json"
+    props = json.loads(arq.read_text(encoding="utf-8"))
+    for p in props:
+        if p["ID"] == 9004:
+            p["proponente"].append({"ID": 703, "nome": "Ver. Caio Exemplo", "partido": "MDB", "url_imagem": None})
+    arq.write_text(json.dumps(props, ensure_ascii=False), encoding="utf-8")
+    processar.atualizar()
+    partidos = {p["partido"]: p["pedidos"] for p in cliente.get("/api/inicio").json()["partidos"]}
+    assert partidos["MDB"] == 4
+
+
+def test_inicio_parados(cliente):
+    _referencia_em("2026-11-19T10:00:00")
+    # 9003 está em comissão desde 2025-04-01; 9007 está na pauta há 1 dia; 9005 ainda sem situação
+    assert cliente.get("/api/inicio").json()["parados"] == {
+        "dias": 60, "total": 1, "por_situacao": [{"situacao": "Encaminhado à Comissão", "pedidos": 1}],
+        "sem_situacao": 1}
+
+
+def test_inicio_emendas_e_folha(cliente):
+    inicio = cliente.get("/api/inicio").json()
+    emendas = cliente.get("/api/emendas").json()
+    assert inicio["emendas"] == {"indicado": sum(e["indicado"] for e in emendas),
+                                 "transferido": sum(e["transferido"] for e in emendas)}
+    assert inicio["folha"] == cliente.get("/api/contas").json()["limite_pessoal"][0]
+    assert [b["nome"] for b in inicio["bairros"]] and len(inicio["bairros"]) <= 5
+
+
+def test_inicio_publico_sem_pessoa_fisica(cliente, publico):
+    corpo = cliente.get("/api/inicio").text
+    assert "FULANA" not in corpo and "JOANA" not in corpo

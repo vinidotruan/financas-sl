@@ -43,6 +43,7 @@ orgaos_pncp:
 # em dados.tce.rs.gov.br. A Fundação Municipal de Saúde não tem arquivo próprio; o instituto de
 # previdência (58706) fica de fora: é quase todo benefício pago a aposentados e pensionistas, com CPF.
 tce_rs:
+  prefeitura: 58700   # o órgão do cartão "quem mais recebeu da prefeitura" no Início
   orgaos:
     - codigo: 58700
       nome: Prefeitura Municipal de São Leopoldo
