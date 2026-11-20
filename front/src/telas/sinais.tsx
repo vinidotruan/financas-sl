@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks'
 import { useCarregar } from '../componentes/carregar'
-import { Carregado, ChipSeveridade, ChipsFonte, Fontes, ListaSinais, Rodape, Topo } from '../componentes/pecas'
+import { Carregado, ChipSeveridade, ChipsFonte, Fontes, ListaSinais, Rodape, Topo, useModoPublico } from '../componentes/pecas'
 import { dados } from '../dados'
 import { AREA, frase, num } from '../formato'
 import { link } from '../rotas'
@@ -12,12 +12,13 @@ function classeFaixa(r: Regra) {
 }
 
 function CartaoRegra({ r }: { r: Regra }) {
+  const publico = useModoPublico()
   return (
     <a class={`cartao faixa ${classeFaixa(r)}`} href={link.regra(r.id)}>
       <ChipSeveridade severidade={r.severidade} area={r.area} />
       <h2>{r.nome}</h2>
       <p>
-        <strong class="num">{num(r.ativos)}</strong> {r.ativos === 1 ? 'caso' : 'casos'}
+        <strong class="num">{num(r.ativos)}</strong> {r.ativos === 1 ? 'caso' : 'casos'}{publico ? (r.ativos === 1 ? ' revisado' : ' revisados') : ''}
         {r.novos > 0 && r.novos !== r.ativos && <span class="apagado"> · {num(r.novos)} sem revisão</span>}
         {r.novos > 0 && r.novos === r.ativos && <span class="apagado"> · nenhum revisado ainda</span>}
       </p>
@@ -98,6 +99,7 @@ export function TelaRegra({ id }: { id: string }) {
   const regras = useCarregar(() => dados.regras(), [])
   const sinais = useCarregar(() => dados.sinais(), [])
   const [ordem, setOrdem] = useState<Ordem>('valor')
+  const publico = useModoPublico()
 
   return (
     <Carregado estado={regras} oque="a regra">
@@ -127,7 +129,7 @@ export function TelaRegra({ id }: { id: string }) {
 
               <section class="secao">
                 <div class="linha-topo">
-                  <span class="rotulo">{num(r.ativos)} {r.ativos === 1 ? 'caso' : 'casos'}</span>
+                  <span class="rotulo">{num(r.ativos)} {r.ativos === 1 ? 'caso' : 'casos'}{publico ? (r.ativos === 1 ? ' revisado' : ' revisados') : ''}</span>
                   <div class="filtros" role="group" aria-label="Ordenar casos">
                     <button type="button" class="filtro" aria-pressed={ordem === 'valor'} onClick={() => setOrdem('valor')}>Maior valor</button>
                     <button type="button" class="filtro" aria-pressed={ordem === 'recente'} onClick={() => setOrdem('recente')}>Mais recente</button>

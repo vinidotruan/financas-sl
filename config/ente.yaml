@@ -4,6 +4,8 @@ uf: RS
 ibge: 4318705
 cnpj_municipio: "89814693000160"
 inicio: 2022-01-01
+# fuso da cidade: a hora das coletas e a data de referência seguem ele, não o UTC do GitHub
+fuso: America/Sao_Paulo
 
 # Câmara de Vereadores: pedidos de providência e indicações, pelo JSON que o site da Câmara usa.
 # São Leopoldo usa o Legiflow; o endereço da API aparece no próprio site (docs/replicar.md).

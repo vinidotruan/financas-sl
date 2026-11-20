@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 import json
-from datetime import date
 from pathlib import Path
 
 import duckdb
 import yaml
 
-from .config import REGRAS, REVISAO
+from .config import REGRAS, REVISAO, agora
 
 CAMPOS_REGRA = ["id", "nome", "versao", "area", "severidade", "base_legal", "limiar",
                 "pode_ser_normal_se", "como_verificar", "fontes", "sql"]
@@ -36,12 +35,24 @@ def ler_revisao() -> dict:
         return {}
 
 
+def status_revisado(rev: dict, valor_agora) -> str:
+    """O status que a revisão dá a um sinal: o que a pessoa marcou, menos o descartado cujo valor
+    observado mudou desde o descarte, que volta a "novo" (D17). Vale no banco e na API (que aplica a
+    revisão na hora, sem esperar o atualizar)."""
+    status = rev.get("status", "novo")
+    valor_rev = rev.get("valor")
+    if status == "descartado" and valor_rev is not None and valor_agora is not None \
+            and abs(valor_agora - valor_rev) > max(0.01, abs(valor_rev) * 0.001):
+        return "novo"
+    return status
+
+
 def rodar(con, banco_anterior: Path) -> int:
     # a data de referência das coletas (D43); sem ela (banco montado à mão), a de hoje
     try:
         hoje = con.execute("select data from core.referencia").fetchone()[0]
     except duckdb.CatalogException:
-        hoje = date.today()
+        hoje = agora().date()
     con.execute("create schema if not exists sinais")
     con.execute("""create or replace table sinais.regra (id varchar primary key, nome varchar, versao integer,
         area varchar, severidade varchar, base_legal varchar, limiar varchar, pode_ser_normal_se varchar,
@@ -87,11 +98,7 @@ def rodar(con, banco_anterior: Path) -> int:
         atual = con.execute("select valor_observado from sinais.ocorrencia where id = ?", [oid]).fetchone()
         if not atual:
             continue
-        status = rev.get("status", "novo")
-        valor_rev, valor_agora = rev.get("valor"), atual[0]
-        if status == "descartado" and valor_rev is not None and valor_agora is not None \
-                and abs(valor_agora - valor_rev) > max(0.01, abs(valor_rev) * 0.001):
-            status = "novo"
+        status = status_revisado(rev, atual[0])
         con.execute("update sinais.ocorrencia set status = ?, nota = ? where id = ?",
                     [status, rev.get("nota"), oid])
 

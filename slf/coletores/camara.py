@@ -105,6 +105,22 @@ def _tramitacoes(cli: Cliente, api: str, proposicoes: list, anteriores: dict, li
     return [novos.get(i) or anteriores[i] for i in ids if i in novos or i in anteriores], len(novos)
 
 
+def _conferir_volume(proposicoes: list) -> None:
+    """Resposta vazia não é "a Câmara apagou os pedidos": se um ano que tinha proposições na coleta boa
+    anterior veio vazio, ou o total caiu à metade, a coleta falha e vale a anterior (com o cache de
+    situação dos pedidos, que levaria dias para refazer). O mesmo cuidado do coletor do Congresso."""
+    pasta = ultima_coleta_boa("camara")
+    arq = pasta / "proposicoes.json" if pasta else None
+    if not arq or not arq.exists():
+        return
+    antes = json.loads(arq.read_text(encoding="utf-8"))
+    por_ano = lambda lista: {p.get("ano") for p in lista}  # noqa: E731
+    sumiram = sorted(a for a in por_ano(antes) - por_ano(proposicoes) if a is not None)
+    if sumiram or len(proposicoes) < len(antes) / 2:
+        raise RuntimeError(f"a Câmara devolveu {len(proposicoes)} proposições (eram {len(antes)}); "
+                           f"anos sem nenhuma: {sumiram or 'nenhum'}. Fica a coleta anterior.")
+
+
 def coletar() -> Coleta | None:
     cfg = ente()
     camara = cfg.get("camara") or {}
@@ -121,6 +137,7 @@ def coletar() -> Coleta | None:
             proposicoes += lote
             print(f"  camara: {ano}: {len(lote)} proposições")
         proposicoes = list({p["ID"]: p for p in proposicoes}.values())
+        _conferir_volume(proposicoes)
         col.salvar("proposicoes", proposicoes, f"{api}/proposicoes")
 
         # situação de cada pedido na Câmara, aos poucos (o que já se sabe vem da coleta anterior)

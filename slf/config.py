@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -32,3 +33,13 @@ def ente() -> dict:
     if isinstance(cfg.get("inicio"), str):
         cfg["inicio"] = date.fromisoformat(cfg["inicio"])
     return cfg
+
+
+def agora() -> datetime:
+    """A hora de agora no fuso da cidade (`fuso` em config/ente.yaml; padrão America/Sao_Paulo), sem fuso no
+    valor. O GitHub roda em UTC: sem isso, uma coleta às 22h de Brasília ficava com a data do dia seguinte."""
+    try:
+        fuso = ente().get("fuso") or "America/Sao_Paulo"
+    except Exception:  # noqa: BLE001 (sem config, vale o padrão)
+        fuso = "America/Sao_Paulo"
+    return datetime.now(ZoneInfo(fuso)).replace(tzinfo=None, microsecond=0)

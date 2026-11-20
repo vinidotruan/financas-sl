@@ -1,10 +1,11 @@
 import type { ComponentChildren } from 'preact'
 import { useState } from 'preact/hooks'
-import { ErroDados, urlFoto } from '../dados'
+import { dados, ErroDados, urlFoto } from '../dados'
 import { AREA, data, dataHora, FONTE, formatar, SEVERIDADE } from '../formato'
 import { link, voltar } from '../rotas'
 import type { FonteRef, Formato, Severidade, Sinal, Status } from '../tipos'
 import type { Estado } from './carregar'
+import { useCarregar } from './carregar'
 
 export function Topo(props: { titulo: string; sub?: ComponentChildren; volta?: string; avatar?: ComponentChildren }) {
   const texto = (
@@ -122,9 +123,17 @@ export function Fontes(props: { fontes: FonteRef[] }) {
   )
 }
 
+/** No modo público (o site publicado) só aparecem sinais revisados: "nenhum" quer dizer "nenhum revisado". */
+export function useModoPublico(): boolean {
+  return useCarregar(() => dados.fontes(), []).dados?.modo === 'publico'
+}
+
 /** Lista de ocorrências de sinal, usada na regra e nas fichas */
 export function ListaSinais(props: { sinais: Sinal[]; formato?: Formato; rotulo?: string; vazio?: string }) {
-  if (!props.sinais.length) return <p class="vazio">{props.vazio ?? 'Nenhum sinal.'}</p>
+  const publico = useModoPublico()
+  if (!props.sinais.length) {
+    return <p class="vazio">{publico ? 'Nenhum sinal revisado aqui ainda: os sinais só aparecem depois de revisados.' : props.vazio ?? 'Nenhum sinal.'}</p>
+  }
   return (
     <ul class="lista">
       {props.sinais.map((s) => (

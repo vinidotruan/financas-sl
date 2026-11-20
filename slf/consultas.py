@@ -19,6 +19,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from .sensivel import OBJETO_OMITIDO, PESSOA_FISICA, limpar_pedido, sem_cpf, titulo_pessoa_fisica  # noqa: F401 (sem_cpf é usado pela API e pela exportação)
+from .sinais import status_revisado
 
 PUBLICOS = ("confirmado", "encaminhado")
 STATUS = ("novo", "em análise", "descartado", "confirmado", "encaminhado")
@@ -94,7 +95,7 @@ class Consulta:
         """Revisão feita na tela (vale na hora), evidência como objeto e filtros do modo público."""
         rev = self.revisao.get(s["id"])
         if rev:
-            s["status"], s["nota"] = rev.get("status", s["status"]), rev.get("nota")
+            s["status"], s["nota"] = status_revisado(rev, s.get("valor_observado")), rev.get("nota")
         s["evidencia"] = _json(s.get("evidencia")) or {}
         if self.publico:
             s["nota"] = None

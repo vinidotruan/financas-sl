@@ -261,12 +261,13 @@ def test_situacao_do_pedido_na_api(cliente):
 
 
 def test_proveniencia_diz_de_onde_veio_cada_numero(cliente):
-    from datetime import date
 
     from slf.raw import ultima_coleta_boa
 
     p = cliente.get("/api/proveniencia").json()
-    assert p["data_referencia"] == date.today().isoformat()  # as fixtures são coletadas na hora do teste
+    from slf.config import agora
+
+    assert p["data_referencia"] == agora().date().isoformat()  # as fixtures são coletadas na hora do teste
     assert {r["id"]: r["versao"] for r in p["regras"]}["R05"] == 3
     fontes = {f["fonte"]: f for f in p["fontes"]}
     assert set(fontes) == {"transferegov", "siconfi", "pncp", "camara", "congresso", "tce"}

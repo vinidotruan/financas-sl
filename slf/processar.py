@@ -317,7 +317,7 @@ TESTES_DUROS = [
      "select count(*) from core.plano_acao where codigo_emenda is not null "
      "and not regexp_full_match(codigo_emenda, '[0-9]{12}')"),
 ]
-TABELAS_VOLUME = ["plano_acao", "contrato", "compra", "aditivo", "pessoal", "despesa"]
+TABELAS_VOLUME = ["plano_acao", "contrato", "compra", "aditivo", "pessoal", "despesa", "pedido"]
 # Avisos não barram o banco: mostram o que ficou incompleto para alguém olhar.
 AVISOS = [
     ("autor de emenda sem cadastro no Congresso (aparece sem cargo)",

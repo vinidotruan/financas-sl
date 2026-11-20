@@ -186,6 +186,9 @@ observado mudar. Por isso **o valor observado precisa ser estável**: um número
 
 **Onde.** `slf/sinais.py`.
 
+**Correção (19/11/2026, revisão).** A API e a exportação reaplicavam o "descartado" do `revisao.json` por
+cima da reabertura. Agora as duas usam a mesma regra (`sinais.status_revisado`), com teste na API.
+
 ### D18 · Revisão fora do banco · 18/11/2026 · vale
 
 **Decisão.** Status e nota de cada sinal ficam em `data/revisao.json`, não no banco, e a API aplica na
@@ -538,6 +541,9 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
   (`arg_max` por data, com o próprio valor no desempate); `min` quando o valor é o mesmo em todas as linhas.
 - **Toda ordenação termina num campo único** (id, código), para empate não trocar a ordem.
 - Conferido nos dados reais: processar duas vezes dá os mesmos 563 arquivos, byte a byte.
+- **Fuso da cidade** (`fuso` em `config/ente.yaml`, America/Sao_Paulo): a hora das coletas e a data de
+  referência seguem o fuso da cidade, não o UTC do GitHub (uma coleta às 22h de Brasília ficava com a data
+  do dia seguinte). Coletas antigas guardam a hora com que foram feitas (raw imutável).
 - **Proveniência** em cada publicação (`data/proveniencia.json`, também em `/api/proveniencia`): o commit do
   código, a data de referência, a versão de cada regra e, de cada fonte, a coleta usada com o sha256, a
   URL e os parâmetros de cada arquivo bruto (vem do manifest, gravado em `core.arquivo_coleta`).

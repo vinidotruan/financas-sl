@@ -6,10 +6,9 @@ import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from datetime import datetime
 from pathlib import Path
 
-from .config import RAW
+from .config import RAW, agora
 
 
 class Coleta:
@@ -17,7 +16,7 @@ class Coleta:
 
     def __init__(self, fonte: str):
         self.fonte = fonte
-        self.inicio = datetime.now()
+        self.inicio = agora()
         self.dir = RAW / fonte / self.inicio.strftime("%Y-%m-%dT%H%M%S")
         self.dir.mkdir(parents=True, exist_ok=True)
         self.manifest = self.dir / "manifest.jsonl"
@@ -33,7 +32,7 @@ class Coleta:
             "linhas": len(dados) if isinstance(dados, list) else None,
             "bytes": len(corpo),
             "sha256": hashlib.sha256(corpo).hexdigest(),
-            "coletado_em": datetime.now().isoformat(timespec="seconds"),
+            "coletado_em": agora().isoformat(timespec="seconds"),
         }
         with open(self.manifest, "a", encoding="utf-8") as f:
             f.write(json.dumps(linha, ensure_ascii=False) + "\n")
@@ -51,14 +50,14 @@ class Coleta:
             "linhas": None,
             "bytes": len(conteudo),
             "sha256": hashlib.sha256(conteudo).hexdigest(),
-            "coletado_em": datetime.now().isoformat(timespec="seconds"),
+            "coletado_em": agora().isoformat(timespec="seconds"),
         }
         with open(self.manifest, "a", encoding="utf-8") as f:
             f.write(json.dumps(linha, ensure_ascii=False) + "\n")
         return destino
 
     def concluir(self) -> None:
-        (self.dir / "_OK").write_text(datetime.now().isoformat(timespec="seconds"))
+        (self.dir / "_OK").write_text(agora().isoformat(timespec="seconds"))
 
 
 # Coletas fixadas por fonte enquanto se refaz uma publicação pela proveniência dela (D43). Fora do

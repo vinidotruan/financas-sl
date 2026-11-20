@@ -6,7 +6,6 @@ from __future__ import annotations
 import json
 import threading
 from contextlib import contextmanager
-from datetime import datetime
 
 import duckdb
 from fastapi import FastAPI, HTTPException
@@ -14,7 +13,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .config import DB, FOTOS, MODO, REVISAO, SITE, WEB
+from .config import DB, FOTOS, MODO, REVISAO, SITE, WEB, agora
 from .consultas import STATUS, Consulta, sem_cpf
 from .sinais import ler_revisao
 
@@ -106,7 +105,7 @@ def revisar_sinal(oid: str, rev: Revisao):
     with _trava:
         dados = ler_revisao()
         dados[oid] = {"status": rev.status, "nota": rev.nota, "valor": atual[0]["valor_observado"],
-                      "em": datetime.now().isoformat(timespec="seconds")}
+                      "em": agora().isoformat(timespec="seconds")}
         tmp = REVISAO.with_suffix(".tmp")
         tmp.write_text(json.dumps(dados, ensure_ascii=False, indent=1), encoding="utf-8")
         tmp.replace(REVISAO)

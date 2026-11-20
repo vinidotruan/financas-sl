@@ -9,6 +9,7 @@ from datetime import date
 
 import duckdb
 import pytest
+from fastapi.testclient import TestClient  # importado antes do conftest trocar o httpx.Client
 
 from slf import cli, processar
 from slf.config import DB, DB_TMP, RAW, REVISAO
@@ -564,3 +565,67 @@ def test_data_de_referencia_e_a_da_coleta_e_nao_a_de_hoje(banco):
 def test_nome_do_fornecedor_e_o_do_contrato_mais_recente(banco):
     # o mesmo CNPJ com dois nomes: vale o do contrato assinado por último, sempre o mesmo a cada processamento
     assert _um(banco, "select nome from core.fornecedor where ni = '55666777000188'") == ("PEDRO EXEMPLO",)
+
+
+# ===== Pendências da revisão: reabertura, fuso, Câmara vazia =====
+
+def test_reabertura_vale_tambem_na_api(banco):
+    # D17: o descartado volta a "novo" quando o valor muda; a API reaplicava o "descartado" por cima
+    from slf import api
+
+    r08_c3 = _id("R08", "89814693000160-2-000003/2024")
+    REVISAO.write_text(json.dumps({r08_c3: {"status": "descartado", "nota": "reforma", "valor": 0.3}}),
+                       encoding="utf-8")
+    processar.atualizar()
+    cliente = TestClient(api.app)
+    assert cliente.get(f"/api/sinais/{r08_c3}").json()["status"] == "descartado"
+    _nova_coleta("pncp", {"contratos": lambda cs: [
+        {**c, "valorGlobal": 140_000.0} if c["sequencialContrato"] == 3 else c for c in cs]})
+    processar.atualizar()
+    assert cliente.get(f"/api/sinais/{r08_c3}").json()["status"] == "novo"
+
+
+def test_hora_da_coleta_no_fuso_da_cidade():
+    # o GitHub roda em UTC; a hora gravada é a da cidade (America/Sao_Paulo), senão uma coleta
+    # às 22h vira o dia seguinte
+    import os
+    import time
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    from slf.raw import Coleta
+
+    antes = os.environ.get("TZ")
+    os.environ["TZ"] = "UTC"
+    time.tzset()
+    try:
+        col = Coleta("teste-fuso")
+        col.salvar("x", [1])
+        col.concluir()
+        linha = (col.dir / "manifest.jsonl").read_text().splitlines()[0]
+        gravada = datetime.fromisoformat(json.loads(linha)["coletado_em"])
+        cidade = datetime.now(ZoneInfo("America/Sao_Paulo")).replace(tzinfo=None)
+        assert abs(gravada - cidade) < timedelta(minutes=2)
+        assert abs(datetime.strptime(col.dir.name, "%Y-%m-%dT%H%M%S") - cidade) < timedelta(minutes=2)
+    finally:
+        if antes is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = antes
+        time.tzset()
+
+
+def test_camara_vazia_nao_vira_coleta_boa(banco, api_falsa, monkeypatch):
+    # a API respondeu sem nada num ano que tinha pedidos: fica a coleta anterior (e o cache de situação)
+    import slf.coletores.camara as camara
+
+    anterior = ultima_coleta_boa("camara")
+    original = camara._todas
+    monkeypatch.setattr(camara, "_todas", lambda cli, api, params: [] if params.get("ano") == 2026
+                        else original(cli, api, params))
+    assert cli.coletar(["camara"]) == ["camara"]
+    assert ultima_coleta_boa("camara") == anterior
+
+
+def test_pedido_tem_teste_de_volume():
+    assert "pedido" in processar.TABELAS_VOLUME
