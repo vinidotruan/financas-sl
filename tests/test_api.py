@@ -299,7 +299,7 @@ def test_inicio_quem_mais_recebeu(cliente):
     assert (r["ano"], r["total"]) == (2025, 1925000)
     assert [(e["nome"], e["valor"]) for e in r["empresas"]] == [
         ("GREEN EXEMPLO REFEICOES LTDA", 400000), ("CONSTRUTORA EXEMPLO SA", 200000)]
-    assert r["empresas"][0]["id"] == hashlib.md5(b"11222333000144").hexdigest()[:12]
+    assert r["empresas"][0]["id"] == hashlib.md5(b"66777888000199").hexdigest()[:12]
     assert (r["ano_corrente"], r["ate"]) == (2026, "2026-02-20")
 
 
@@ -349,3 +349,46 @@ def test_inicio_emendas_e_folha(cliente):
 def test_inicio_publico_sem_pessoa_fisica(cliente, publico):
     corpo = cliente.get("/api/inicio").text
     assert "FULANA" not in corpo and "JOANA" not in corpo
+
+
+# ===== Fornecedores com o pago do TCE-RS (D44) =====
+
+def _fornecedores(cliente) -> dict:
+    return {f["nome"]: f for f in cliente.get("/api/fornecedores").json()}
+
+
+def test_fornecedor_so_do_tce_entra_com_pago(cliente):
+    fs = _fornecedores(cliente)
+    green = fs["GREEN EXEMPLO REFEICOES LTDA"]
+    assert (green["contratos"], green["valor_total"], green["pago_total"]) == (0, 0, 1469999)
+    assert green["pago_prefeitura"] == {"2024": 999999, "2025": 400000, "2026": 70000}
+    papelaria = fs["PAPELARIA EXEMPLO LTDA"]  # só a Câmara pagou
+    assert (papelaria["pago_total"], papelaria["pago_prefeitura"]) == (1000, {})
+
+
+def test_fornecedor_com_contrato_e_pago(cliente):
+    construtora = _fornecedores(cliente)["CONSTRUTORA EXEMPLO SA"]
+    assert construtora["contratos"] == 1
+    assert construtora["pago_prefeitura"] == {"2024": 10000, "2025": 200000, "2026": 30000}
+    ficha = cliente.get(f"/api/fornecedores/{construtora['id']}").json()
+    assert [(p["ano"], p["valor"]) for p in ficha["pagos"]] == [(2026, 30000), (2025, 200000), (2024, 10000)]
+    assert all(p["orgao_nome"] for p in ficha["pagos"])
+
+
+def test_repasse_tem_selo(cliente):
+    fs = _fornecedores(cliente)
+    assert fs["CAIXA ECONOMICA FEDERAL"]["repasse"] is True
+    assert fs["GREEN EXEMPLO REFEICOES LTDA"]["repasse"] is False
+
+
+@pytest.mark.parametrize("modo", ["privado", "publico"])
+def test_pessoa_fisica_do_tce_nao_vira_fornecedor(cliente, monkeypatch, modo):
+    import slf.api
+
+    monkeypatch.setattr(slf.api, "MODO", modo)
+    fs = cliente.get("/api/fornecedores").json()
+    # a Fulana (CPF) e o MEI 12.345.678 só aparecem no TCE-RS: não viram fornecedor
+    assert not any("FULANA" in f["nome"] for f in fs)
+    assert not any(f["ni"] in ("04567890123", "12345678000190") for f in fs)
+    if modo == "publico":
+        assert not any("JOANA" in f["nome"] for f in fs)

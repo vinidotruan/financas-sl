@@ -342,11 +342,23 @@ class Consulta:
         return sem_cpf({**linhas[0], "emendas_lista": emendas, "sinais": sinais,
                         "fontes": self._fontes(["transferegov", "congresso"])})
 
+    def _prefeitura(self) -> int:
+        from .config import ente
+
+        tce = ente().get("tce_rs") or {}
+        return int(tce.get("prefeitura") or (tce.get("orgaos") or [{"codigo": 0}])[0]["codigo"])
+
     def fornecedores(self, limite: int | None = None) -> list[dict]:
         sql = "select * from core.fornecedor order by valor_total desc, id"
         linhas = self._q(sql + (" limit ?" if limite else ""), [limite] if limite else [])
+        # o pago pela prefeitura em cada ano (TCE-RS), para a lista ordenar "por pago" num ano (D44)
+        pagos: dict[str, dict[str, float]] = {}
+        for p in self._q("select ni, ano, pago from core.credor_ano where orgao = ? order by ni, ano",
+                         [self._prefeitura()]):
+            pagos.setdefault(p["ni"], {})[str(p["ano"])] = p["pago"]
         for f in linhas:
             f["pct_direto"] = f["valor_direto"] / f["valor_total"] if f["valor_total"] else None
+            f["pago_prefeitura"] = pagos.get(f["ni"], {})
         return sem_cpf([self._fornecedor_publico(f) for f in linhas])
 
     def fornecedor(self, fid: str) -> dict | None:
@@ -362,7 +374,17 @@ class Consulta:
                             [f["ni"]])
         chaves = [c["id"] for c in contratos] + [c["compra_id"] for c in contratos if c["compra_id"]]
         sinais = self._ocorrencias(f"o.chave in ({','.join('?' * len(chaves))})", chaves) if chaves else []
-        return sem_cpf({**f, "contratos_lista": contratos, "sinais": sinais, "fontes": self._fontes(["pncp"])})
+        # o nome do órgão vem da config (tce_rs.orgaos); sem ele, o nome que o TCE-RS usa
+        from .config import ente
+
+        nomes = {int(o["codigo"]): o["nome"] for o in (ente().get("tce_rs") or {}).get("orgaos") or []}
+        pagos = self._q("""select c.orgao, c.ano, c.pago as valor,
+                                  (select min(orgao_nome) from core.despesa d where d.orgao = c.orgao) as nome_tce
+                           from core.credor_ano c where c.ni = ?""", [f["ni"]])
+        pagos = sorted(({"orgao_nome": nomes.get(p["orgao"], p["nome_tce"]), "ano": p["ano"], "valor": p["valor"]}
+                        for p in pagos), key=lambda p: (-p["ano"], p["orgao_nome"]))
+        return sem_cpf({**f, "contratos_lista": contratos, "pagos": pagos, "sinais": sinais,
+                        "fontes": self._fontes(["pncp", "tce"])})
 
     def contratos(self, q: str | None = None, limite: int = 50) -> list[dict]:
         if q and self.publico:

@@ -19,7 +19,7 @@ export function App() {
     case 'sinal': tela = <TelaSinal key={rota.id} id={rota.id} />; break
     case 'emendas': tela = <TelaEmendas />; break
     case 'emenda': tela = <TelaRastro key={rota.codigo} codigo={rota.codigo} />; break
-    case 'fichas': tela = <TelaFichas lista={rota.lista} />; break
+    case 'fichas': tela = <TelaFichas lista={rota.lista} ordem={rota.ordem} />; break
     case 'parlamentar': tela = <TelaParlamentar key={rota.codigo} codigo={rota.codigo} />; break
     case 'fornecedor': tela = <TelaFornecedor key={rota.id} id={rota.id} />; break
     case 'pedidos': tela = <TelaPedidos tema={rota.tema} />; break

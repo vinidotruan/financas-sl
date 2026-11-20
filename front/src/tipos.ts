@@ -156,6 +156,12 @@ export interface Fornecedor {
   pct_direto: number | null
   primeiro_contrato: string | null
   ultimo_contrato: string | null
+  /** pago por todos os órgãos coletados no TCE-RS, todos os anos (D44) */
+  pago_total: number
+  /** pago pela prefeitura em cada ano: { "2025": 400000 } */
+  pago_prefeitura: Record<string, number>
+  /** órgão público, banco, previdência ou tributo retido (slf/repasses.yaml) */
+  repasse: boolean
 }
 
 export interface ContratoFicha {
@@ -178,6 +184,7 @@ export interface ContratoFicha {
 
 export interface FornecedorFicha extends Fornecedor {
   contratos_lista: ContratoFicha[]
+  pagos: { orgao_nome: string; ano: number; valor: number }[]
   sinais: Sinal[]
   fontes: FonteRef[]
 }

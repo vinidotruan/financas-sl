@@ -4,12 +4,13 @@ import { Carregado, ChipCargo, Fontes, Foto, ListaSinais, Rodape, Topo } from '.
 import { dados } from '../dados'
 import { brl, brlCurto, data, documento, linkPncp, num, pct, VAZIO } from '../formato'
 import { link } from '../rotas'
+import type { Fornecedor } from '../tipos'
 
 function semAcento(t: string) {
   return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
-export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' }) {
+export function TelaFichas({ lista, ordem }: { lista: 'parlamentares' | 'fornecedores'; ordem?: string }) {
   const [busca, setBusca] = useState('')
   const parlamentares = useCarregar(() => dados.parlamentares(), [])
   const fornecedores = useCarregar(() => dados.fornecedores(), [])
@@ -61,22 +62,46 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
         ) : (
           <Carregado estado={fornecedores} oque="os fornecedores">
             {(fs) => {
-              const vis = fs.filter((f) => !termo || semAcento(f.nome).includes(termo) || (f.ni ?? '').includes(termo))
+              // "pago-2025": pelo pago da prefeitura no ano (TCE-RS); sem ordem, pelo contratado (PNCP)
+              const anoPago = ordem?.startsWith('pago-') ? ordem.slice(5) : null
+              const anos = [...new Set(fs.flatMap((f) => Object.keys(f.pago_prefeitura ?? {})))].sort().reverse()
+              const valor = (f: Fornecedor) => (anoPago ? f.pago_prefeitura?.[anoPago] ?? 0 : f.valor_total)
+              const vis = fs
+                .filter((f) => !termo || semAcento(f.nome).includes(termo) || (f.ni ?? '').includes(termo))
+                .filter((f) => valor(f) !== 0)
+                // por pago, as empresas vêm antes dos repasses: as 5 do topo são as 5 do cartão do Início
+                .sort((a, b) => (anoPago ? Number(a.repasse) - Number(b.repasse) : 0) || valor(b) - valor(a)
+                  || (a.id ?? '').localeCompare(b.id ?? ''))
               const mostrados = vis.slice(0, 100)
-              return vis.length ? (
+              return (
+                <>
+                  <label class="sr" for="ordem">Ordenar</label>
+                  <select id="ordem" class="seletor" value={ordem ?? ''}
+                    onChange={(e) => { location.hash = link.fichas('fornecedores', (e.target as HTMLSelectElement).value || undefined) }}>
+                    <option value="">Maior contratado (PNCP)</option>
+                    {anos.map((a) => <option key={a} value={`pago-${a}`}>Maior pago em {a} (TCE-RS)</option>)}
+                  </select>
+                  {vis.length ? (
                 <>
                   <p class="apagado pequeno">
-                    Quanto cada empresa ou pessoa tem em contratos com os órgãos da cidade (valor global, já com
-                    os aditivos), do maior para o menor.{' '}
+                    {anoPago
+                      ? `Quanto a prefeitura pagou a cada credor em ${anoPago}, do maior para o menor (TCE-RS). Empresas primeiro; órgãos públicos e bancos vêm depois, com um selo: recebem repasses e retenções.`
+                      : 'Quanto cada empresa ou pessoa tem em contratos com os órgãos da cidade (valor global, já com os aditivos), do maior para o menor.'}{' '}
                     {vis.length > mostrados.length ? `Mostrando os ${mostrados.length} maiores de ${num(vis.length)}; use a busca para achar os outros.` : `${num(vis.length)} fornecedores.`}
                   </p>
                   <ul class="lista">
                     {mostrados.map((f, i) => {
                       const conteudo = (
                         <>
-                          <span class="linha-topo"><span class="titulo">{f.nome}</span><ValorRotulado valor={f.valor_total} rotulo="contratados" /></span>
+                          <span class="linha-topo">
+                            <span class="titulo">{f.nome}{f.repasse && <> <span class="chip cargo">órgão público ou banco</span></>}</span>
+                            <ValorRotulado valor={valor(f)} rotulo={anoPago ? `pagos em ${anoPago}` : 'contratados'} />
+                          </span>
                           <span class="apagado pequeno">
-                            {f.contratos} {f.contratos === 1 ? 'contrato' : 'contratos'} · {pct(f.pct_direto)} sem licitação
+                            {f.contratos
+                              ? `${f.contratos} ${f.contratos === 1 ? 'contrato' : 'contratos'} · ${pct(f.pct_direto)} sem licitação`
+                              : 'sem contrato no PNCP'}
+                            {f.pago_total ? ` · ${brlCurto(f.pago_total)} pagos (TCE-RS)` : ''}
                           </span>
                         </>
                       )
@@ -88,7 +113,9 @@ export function TelaFichas({ lista }: { lista: 'parlamentares' | 'fornecedores' 
                     })}
                   </ul>
                 </>
-              ) : <p class="vazio">Nenhum fornecedor com esse nome.</p>
+                  ) : <p class="vazio">Nenhum fornecedor com esse nome.</p>}
+                </>
+              )
             }}
           </Carregado>
         )}
@@ -154,9 +181,22 @@ export function TelaFornecedor({ id }: { id: string }) {
           <main class="conteudo">
             <div class="trio">
               <div class="cartao"><span class="rotulo">Contratos</span><span class="valor">{num(f.contratos)}</span></div>
-              <div class="cartao"><span class="rotulo">Valor</span><span class="valor">{brlCurto(f.valor_total)}</span></div>
-              <div class="cartao"><span class="rotulo">Sem licitação</span><span class="valor">{pct(f.pct_direto)}</span></div>
+              <div class="cartao"><span class="rotulo">Contratado</span><span class="valor">{f.contratos ? brlCurto(f.valor_total) : VAZIO}</span></div>
+              <div class="cartao"><span class="rotulo">Pago</span><span class="valor">{f.pago_total ? brlCurto(f.pago_total) : VAZIO}</span></div>
             </div>
+            {f.repasse && <p class="apagado pequeno"><span class="chip cargo">órgão público ou banco</span> Recebe repasses ou retenções, não é venda de bem ou serviço.</p>}
+            {f.pagos.length > 0 && (
+              <section class="secao">
+                <span class="rotulo">Pagamentos por ano (TCE-RS)</span>
+                <ul class="lista">
+                  {f.pagos.map((p) => (
+                    <li key={`${p.orgao_nome}-${p.ano}`}>
+                      <div class="item"><span class="linha-topo"><span>{p.ano} · {p.orgao_nome}</span><span class="valor">{brl(p.valor)}</span></span></div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             <section class="secao">
               <span class="rotulo">Sinais</span>
               <ListaSinais sinais={f.sinais} vazio="Nenhum sinal nos contratos deste fornecedor." />
@@ -187,7 +227,7 @@ export function TelaFornecedor({ id }: { id: string }) {
                 })}
               </ul>
             </section>
-            <p class="apagado pequeno">Primeiro contrato em {data(f.primeiro_contrato)}, último em {data(f.ultimo_contrato) ?? VAZIO}.</p>
+            {f.contratos > 0 && <p class="apagado pequeno">Primeiro contrato em {data(f.primeiro_contrato)}, último em {data(f.ultimo_contrato) ?? VAZIO}. Sem licitação: {pct(f.pct_direto)} do valor.</p>}
             <Fontes fontes={f.fontes} />
             <Rodape />
           </main>

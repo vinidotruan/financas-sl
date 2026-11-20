@@ -10,7 +10,7 @@ export type Rota =
   | { tela: 'sinal'; id: string }
   | { tela: 'emendas' }
   | { tela: 'emenda'; codigo: string }
-  | { tela: 'fichas'; lista: 'parlamentares' | 'fornecedores' }
+  | { tela: 'fichas'; lista: 'parlamentares' | 'fornecedores'; ordem?: string }
   | { tela: 'parlamentar'; codigo: string }
   | { tela: 'fornecedor'; id: string }
   | { tela: 'pedidos'; tema?: string }
@@ -19,7 +19,7 @@ export type Rota =
   | { tela: 'fontes' }
 
 export function lerRota(hash: string): Rota {
-  const [tela, arg] = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)
+  const [tela, arg, extra] = hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)
   switch (tela) {
     case 'inicio': return { tela }
     case 'sinais': return { tela }
@@ -27,7 +27,7 @@ export function lerRota(hash: string): Rota {
     case 'sinal': return arg ? { tela, id: arg } : { tela: 'sinais' }
     case 'emendas': return { tela }
     case 'emenda': return arg ? { tela, codigo: arg } : { tela: 'emendas' }
-    case 'fichas': return { tela, lista: arg === 'fornecedores' ? 'fornecedores' : 'parlamentares' }
+    case 'fichas': return arg === 'fornecedores' ? { tela, lista: 'fornecedores', ordem: extra || undefined } : { tela, lista: 'parlamentares' }
     case 'parlamentar': return arg ? { tela, codigo: arg } : { tela: 'fichas', lista: 'parlamentares' }
     case 'fornecedor': return arg ? { tela, id: arg } : { tela: 'fichas', lista: 'fornecedores' }
     case 'pedidos': return arg ? { tela, tema: arg } : { tela }
@@ -57,7 +57,8 @@ export const link = {
   sinal: (id: string) => `#/sinal/${id}`,
   emendas: () => '#/emendas',
   emenda: (codigo: string) => `#/emenda/${codigo.replace(/\D/g, '')}`,
-  fichas: (lista: 'parlamentares' | 'fornecedores' = 'parlamentares') => `#/fichas/${lista}`,
+  fichas: (lista: 'parlamentares' | 'fornecedores' = 'parlamentares', ordem?: string) =>
+    `#/fichas/${lista}${ordem ? `/${ordem}` : ''}`,
   parlamentar: (codigo: string) => `#/parlamentar/${codigo}`,
   fornecedor: (id: string) => `#/fornecedor/${id}`,
   pedidos: (tema?: string) => (tema ? `#/pedidos/${encodeURIComponent(tema)}` : '#/pedidos'),

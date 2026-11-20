@@ -19,7 +19,7 @@ function QuemMaisRecebeu({ r }: { r: Inicio['recebeu'] }) {
     )
   }
   return (
-    <CartaoPergunta pergunta={`Quem mais recebeu da prefeitura em ${r.ano}`} href={link.fichas('fornecedores')}
+    <CartaoPergunta pergunta={`Quem mais recebeu da prefeitura em ${r.ano}`} href={link.fichas('fornecedores', `pago-${r.ano}`)}
       rotuloLink="Ver todas">
       <span class="valor-grande">{brlCurto(r.total)}</span>
       <p class="apagado pequeno">pagos no ano a empresas, pessoas e outros órgãos. As cinco empresas que mais receberam:</p>

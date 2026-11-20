@@ -174,7 +174,7 @@ select c.id, c.compra_id, so_digitos(c.orgao_cnpj) as orgao_cnpj, c.orgao_nome, 
        cast(c.ano as integer) as ano, cast(c.sequencial as integer) as sequencial, c.tipo, c.categoria,
        c.processo, c.tipo_pessoa, so_digitos(c.fornecedor_ni) as fornecedor_ni, c.fornecedor_nome,
        -- MEI e empresário individual vêm como PJ, mas o nome é o do dono; contam como pessoa física
-       -- (eh_pessoa_fisica, no topo). A fase 3 troca pela natureza jurídica. Depois do core.fornecedor, um
+       -- (eh_pessoa_fisica, no topo). A fase 3 troca pela natureza jurídica. Logo abaixo, um
        -- contrato herda pessoa física de outro contrato do mesmo fornecedor.
        eh_pessoa_fisica(c.tipo_pessoa, c.fornecedor_nome) as pessoa_fisica,
        c.objeto, n(c.valor_inicial) as valor_inicial, n(c.valor_global) as valor_global,
@@ -208,20 +208,11 @@ select contrato_id, tipo, numero, d(data_assinatura) as data_assinatura,
          or coalesce(try_cast(valor_acrescido as double), 0) > 0 as altera_valor
 from staging.pn_termos where contrato_id is not null;
 
-create or replace table core.fornecedor as
--- id curto pra links e nomes de arquivo: o CPF de pessoa física nunca vai pra URL nem pro nome do JSON
-select left(md5(fornecedor_ni), 12) as id, fornecedor_ni as ni,
-       arg_max(fornecedor_nome, (data_assinatura, fornecedor_nome)) as nome,
-       arg_max(tipo_pessoa, (data_assinatura, tipo_pessoa)) as tipo_pessoa,
-       bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, round(sum(valor_global), 2) as valor_total,
-       round(sum(case when contratacao_direta then valor_global else 0 end), 2) as valor_direto,
-       min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
-from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by fornecedor_ni;
-
--- Pessoa física se decide por fornecedor: o mesmo MEI aparece com o nome em formatos diferentes, e
--- basta um contrato denunciar o dono para todos esconderem o nome.
+-- Pessoa física se decide pelo documento: o mesmo MEI aparece com o nome em formatos diferentes, e
+-- basta um contrato denunciar o dono para todos esconderem o nome. (Os pagamentos do TCE-RS, mais abaixo,
+-- entram na mesma conta.)
 update core.contrato set pessoa_fisica = true
-where not pessoa_fisica and fornecedor_ni in (select ni from core.fornecedor where pessoa_fisica);
+where not pessoa_fisica and fornecedor_ni in (select fornecedor_ni from core.contrato where pessoa_fisica);
 
 -- ===== Pagamentos por credor (TCE-RS, D44) =====
 -- O arquivo de cada ano traz o histórico inteiro dos empenhos que andaram nele, inclusive pagamentos de
@@ -245,8 +236,6 @@ where not pessoa_fisica and (ni in (select ni from core.despesa where pessoa_fis
                              or ni in (select fornecedor_ni from core.contrato where pessoa_fisica));
 update core.contrato set pessoa_fisica = true
 where not pessoa_fisica and fornecedor_ni in (select ni from core.despesa where pessoa_fisica);
-update core.fornecedor set pessoa_fisica = true
-where not pessoa_fisica and ni in (select ni from core.despesa where pessoa_fisica);
 
 -- Repasse: órgão público, banco, previdência, tributo retido (slf/repasses.yaml). Não é venda de bem ou
 -- serviço; fica fora do "quem mais recebeu" do Início.
@@ -261,6 +250,33 @@ group by d.orgao, d.ano, d.ni;
 
 create or replace table core.despesa_mes as
 select orgao, ano, mes, round(sum(valor), 2) as pago from core.despesa group by orgao, ano, mes;
+
+-- Fornecedor: quem tem contrato no PNCP e quem recebeu pagamento no TCE-RS (empresa), pelo documento.
+-- Pessoa física que só aparece no TCE-RS (diária, aluguel, honorário) não vira fornecedor (D44).
+-- id curto pra links e nomes de arquivo: o CPF de pessoa física nunca vai pra URL nem pro nome do JSON.
+create or replace table core.fornecedor as
+with pncp as (
+  select fornecedor_ni as ni,
+         arg_max(fornecedor_nome, (data_assinatura, fornecedor_nome)) as nome,
+         arg_max(tipo_pessoa, (data_assinatura, tipo_pessoa)) as tipo_pessoa,
+         bool_or(pessoa_fisica) as pessoa_fisica, count(*) as contratos, round(sum(valor_global), 2) as valor_total,
+         round(sum(case when contratacao_direta then valor_global else 0 end), 2) as valor_direto,
+         min(data_assinatura) as primeiro_contrato, max(data_assinatura) as ultimo_contrato
+  from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group by fornecedor_ni
+),
+tce as (
+  select ni, arg_max(nome, (ano, nome)) as nome, bool_or(pessoa_fisica) as pessoa_fisica,
+         round(sum(pago), 2) as pago_total, bool_or(repasse) as repasse
+  from core.credor_ano group by ni
+)
+select left(md5(coalesce(p.ni, t.ni)), 12) as id, coalesce(p.ni, t.ni) as ni, coalesce(p.nome, t.nome) as nome,
+       coalesce(p.tipo_pessoa, 'PJ') as tipo_pessoa,
+       coalesce(p.pessoa_fisica, false) or coalesce(t.pessoa_fisica, false) as pessoa_fisica,
+       coalesce(p.contratos, 0) as contratos, coalesce(p.valor_total, 0) as valor_total,
+       coalesce(p.valor_direto, 0) as valor_direto, p.primeiro_contrato, p.ultimo_contrato,
+       coalesce(t.pago_total, 0) as pago_total, coalesce(t.repasse, false) as repasse
+from pncp p full outer join tce t on t.ni = p.ni
+where p.ni is not null or not t.pessoa_fisica;
 
 -- ===== Contas (SICONFI) =====
 create or replace table core.pessoal as
