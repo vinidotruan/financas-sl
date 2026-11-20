@@ -3,6 +3,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
 
@@ -58,12 +61,64 @@ class Coleta:
         (self.dir / "_OK").write_text(datetime.now().isoformat(timespec="seconds"))
 
 
+# Coletas fixadas por fonte enquanto se refaz uma publicação pela proveniência dela (D43). Fora do
+# `coletas_fixadas`, None: vale a última coleta boa.
+_FIXADAS: ContextVar[dict[str, str | None] | None] = ContextVar("coletas_fixadas", default=None)
+
+
+@contextmanager
+def coletas_fixadas(coletas: dict[str, str | None]) -> Iterator[None]:
+    """Dentro do bloco, ultima_coleta_boa devolve a coleta indicada de cada fonte; fonte fora do mapa ou
+    com None fica sem coleta. Ao sair, mesmo com erro, volta a valer a última coleta boa."""
+    token = _FIXADAS.set(dict(coletas))
+    try:
+        yield
+    finally:
+        _FIXADAS.reset(token)
+
+
 def ultima_coleta_boa(fonte: str) -> Path | None:
+    fixadas = _FIXADAS.get()
+    if fixadas is not None:
+        coleta = fixadas.get(fonte)
+        return RAW / fonte / coleta if coleta else None
     base = RAW / fonte
     if not base.exists():
         return None
     boas = sorted(d for d in base.iterdir() if (d / "_OK").exists())
     return boas[-1] if boas else None
+
+
+def diferencas(fontes: list[dict]) -> list[str]:
+    """Confere as coletas de uma proveniência (D43) contra data/raw, antes de refazer a publicação: a pasta
+    de cada coleta existe, cada arquivo listado existe com o mesmo sha256 e não sobra arquivo fora da lista
+    (as fotos são lidas da pasta inteira; arquivo oculto, como o .DS_Store do Mac, não conta). Devolve uma
+    linha por diferença; vazia, as coletas são as mesmas."""
+    saida = []
+    for f in fontes:
+        fonte, coleta = f["fonte"], f.get("coleta")
+        if not coleta:
+            continue
+        pasta = RAW / fonte / coleta
+        if not pasta.is_dir():
+            saida.append(f"{fonte} · {coleta}: pasta não encontrada ({pasta})")
+            continue
+        listados = set()
+        for a in f.get("arquivos") or []:
+            listados.add(a["arquivo"])
+            arq = pasta / a["arquivo"]
+            if not arq.is_file():
+                saida.append(f"{fonte} · {coleta} · {a['arquivo']}: arquivo não encontrado")
+                continue
+            with open(arq, "rb") as aberto:
+                achado = hashlib.file_digest(aberto, "sha256").hexdigest()
+            if achado != a["sha256"]:
+                saida.append(f"{fonte} · {coleta} · {a['arquivo']}: sha256 esperado {a['sha256']}, achado {achado}")
+        for arq in sorted(p for p in pasta.rglob("*") if p.is_file() and not p.name.startswith(".")):
+            nome = arq.relative_to(pasta).as_posix()
+            if nome not in listados and nome not in ("manifest.jsonl", "_OK"):
+                saida.append(f"{fonte} · {coleta} · {nome}: arquivo a mais, que a proveniência não lista")
+    return saida
 
 
 def podar(manter: int = 3) -> list[Path]:

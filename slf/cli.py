@@ -43,6 +43,8 @@ def main(argv=None):
     c.add_argument("fontes", nargs="*", help=", ".join(COLETORES) + " (padrão: todas)")
     a = sub.add_parser("atualizar", help="monta o banco e roda as regras de sinal")
     a.add_argument("--forcar", action="store_true", help="troca o banco mesmo com teste falhando")
+    a.add_argument("--proveniencia", metavar="CAMINHO",
+                   help="refaz uma publicação: usa as coletas do proveniencia.json dela, conferindo o sha256 (D43)")
     sub.add_parser("diario", help="coletar tudo e atualizar (o que o agendamento roda)")
     s = sub.add_parser("servir", help="sobe a API e a tela pro celular")
     s.add_argument("--host", default="0.0.0.0")
@@ -71,8 +73,10 @@ def main(argv=None):
         falhas = coletar(args.fontes or COLETORES)
         sys.exit(1 if falhas else 0)
     if args.cmd == "atualizar":
+        from pathlib import Path
+
         from .processar import atualizar
-        atualizar(forcar=args.forcar)
+        atualizar(forcar=args.forcar, proveniencia=Path(args.proveniencia) if args.proveniencia else None)
     if args.cmd == "diario":
         falhas = coletar(COLETORES)
         from .processar import atualizar

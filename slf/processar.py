@@ -14,7 +14,7 @@ import yaml
 
 from . import sinais
 from .config import DB, DB_TMP
-from .raw import ultima_coleta_boa
+from .raw import coletas_fixadas, diferencas, ultima_coleta_boa
 
 # Colunas que o core usa. Se a fonte vier vazia ou sem a coluna, ela é criada como nula.
 COLUNAS = {
@@ -155,6 +155,7 @@ COLUNAS["cg_senadores"] = ["codigo", "nome", "sexo", "uf", "legislatura", "link"
 PREFIXO = {"transferegov": "tg", "siconfi": "sc", "pncp": "pn", "camara": "cm", "congresso": "cg"}
 ACHATAR = {"pncp": _achatar_pncp, "camara": _achatar_camara, "congresso": _achatar_congresso}
 ORIGEM_ARQUIVO = {("camara", "autores"): "proposicoes"}  # tabela de staging que sai de outro arquivo
+FONTES = (*PREFIXO, "tce")  # todas as fontes que o processamento lê
 
 
 def _carregar_tabela(con, tabela: str, arquivo: Path | None, linhas: list | None = None):
@@ -344,7 +345,46 @@ def testar(con, banco_anterior: Path) -> list[str]:
     return falhas
 
 
-def atualizar(forcar: bool = False) -> None:
+def _ler_proveniencia(caminho: Path) -> dict[str, str | None]:
+    """Para refazer uma publicação (D43): lê o proveniencia.json dela, avisa se o commit é outro e confere
+    cada arquivo bruto listado. Qualquer diferença para aqui, antes de abrir o banco novo. Devolve a coleta
+    de cada fonte; fonte que a proveniência não lista fica sem coleta, como na publicação."""
+    from .consultas import _commit
+
+    try:
+        prov = json.loads(Path(caminho).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as erro:
+        raise SystemExit(f"Não deu para ler a proveniência {caminho}: {erro}") from erro
+    esperado, atual = prov.get("commit"), _commit()
+    if esperado != atual:
+        print(f"  aviso: a proveniência é do commit {esperado or 'desconhecido'} e o código está no "
+              f"{atual or 'desconhecido'}; o mesmo resultado só é garantido com o mesmo commit")
+    fontes = prov.get("fontes") or []
+    if difs := diferencas(fontes):
+        raise SystemExit("\n".join([
+            f"As coletas da proveniência {caminho} não batem com data/raw; o banco anterior continua valendo:",
+            *(f"  - {d}" for d in difs)]))
+    coletas = {f["fonte"]: f.get("coleta") for f in fontes}
+    for fonte in FONTES:
+        if fonte not in coletas:
+            print(f"  aviso: a proveniência não lista a fonte {fonte}; ela fica sem coleta")
+    print(f"Refazendo a publicação de {prov.get('data_referencia')} com as coletas da proveniência "
+          f"(sha256 conferidos)")
+    return coletas
+
+
+def atualizar(forcar: bool = False, proveniencia: Path | None = None) -> None:
+    """Monta o banco com a última coleta boa de cada fonte. Com `proveniencia` (o proveniencia.json de uma
+    publicação), refaz aquela publicação: usa de cada fonte a coleta listada nela, depois de conferir o
+    sha256 de cada arquivo bruto (D43)."""
+    if proveniencia is None:
+        _montar(forcar)
+        return
+    with coletas_fixadas(_ler_proveniencia(proveniencia)):
+        _montar(forcar)
+
+
+def _montar(forcar: bool) -> None:
     DB.parent.mkdir(parents=True, exist_ok=True)
     if DB_TMP.exists():
         DB_TMP.unlink()

@@ -441,6 +441,115 @@ def test_processar_de_novo_da_o_mesmo_resultado(banco, tmp_path):
     assert [arq for arq in primeira if primeira[arq] != segunda[arq]] == []
 
 
+def _proveniencia(pasta, alterar=None):
+    """A proveniência da exportação em `pasta`, opcionalmente alterada, gravada num arquivo à parte."""
+    prov = json.loads((pasta / "proveniencia.json").read_text(encoding="utf-8"))
+    if alterar:
+        alterar(prov)
+    destino = pasta.parent / f"proveniencia-{pasta.name}.json"
+    destino.write_text(json.dumps(prov, ensure_ascii=False), encoding="utf-8")
+    return destino
+
+
+def _coleta(prov_arquivo, fonte: str) -> str:
+    prov = json.loads(prov_arquivo.read_text(encoding="utf-8"))
+    return next(f["coleta"] for f in prov["fontes"] if f["fonte"] == fonte)
+
+
+def test_refazer_pela_proveniencia_da_o_mesmo_resultado(banco, tmp_path, capsys):
+    primeira = _exportar_tudo(tmp_path / "a")
+    prov = _proveniencia(tmp_path / "a")
+    # uma coleta nova e diferente do Transferegov: sem a proveniência, seria ela a usada
+    _nova_coleta("transferegov", {"plano_acao_especial": lambda planos: [
+        {**p, "valor_investimento_plano_acao": (p["valor_investimento_plano_acao"] or 0) + 1000} for p in planos]})
+    capsys.readouterr()
+
+    cli.main(["atualizar", "--proveniencia", str(prov)])
+    saida = capsys.readouterr().out
+    segunda = _exportar_tudo(tmp_path / "b")
+    assert primeira.keys() == segunda.keys()
+    assert [arq for arq in primeira if primeira[arq] != segunda[arq]] == []
+    assert "commit" not in saida  # mesmo commit: nenhum aviso
+
+    # a coleta fixada não vaza: o atualizar seguinte volta à última boa, que muda o resultado
+    assert ultima_coleta_boa("transferegov").name == "2099-01-01T000000"
+    processar.atualizar()
+    terceira = _exportar_tudo(tmp_path / "c")
+    assert [arq for arq in primeira if primeira[arq] != terceira.get(arq)] != []
+
+
+def test_refazer_para_se_o_arquivo_mudou(banco, tmp_path):
+    _exportar_tudo(tmp_path / "a")
+    prov = _proveniencia(tmp_path / "a")
+    arq = RAW / "transferegov" / _coleta(prov, "transferegov") / "plano_acao_especial.json"
+    arq.write_text(arq.read_text(encoding="utf-8").replace("500000.0", "500001.0"), encoding="utf-8")
+    antes = DB.read_bytes()
+
+    with pytest.raises(SystemExit) as erro:
+        processar.atualizar(proveniencia=prov)
+    mensagem = str(erro.value)
+    assert "transferegov" in mensagem and "plano_acao_especial.json" in mensagem and "sha256" in mensagem
+    assert DB.read_bytes() == antes
+    assert not DB_TMP.exists()
+
+
+def test_refazer_lista_cada_diferenca(banco, tmp_path):
+    _exportar_tudo(tmp_path / "a")
+    prov = _proveniencia(tmp_path / "a")
+    (RAW / "siconfi" / _coleta(prov, "siconfi") / "rreo.json").unlink()
+    (RAW / "camara" / _coleta(prov, "camara") / "fotos" / "vereador-99.jpg").write_bytes(b"foto a mais")
+    (RAW / "camara" / _coleta(prov, "camara") / ".DS_Store").write_bytes(b"do Finder, nao conta")
+
+    with pytest.raises(SystemExit) as erro:
+        processar.atualizar(proveniencia=prov)
+    linhas = [linha for linha in str(erro.value).splitlines() if linha.startswith("  - ")]
+    assert len(linhas) == 2
+    assert any("siconfi" in linha and "rreo.json" in linha for linha in linhas)
+    assert any("camara" in linha and "fotos/vereador-99.jpg" in linha for linha in linhas)
+
+
+def test_refazer_para_se_a_coleta_sumiu(banco, tmp_path):
+    _exportar_tudo(tmp_path / "a")
+
+    def coleta_que_nao_existe(p):
+        next(f for f in p["fontes"] if f["fonte"] == "pncp")["coleta"] = "2000-01-01T000000"
+
+    prov = _proveniencia(tmp_path / "a", coleta_que_nao_existe)
+    antes = DB.read_bytes()
+
+    with pytest.raises(SystemExit) as erro:
+        processar.atualizar(proveniencia=prov)
+    assert "pncp" in str(erro.value) and "2000-01-01T000000" in str(erro.value)
+    assert DB.read_bytes() == antes
+    assert not DB_TMP.exists()
+
+
+def test_refazer_fonte_sem_coleta_fica_sem_coleta(banco, tmp_path):
+    _exportar_tudo(tmp_path / "a")
+
+    def sem_tce(p):
+        tce = next(f for f in p["fontes"] if f["fonte"] == "tce")
+        tce.update(coleta=None, coletado_em=None, arquivos=[])
+
+    processar.atualizar(proveniencia=_proveniencia(tmp_path / "a", sem_tce))
+    assert _um(DB, "select coleta from core.fonte where fonte = 'tce'") == (None,)
+    assert _um(DB, "select count(*) from staging.tce_operacao") == (0,)
+    assert ultima_coleta_boa("tce") is not None  # a coleta continua lá; só não foi usada
+
+
+def test_refazer_avisa_se_o_commit_e_outro(banco, tmp_path, capsys):
+    from slf.consultas import _commit
+
+    _exportar_tudo(tmp_path / "a")
+    prov = _proveniencia(tmp_path / "a", lambda p: p.update(commit="0" * 40))
+    capsys.readouterr()
+
+    processar.atualizar(proveniencia=prov)  # avisa, mas não para
+    saida = capsys.readouterr().out
+    assert "aviso" in saida and "0" * 40 in saida and str(_commit()) in saida
+    assert "Banco atualizado" in saida
+
+
 def test_data_de_referencia_e_a_da_coleta_e_nao_a_de_hoje(banco):
     # rodar o processamento outro dia, sobre as mesmas coletas, tem que dar o mesmo resultado
     for manifesto in RAW.rglob("manifest.jsonl"):
