@@ -58,3 +58,82 @@ def test_ano_fechado_vem_da_coleta_anterior(api_falsa, pedidos_tce):
         assert pedidos_tce[caminho] == (2 if ano >= hoje - 1 else 1), ano
     a, b = _manifesto(primeira), _manifesto(segunda)
     assert b["empenhos/58700-2024.csv.zip"]["sha256"] == a["empenhos/58700-2024.csv.zip"]["sha256"]
+
+
+# ===== Pagamentos no core =====
+
+def _um(sql: str):
+    import duckdb
+
+    from slf.config import DB
+
+    con = duckdb.connect(str(DB), read_only=True)
+    try:
+        return con.execute(sql).fetchone()
+    finally:
+        con.close()
+
+
+def test_pagamento_conta_no_ano_da_data(banco):
+    # o arquivo de 2025 traz também o pagamento de 2024-11-20: conta só em 2024, uma vez
+    assert _um("select sum(pago) from core.despesa_mes where orgao = 58700 and ano = 2025") == (1925000,)
+    assert _um("select sum(pago) from core.despesa_mes where orgao = 58700 and ano = 2024") == (1009999,)
+    assert _um("select count(*) from core.despesa where orgao = 58700 and ano = 2024") == (2,)
+
+
+def test_estorno_entra_na_soma(banco):
+    assert _um("select pago, pagamentos from core.credor_ano "
+               "where orgao = 58700 and ano = 2025 and nome = 'CONSTRUTORA EXEMPLO SA'") == (200000, 2)
+
+
+def test_cnpj_sem_zeros_a_esquerda(banco):
+    assert _um("select ni, repasse from core.credor_ano where nome = 'CAIXA ECONOMICA FEDERAL'") == (
+        "00360305000104", True)
+
+
+def test_mei_do_tce_e_pessoa_fisica(banco):
+    # o TCE-RS manda o MEI como PJ; o nome no formato novo denuncia o dono (D40)
+    assert _um("select pessoa_fisica, ni from core.credor_ano where nome = '12.345.678 JOANA EXEMPLO'") == (
+        True, "12345678000190")
+    assert _um("select pessoa_fisica, ni from core.credor_ano where nome = 'FULANA EXEMPLO'") == (True, "04567890123")
+
+
+def test_repasse_e_empresa(banco):
+    repasse = dict(_um_todos("select nome, repasse from core.credor_ano where orgao = 58700 and ano = 2025"))
+    assert repasse["CAIXA ECONOMICA FEDERAL"] and repasse["INSTITUTO APOSENT PENSOES SERVIDORES MUNICIPAIS DE SL"]
+    assert not repasse["GREEN EXEMPLO REFEICOES LTDA"] and not repasse["CONSTRUTORA EXEMPLO SA"]
+
+
+def test_historico_nao_entra_no_banco(banco):
+    # o histórico do empenho pode trazer nome e CPF de pessoa física: fica no raw
+    assert _um("select count(*) from information_schema.columns where column_name = 'historico'") == (0,)
+
+
+def _um_todos(sql: str):
+    import duckdb
+
+    from slf.config import DB
+
+    con = duckdb.connect(str(DB), read_only=True)
+    try:
+        return con.execute(sql).fetchall()
+    finally:
+        con.close()
+
+
+def test_padroes_de_repasse_com_nomes_reais():
+    # nomes como vêm do TCE-RS (19/11/2026): repasse e tributo retido não são empresa
+    import re
+
+    import yaml
+
+    dados = yaml.safe_load((Path(__file__).parents[1] / "slf" / "repasses.yaml").read_text(encoding="utf-8"))
+    eh_repasse = lambda nome: any(re.search(p, nome, re.I) for p in dados["padroes"])  # noqa: E731
+    for nome in ("INST. NACIONAL SEGURO SOCIAL", "RIO GRANDE DO SUL PODER JUDICIARIO", "BANCO DO BRASIL S/A",
+                 "CAIXA ECONOMICA FEDERAL", "FUNDACAO MUNICIPAL DE SAUDE DE SAO LEOPOLDO", "PASEP",
+                 "BANRISUL SOLUCOES EM PAGAMENTOS S.A. - INSTITUICAO DE PAGAME"):
+        assert eh_repasse(nome), nome
+    for nome in ("GREEN CARD S/A REFEICOES COMERCIO E SERVICOS",
+                 "INSTITUTO DESENVOLVIMENTO E ASSISTENCIA A SAUDE - IDEAS", "INSTALADORA ELETRICA MERCURIO",
+                 "RGE SUL DISTRIBUIDORA DE ENERGIA S.A.", "ONCOLOGIA CENTENARIO LTDA"):
+        assert not eh_repasse(nome), nome

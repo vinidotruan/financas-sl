@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 import duckdb
@@ -196,7 +197,42 @@ def carregar_staging(con) -> dict:
     _carregar_temas(con)
     _carregar_ente(con)
     _carregar_fotos(con)
+    origem["tce"] = _carregar_tce(con)
+    _carregar_repasses(con)
     return origem
+
+
+# Colunas do CSV do TCE-RS que entram no staging. O histórico fica de fora: pode trazer nome e CPF.
+TCE_COLUNAS = ["tipo_operacao", "dt_operacao", "nr_empenho", "nr_pagamento", "cd_credor", "nm_credor", "tp_pessoa",
+               "cnpj_cpf", "vl_empenho", "vl_liquidacao", "vl_pagamento", "ds_funcao", "nome_orgao"]
+
+
+def _carregar_tce(con) -> str | None:
+    """Os zips da última coleta boa do TCE-RS em staging.tce_operacao, com o órgão e o ano do nome do
+    arquivo (`empenhos/{codigo}-{ano}.csv.zip`). Sem coleta, a tabela vazia."""
+    colunas = ", ".join(f'"{c}" varchar' for c in ["orgao_codigo", "ano_arquivo", *TCE_COLUNAS])
+    con.execute(f"create or replace table staging.tce_operacao ({colunas})")
+    pasta = ultima_coleta_boa("tce")
+    if not pasta:
+        return None
+    lista = ", ".join(f'"{c}"' for c in TCE_COLUNAS)
+    for arq in sorted((pasta / "empenhos").glob("*.csv.zip")):
+        codigo, ano = arq.name.removesuffix(".csv.zip").split("-")
+        with zipfile.ZipFile(arq) as z, tempfile.TemporaryDirectory() as tmp:
+            csv = z.extract(z.namelist()[0], tmp)
+            con.execute(f"insert into staging.tce_operacao select '{int(codigo)}', '{int(ano)}', {lista} "
+                        f"from read_csv('{csv}', header=true, all_varchar=true)")
+    return pasta.name
+
+
+def _carregar_repasses(con):
+    dados = yaml.safe_load((Path(__file__).parent / "repasses.yaml").read_text(encoding="utf-8")) or {}
+    con.execute("create or replace table staging.repasse_cnpj (cnpj varchar)")
+    con.execute("create or replace table staging.repasse_padrao (padrao varchar)")
+    for cnpj in dados.get("cnpjs") or []:
+        con.execute("insert into staging.repasse_cnpj values (?)", [str(cnpj)])
+    for padrao in dados.get("padroes") or []:
+        con.execute("insert into staging.repasse_padrao values (?)", [padrao])
 
 
 def _carregar_fotos(con):
@@ -280,7 +316,7 @@ TESTES_DUROS = [
      "select count(*) from core.plano_acao where codigo_emenda is not null "
      "and not regexp_full_match(codigo_emenda, '[0-9]{12}')"),
 ]
-TABELAS_VOLUME = ["plano_acao", "contrato", "compra", "aditivo", "pessoal"]
+TABELAS_VOLUME = ["plano_acao", "contrato", "compra", "aditivo", "pessoal", "despesa"]
 # Avisos não barram o banco: mostram o que ficou incompleto para alguém olhar.
 AVISOS = [
     ("autor de emenda sem cadastro no Congresso (aparece sem cargo)",

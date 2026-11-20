@@ -2,6 +2,14 @@
 -- d() e n() convertem com segurança: a fonte pode mandar texto, número ou nulo.
 create or replace macro d(x) as try_cast(left(cast(x as varchar), 10) as date);
 create or replace macro n(x) as coalesce(try_cast(x as double), 0);
+-- Pessoa física, inclusive MEI e empresário individual, que as fontes mandam como PJ mas com o nome do
+-- dono. Formato antigo: CPF no fim ("FULANO DE TAL 12345678901"). Formato da Receita desde 2023: raiz do
+-- CNPJ na frente ("12.345.678 FULANO DE TAL"). Vale para o PNCP e para o TCE-RS (D40, D44).
+create or replace macro eh_pessoa_fisica(tipo, nome) as
+  coalesce(tipo = 'PF'
+           or regexp_matches(coalesce(nome, ''), '(^|[^0-9])[0-9]{11}\s*$')
+           or regexp_matches(coalesce(nome, ''), '^\s*[0-9]{2}\.?[0-9]{3}\.?[0-9]{3}\s+[^0-9\s]'),
+           false);
 create or replace macro so_digitos(x) as regexp_replace(cast(x as varchar), '[^0-9]', '', 'g');
 -- Funções do orçamento citadas no plano, sem o código: "10-Saúde / 302-Assistência Hospitalar" vira
 -- "Saúde". O Transferegov separa as áreas com " , " (o nome de subfunção pode ter vírgula).
@@ -165,15 +173,10 @@ create or replace table core.contrato as
 select c.id, c.compra_id, so_digitos(c.orgao_cnpj) as orgao_cnpj, c.orgao_nome, c.unidade,
        cast(c.ano as integer) as ano, cast(c.sequencial as integer) as sequencial, c.tipo, c.categoria,
        c.processo, c.tipo_pessoa, so_digitos(c.fornecedor_ni) as fornecedor_ni, c.fornecedor_nome,
-       -- MEI e empresário individual vêm como PJ, mas o nome é o do dono; contam como pessoa física.
-       -- Formato antigo: CPF no fim ("FULANO DE TAL 12345678901"). Formato da Receita desde 2023: raiz
-       -- do CNPJ na frente ("12.345.678 FULANO DE TAL"). A fase 3 troca pela natureza jurídica.
-       -- Depois do core.fornecedor, um contrato herda pessoa física de outro contrato do mesmo fornecedor.
-       coalesce(c.tipo_pessoa = 'PF'
-                or regexp_matches(coalesce(c.fornecedor_nome, ''), '(^|[^0-9])[0-9]{11}\s*$')
-                or regexp_matches(coalesce(c.fornecedor_nome, ''), '^\s*[0-9]{2}\.?[0-9]{3}\.?[0-9]{3}\s+[^0-9\s]'),
-                false)
-         as pessoa_fisica,
+       -- MEI e empresário individual vêm como PJ, mas o nome é o do dono; contam como pessoa física
+       -- (eh_pessoa_fisica, no topo). A fase 3 troca pela natureza jurídica. Depois do core.fornecedor, um
+       -- contrato herda pessoa física de outro contrato do mesmo fornecedor.
+       eh_pessoa_fisica(c.tipo_pessoa, c.fornecedor_nome) as pessoa_fisica,
        c.objeto, n(c.valor_inicial) as valor_inicial, n(c.valor_global) as valor_global,
        d(c.data_assinatura) as data_assinatura, d(c.vigencia_inicio) as vigencia_inicio,
        d(c.vigencia_fim) as vigencia_fim, try_cast(c.publicado_em as timestamp) as publicado_em,
@@ -219,6 +222,45 @@ from core.contrato where fornecedor_ni is not null and fornecedor_ni <> '' group
 -- basta um contrato denunciar o dono para todos esconderem o nome.
 update core.contrato set pessoa_fisica = true
 where not pessoa_fisica and fornecedor_ni in (select ni from core.fornecedor where pessoa_fisica);
+
+-- ===== Pagamentos por credor (TCE-RS, D44) =====
+-- O arquivo de cada ano traz o histórico inteiro dos empenhos que andaram nele, inclusive pagamentos de
+-- anos anteriores: pagamento conta no ano da data dele e é lido só do arquivo daquele ano (sem dobrar).
+-- O TCE-RS manda CPF e CNPJ sem os zeros à esquerda: volta a 11 e 14 dígitos, para casar com o PNCP.
+-- O histórico do empenho (pode ter nome e CPF de pessoa física) não entra.
+create or replace table core.despesa as
+select cast(t.orgao_codigo as integer) as orgao, t.nome_orgao as orgao_nome,
+       year(d(t.dt_operacao)) as ano, month(d(t.dt_operacao)) as mes, d(t.dt_operacao) as data,
+       t.nr_empenho, t.nr_pagamento,
+       case when t.tp_pessoa = 'PF' then lpad(so_digitos(t.cnpj_cpf), 11, '0')
+            else lpad(so_digitos(t.cnpj_cpf), 14, '0') end as ni,
+       eh_pessoa_fisica(t.tp_pessoa, t.nm_credor) as pessoa_fisica, t.nm_credor as nome,
+       n(t.vl_pagamento) as valor
+from staging.tce_operacao t
+where t.tipo_operacao = 'P' and left(t.dt_operacao, 4) = t.ano_arquivo;
+
+-- Pessoa física vale pelo documento, em todas as fontes: basta um nome denunciar o dono.
+update core.despesa set pessoa_fisica = true
+where not pessoa_fisica and (ni in (select ni from core.despesa where pessoa_fisica)
+                             or ni in (select fornecedor_ni from core.contrato where pessoa_fisica));
+update core.contrato set pessoa_fisica = true
+where not pessoa_fisica and fornecedor_ni in (select ni from core.despesa where pessoa_fisica);
+update core.fornecedor set pessoa_fisica = true
+where not pessoa_fisica and ni in (select ni from core.despesa where pessoa_fisica);
+
+-- Repasse: órgão público, banco, previdência, tributo retido (slf/repasses.yaml). Não é venda de bem ou
+-- serviço; fica fora do "quem mais recebeu" do Início.
+create or replace table core.credor_ano as
+select d.orgao, d.ano, d.ni, bool_or(d.pessoa_fisica) as pessoa_fisica,
+       arg_max(d.nome, (d.data, d.nome)) as nome, round(sum(d.valor), 2) as pago, count(*) as pagamentos,
+       d.ni in (select cnpj from staging.repasse_cnpj)
+         or bool_or(exists (select 1 from staging.repasse_padrao r where regexp_matches(d.nome, r.padrao, 'i')))
+         as repasse
+from core.despesa d
+group by d.orgao, d.ano, d.ni;
+
+create or replace table core.despesa_mes as
+select orgao, ano, mes, round(sum(valor), 2) as pago from core.despesa group by orgao, ano, mes;
 
 -- ===== Contas (SICONFI) =====
 create or replace table core.pessoal as

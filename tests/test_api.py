@@ -269,7 +269,7 @@ def test_proveniencia_diz_de_onde_veio_cada_numero(cliente):
     assert p["data_referencia"] == date.today().isoformat()  # as fixtures são coletadas na hora do teste
     assert {r["id"]: r["versao"] for r in p["regras"]}["R05"] == 3
     fontes = {f["fonte"]: f for f in p["fontes"]}
-    assert set(fontes) == {"transferegov", "siconfi", "pncp", "camara", "congresso"}
+    assert set(fontes) == {"transferegov", "siconfi", "pncp", "camara", "congresso", "tce"}
     assert fontes["pncp"]["coleta"] == ultima_coleta_boa("pncp").name
     contratos = next(a for a in fontes["pncp"]["arquivos"] if a["arquivo"] == "contratos.json")
     bruto = (ultima_coleta_boa("pncp") / "contratos.json").read_bytes()

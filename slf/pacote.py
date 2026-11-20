@@ -35,6 +35,11 @@ TABELAS: dict[str, str | None] = {
     "core.compra": f"""select k.* replace (case when exists ({_PF_CONTRATO} and c.compra_id = k.id)
                                                then '{OBJETO_OMITIDO}' else k.objeto end as objeto)
                        from core.compra k""",
+    "core.credor_ano": f"""select * replace (
+                             case when pessoa_fisica then null else ni end as ni,
+                             case when pessoa_fisica then '{PESSOA_FISICA}' else nome end as nome)
+                           from core.credor_ano""",
+    "core.despesa_mes": None,
     "core.contrato": f"""select * replace (
                            case when pessoa_fisica then '{PESSOA_FISICA}' else fornecedor_nome end as fornecedor_nome,
                            case when pessoa_fisica then null else fornecedor_ni end as fornecedor_ni,

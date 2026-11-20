@@ -9,7 +9,7 @@ import pytest
 from slf.pacote import montar_pacote
 from slf.sensivel import conferir
 
-DONOS = ("FULANO", "MARIA EXEMPLO", "JOANA EXEMPLO", "PEDRO EXEMPLO", "Fulana Exemplo")
+DONOS = ("FULANO", "MARIA EXEMPLO", "JOANA EXEMPLO", "PEDRO EXEMPLO", "Fulana Exemplo", "FULANA EXEMPLO")
 CPFS = ("12345678901", "98765432100", "22233344455")
 
 
@@ -46,6 +46,9 @@ def test_pacote_esconde_pessoa_fisica(pacote):
     assert contratos[3]["fornecedor_nome"] == "CONSTRUTORA EXEMPLO SA"
     pf = [f for f in _tabela(pacote, "core.fornecedor") if f["pessoa_fisica"]]
     assert pf and all(f["nome"] == "pessoa física" and f["ni"] is None and f["id"] is None for f in pf)
+    credores_pf = [c for c in _tabela(pacote, "core.credor_ano") if c["pessoa_fisica"]]
+    assert credores_pf and all(c["nome"] == "pessoa física" and c["ni"] is None for c in credores_pf)
+    assert _tabela(pacote, "core.despesa_mes")  # o pago por mês entra inteiro
 
 
 def test_pacote_limpa_o_texto_dos_pedidos(pacote):

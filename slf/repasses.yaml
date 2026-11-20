@@ -1,0 +1,24 @@
+# Credores que recebem repasse, retenção ou transferência, e não venda de bem ou serviço (D44). Eles
+# aparecem na lista de fornecedores com um selo e ficam de fora do cartão "quem mais recebeu" do Início.
+# Um credor é repasse quando o CNPJ está em `cnpjs` ou o nome casa um dos `padroes` (regex, sem
+# diferenciar maiúsculas). A lista cresce quando um repasse aparecer entre as empresas.
+cnpjs:
+  - "93850972000156"   # IAPS, instituto de previdência dos servidores de São Leopoldo
+padroes:
+  - "^BANCO "                            # bancos: consignado, tarifa, retenção da folha
+  - "^CAIXA ECONOMICA"                   # idem (Caixa Econômica Federal)
+  - "^BANRISUL"                          # Banrisul e a Banrisul Soluções em Pagamentos (cartões de benefício)
+  - "PREVID"                             # institutos e fundos de previdência
+  - "APOSENT.*PENS"                      # "instituto de aposentadorias e pensões"
+  - "^FUNDACAO MUNICIPAL"                # fundações do próprio município
+  - "^FUNDO MUNICIPAL"                   # fundos municipais
+  - "^MUNICIPIO "                        # o próprio município ou outro (convênios, consórcios)
+  - "^PREFEITURA"
+  - "^SECRETARIA"
+  - "RECEITA FEDERAL"                    # tributo retido
+  - "SEGURO SOCIAL"                      # INSS retido ("INSTITUTO NACIONAL DO SEGURO SOCIAL", "INST. NACIONAL SEGURO SOCIAL")
+  - "PODER JUDICIARIO"                   # precatórios e depósitos judiciais
+  - "^TRIBUNAL"
+  - "^MINISTERIO"
+  - "^PASEP"                             # contribuição para o PASEP
+  - "^ESTADO DO "                        # o estado (repasses e convênios)
