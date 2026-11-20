@@ -296,7 +296,7 @@ def test_inicio_quem_mais_recebeu(cliente):
     _referencia_em("2026-11-19T10:00:00")
     r = cliente.get("/api/inicio").json()["recebeu"]
     # 2025 é o último ano com pagamento em dezembro; o total inclui pessoa física e repasses
-    assert (r["ano"], r["total"]) == (2025, 1925000)
+    assert (r["ano"], r["total"]) == (2025, 1928000)
     assert [(e["nome"], e["valor"]) for e in r["empresas"]] == [
         ("GREEN EXEMPLO REFEICOES LTDA", 400000), ("CONSTRUTORA EXEMPLO SA", 200000)]
     assert r["empresas"][0]["id"] == hashlib.md5(b"66777888000199").hexdigest()[:12]
@@ -392,3 +392,10 @@ def test_pessoa_fisica_do_tce_nao_vira_fornecedor(cliente, monkeypatch, modo):
     assert not any(f["ni"] in ("04567890123", "12345678000190") for f in fs)
     if modo == "publico":
         assert not any("JOANA" in f["nome"] for f in fs)
+
+
+def test_inicio_no_comeco_do_ano_mostra_o_ano_parcial(cliente):
+    # em janeiro de 2027 o TCE-RS ainda não tem 2027: o cartão diz até quando vai o último ano parcial (2026)
+    _referencia_em("2027-01-10T10:00:00")
+    r = cliente.get("/api/inicio").json()["recebeu"]
+    assert (r["ano"], r["ano_corrente"], r["ate"]) == (2025, 2026, "2026-02-20")

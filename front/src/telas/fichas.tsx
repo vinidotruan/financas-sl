@@ -68,7 +68,8 @@ export function TelaFichas({ lista, ordem }: { lista: 'parlamentares' | 'fornece
               const valor = (f: Fornecedor) => (anoPago ? f.pago_prefeitura?.[anoPago] ?? 0 : f.valor_total)
               const vis = fs
                 .filter((f) => !termo || semAcento(f.nome).includes(termo) || (f.ni ?? '').includes(termo))
-                .filter((f) => valor(f) !== 0)
+                // por pago, só quem a prefeitura pagou naquele ano; por contratado, todos (empresa só do TCE-RS entra com "–")
+                .filter((f) => !anoPago || valor(f) !== 0)
                 // por pago, as empresas vêm antes dos repasses: as 5 do topo são as 5 do cartão do Início
                 .sort((a, b) => (anoPago ? Number(a.repasse) - Number(b.repasse) : 0) || valor(b) - valor(a)
                   || (a.id ?? '').localeCompare(b.id ?? ''))

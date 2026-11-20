@@ -223,7 +223,9 @@ create or replace table core.despesa as
 select cast(t.orgao_codigo as integer) as orgao, t.nome_orgao as orgao_nome,
        year(d(t.dt_operacao)) as ano, month(d(t.dt_operacao)) as mes, d(t.dt_operacao) as data,
        t.nr_empenho, t.nr_pagamento,
-       case when t.tp_pessoa = 'PF' then lpad(so_digitos(t.cnpj_cpf), 11, '0')
+       -- sem documento: ni nulo (entra no total do mês, não vira credor nem soma com outro credor)
+       case when coalesce(so_digitos(t.cnpj_cpf), '') = '' then null
+            when t.tp_pessoa = 'PF' then lpad(so_digitos(t.cnpj_cpf), 11, '0')
             else lpad(so_digitos(t.cnpj_cpf), 14, '0') end as ni,
        eh_pessoa_fisica(t.tp_pessoa, t.nm_credor) as pessoa_fisica, t.nm_credor as nome,
        n(t.vl_pagamento) as valor
@@ -246,6 +248,7 @@ select d.orgao, d.ano, d.ni, bool_or(d.pessoa_fisica) as pessoa_fisica,
          or bool_or(exists (select 1 from staging.repasse_padrao r where regexp_matches(d.nome, r.padrao, 'i')))
          as repasse
 from core.despesa d
+where d.ni is not null
 group by d.orgao, d.ano, d.ni;
 
 create or replace table core.despesa_mes as

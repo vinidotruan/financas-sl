@@ -11,7 +11,9 @@ boa anterior quando estão lá. Arquivo que o TCE-RS não tem (404: órgão sem 
 """
 from __future__ import annotations
 
+import io
 import json
+import zipfile
 from datetime import date
 
 import httpx
@@ -49,6 +51,9 @@ def coletar() -> Coleta:
                             raise
                         ausentes.append({"orgao": codigo, "ano": ano})
                         continue
+                    if not zipfile.is_zipfile(io.BytesIO(conteudo)):
+                        # página de verificação ou erro com status 200: a coleta falha e vale a anterior
+                        raise ValueError(f"o TCE-RS devolveu algo que não é zip ({len(conteudo)} bytes) para {url}")
                     baixados += 1
                 col.salvar_arquivo(nome, conteudo, url)
                 tamanho += len(conteudo)

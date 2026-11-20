@@ -173,7 +173,10 @@ class Consulta:
                       [prefeitura])[0]["ano"]
         recebeu = None
         if ano:
-            corrente = int(referencia[:4])
+            # o ano parcial é o do último pagamento da prefeitura, se passa do ano completo: em janeiro o
+            # TCE-RS ainda não tem o ano novo, e o parcial é o anterior
+            ultimo = self._q("select max(data) as d from core.despesa where orgao = ?", [prefeitura])[0]["d"]
+            parcial = int(ultimo[:4]) if ultimo and int(ultimo[:4]) > ano else None
             recebeu = {
                 "ano": ano,
                 "total": self._q("select sum(pago) as v from core.despesa_mes where orgao = ? and ano = ?",
@@ -181,9 +184,8 @@ class Consulta:
                 "empresas": self._q("""select left(md5(ni), 12) as id, nome, pago as valor from core.credor_ano
                                        where orgao = ? and ano = ? and not pessoa_fisica and not repasse
                                        order by pago desc, ni limit 5""", [prefeitura, ano]),
-                "ano_corrente": corrente,
-                "ate": self._q("select max(data) as d from core.despesa where orgao = ? and ano = ?",
-                               [prefeitura, corrente])[0]["d"],
+                "ano_corrente": parcial or int(referencia[:4]),
+                "ate": ultimo if parcial else None,
             }
         emendas = self.emendas()
         parados = self._q(f"""select situacao, count(*) as pedidos from core.pedido

@@ -76,7 +76,7 @@ def _um(sql: str):
 
 def test_pagamento_conta_no_ano_da_data(banco):
     # o arquivo de 2025 traz também o pagamento de 2024-11-20: conta só em 2024, uma vez
-    assert _um("select sum(pago) from core.despesa_mes where orgao = 58700 and ano = 2025") == (1925000,)
+    assert _um("select sum(pago) from core.despesa_mes where orgao = 58700 and ano = 2025") == (1928000,)
     assert _um("select sum(pago) from core.despesa_mes where orgao = 58700 and ano = 2024") == (1009999,)
     assert _um("select count(*) from core.despesa where orgao = 58700 and ano = 2024") == (2,)
 
@@ -137,3 +137,26 @@ def test_padroes_de_repasse_com_nomes_reais():
                  "INSTITUTO DESENVOLVIMENTO E ASSISTENCIA A SAUDE - IDEAS", "INSTALADORA ELETRICA MERCURIO",
                  "RGE SUL DISTRIBUIDORA DE ENERGIA S.A.", "ONCOLOGIA CENTENARIO LTDA"):
         assert not eh_repasse(nome), nome
+
+
+def test_credor_sem_documento_fica_fora_da_lista(banco):
+    # sem CNPJ nem CPF não dá para saber quem é: entra no total do mês, não vira credor (nem soma com outro)
+    assert _um("select count(*) from core.despesa where nome like 'CREDOR SEM DOCUMENTO%' and ni is null") == (2,)
+    assert _um("select count(*) from core.credor_ano where ni is null or nome like 'CREDOR SEM DOCUMENTO%'") == (0,)
+    assert _um("select count(*) from core.fornecedor where ni is null or nome like 'CREDOR SEM DOCUMENTO%'") == (0,)
+
+
+def test_resposta_que_nao_e_zip_derruba_so_a_coleta_do_tce(api_falsa, monkeypatch):
+    # uma página HTML com status 200 (desafio do Cloudflare) não pode virar coleta boa
+    import slf.http
+
+    assert cli.coletar(["tce"]) == []
+    boa = ultima_coleta_boa("tce").rename(ultima_coleta_boa("tce").with_name("2000-01-01T000000"))
+    original = slf.http.Cliente.get_bytes
+
+    def html_em_2025(self, url):
+        return b"<html>verificando seu navegador</html>" if "/2025/58700" in url else original(self, url)
+
+    monkeypatch.setattr(slf.http.Cliente, "get_bytes", html_em_2025)
+    assert cli.coletar(["tce"]) == ["tce"]
+    assert ultima_coleta_boa("tce") == boa
