@@ -574,8 +574,7 @@ cartões-pergunta: quem mais recebeu da prefeitura (ano completo mais recente, s
 quanto das emendas chegou, pedidos parados na Câmara (comissão, pauta ou parecer há mais de 60 dias;
 "Encaminhado para o Executivo" não conta, porque é o último passo que a Câmara registra), partido que mais
 pediu (o partido **da época** do pedido, contado uma vez por partido; comissão e Mesa Diretora não
-contam), bairros que mais pedem, folha sobre a receita com as linhas da LRF, e o maior salário como "em
-breve". Abas: Início · Emendas · Pedidos · Fichas · Contas · Sinais; Fontes virou link no rodapé do
+contam), bairros que mais pedem e folha sobre a receita com as linhas da LRF. Abas: Início · Emendas · Pedidos · Fichas · Contas · Sinais; Fontes virou link no rodapé do
 Início. Design e plano em `docs/superpowers/specs/2026-11-19-aba-inicio-design.md` e
 `docs/superpowers/plans/2026-11-19-aba-inicio.md`.
 
@@ -587,8 +586,9 @@ do PNCP, unificada pelo documento entre as duas fontes); o histórico do empenho
 repasses (órgão público, banco, previdência, tributo retido) pela lista `slf/repasses.yaml`.
 
 **O que ficou de fora.** Salário: o portal da prefeitura (Thema GRP) só entrega a folha e os pagamentos
-do mês com um login embutido na página, e a regra do projeto é não automatizar login; vem por Lei de
-Acesso à Informação ou download à mão. "Este mês": o TCE-RS chega com meses de atraso (em 19/11/2026, o
+do mês com um login embutido na página, e a regra do projeto é não automatizar login. O Ruan decidiu (19/11)
+que o painel só traz o que dá para automatizar com dado aberto, sem pedir nada a ninguém (nem Lei de
+Acesso à Informação, nem download à mão): o cartão do salário saiu do Início. "Este mês": o TCE-RS chega com meses de atraso (em 19/11/2026, o
 ano de 2026 ia até 27/02).
 
 ---

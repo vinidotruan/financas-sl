@@ -46,13 +46,3 @@ export const PerguntaComNumeros: StoryObj = {
     </CartaoPergunta>
   ),
 }
-
-export const EmBreve: StoryObj = {
-  name: 'Em breve (tracejado)',
-  render: () => (
-    <CartaoPergunta pergunta="Maior salário do mês" tracejado>
-      <span class="valor-grande apagado">em breve</span>
-      <p class="apagado pequeno">O portal da prefeitura só mostra a folha com login.</p>
-    </CartaoPergunta>
-  ),
-}

@@ -4,10 +4,10 @@ import type { ComponentChildren } from 'preact'
    simples quando ajuda e um link para a tela de detalhe. */
 
 export function CartaoPergunta(props: {
-  pergunta: string; children: ComponentChildren; href?: string; rotuloLink?: string; tracejado?: boolean
+  pergunta: string; children: ComponentChildren; href?: string; rotuloLink?: string
 }) {
   return (
-    <section class={props.tracejado ? 'cartao pergunta tracejado' : 'cartao pergunta'}>
+    <section class="cartao pergunta">
       <h2 class="rotulo">{props.pergunta}</h2>
       {props.children}
       {props.href && <a class="ver" href={props.href}>{props.rotuloLink ?? 'Ver mais'}</a>}

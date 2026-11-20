@@ -124,13 +124,6 @@ export function TelaInicio() {
               <Partidos partidos={i.partidos} />
               <Bairros bairros={i.bairros} />
               <Folha f={i.folha} />
-              <CartaoPergunta pergunta="Maior salário do mês" tracejado>
-                <span class="valor-grande apagado">em breve</span>
-                <p class="apagado pequeno">
-                  O portal da prefeitura só mostra a folha de pagamento com login. Ela vai entrar por um pedido de
-                  Lei de Acesso à Informação ou por um arquivo baixado à mão.
-                </p>
-              </CartaoPergunta>
               <Fontes fontes={i.fontes} />
               <p class="pequeno rodape-inicio"><a href={link.fontes()}>De onde vem cada dado</a></p>
             </>
