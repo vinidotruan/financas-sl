@@ -61,7 +61,7 @@ SEMAE (58702): sem arquivo (404).
 
 ---
 
-### Tarefa 1: Coletor do TCE-RS e a prova de acesso no GitHub Actions
+### Task 1: Coletor do TCE-RS e a prova de acesso no GitHub Actions
 
 **Files:**
 - Create: `slf/coletores/tce.py`, `tests/fixtures/tce/*.csv` (tabela acima), `tests/test_tce.py`
@@ -82,7 +82,7 @@ SEMAE (58702): sem arquivo (404).
 - [ ] **Step 6: Commit e push.** `git commit -m "Coletor do TCE-RS: empenhos e pagamentos por órgão e ano (D44)"` e `git push`.
 - [ ] **Step 7: Prova de acesso no Actions (risco da spec).** Pedir ao Ruan para rodar `gh workflow run coleta.yml --repo vinidotruan/financas-sl --ref main -f fontes="tce"` (o disparo pela sessão foi barrado antes). Conferir no log: os quatro órgãos baixados, sem 403. **Se o TCE-RS bloquear o runner: parar o plano aqui e voltar ao Ruan**, sem contornar.
 
-### Tarefa 2: Staging e core dos pagamentos
+### Task 2: Staging e core dos pagamentos
 
 **Files:**
 - Modify: `slf/processar.py` (`PREFIXO["tce"] = "tce"`, carregador dos zips, `TABELAS_VOLUME += ["despesa"]`), `slf/core.sql` (macro de pessoa física compartilhada; `core.despesa`, `core.credor_ano`, `core.despesa_mes`), `slf/pacote.py` (`core.credor_ano` e `core.despesa_mes` em `TABELAS`, pessoa física mascarada), `tests/test_tce.py`
@@ -111,7 +111,7 @@ SEMAE (58702): sem arquivo (404).
 - [ ] **Step 5: Conferir nos dados reais** (Mac, `uv run slf coletar tce && uv run slf atualizar`): prefeitura 2025 = R$ 944,6 mi (± arredondamento); as cinco empresas sem repasse: Green Card, IDEAS, Instaladora Elétrica Mercúrio, Construsinos, RGE Sul. Se diferir, explicar antes de seguir.
 - [ ] **Step 6: Commit e push** (`"Pagamentos do TCE-RS no core: por credor, por ano e por mês (D44)"`). Antes do push, confirmar que a coleta `tce` já está no cache do Actions (Tarefa 1, Step 7): sem ela, o processar para de propósito (fonte sem coleta).
 
-### Tarefa 3: Os dados do Início (`/api/inicio` e `inicio.json`)
+### Task 3: Os dados do Início (`/api/inicio` e `inicio.json`)
 
 **Files:**
 - Modify: `slf/core.sql` (`core.pedido_partido`), `slf/consultas.py` (`Consulta.inicio`), `slf/api.py` (rota), `slf/exportar.py` (`gravar("inicio.json", c.inicio())`), `tests/test_exportar.py` (`ROTAS["inicio.json"] = "/api/inicio"`), `tests/test_api.py`
@@ -150,7 +150,7 @@ SEMAE (58702): sem arquivo (404).
 - [ ] **Step 4:** testes, suíte, `ruff`; nos dados reais, `slf exportar --modo publico` + `slf conferir` sem achados, e conferir à mão os números do esboço corrigido (R$ 944,6 mi; Green Card no topo).
 - [ ] **Step 5: Commit e push** (`"Dados da aba Início: quem mais recebeu, emendas, parados, partidos, bairros e folha (D44)"`).
 
-### Tarefa 4: A aba Início no front
+### Task 4: A aba Início no front
 
 **Files:**
 - Create: `front/src/telas/inicio.tsx`, `front/src/componentes/cartoes.tsx`, `front/src/componentes/cartoes.stories.tsx`
@@ -171,7 +171,7 @@ SEMAE (58702): sem arquivo (404).
 - [ ] **Step 4:** `docs/decisoes.md`: D44 (fonte TCE-RS, regra do ano da data, repasses, Início como primeira aba, partido da época, "parado"); `CLAUDE.md` (aba Início, fonte `tce`).
 - [ ] **Step 5: Commit e push** (`"Aba Início: sete cartões-pergunta e a primeira aba do site (D44)"`). Conferir no site publicado: `#/` mostra o Início; prints na página de progresso.
 
-### Tarefa 5: Pago ao lado do contratado em Fichas → Fornecedores
+### Task 5: Pago ao lado do contratado em Fichas → Fornecedores
 
 **Files:**
 - Modify: `slf/core.sql` (`core.fornecedor`), `slf/consultas.py` (`fornecedores`, `fornecedor`), `slf/pacote.py` (colunas novas mascaradas), `front/src/rotas.ts`, `front/src/telas/fichas.tsx`, `front/src/telas/inicio.tsx` (link do cartão 1), `front/src/tipos.ts`, `tests/test_api.py`
