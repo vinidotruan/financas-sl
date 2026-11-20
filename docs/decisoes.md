@@ -541,6 +541,12 @@ e listas com valores empatados (dois parlamentares com o mesmo valor indicado) s
 - **Proveniência** em cada publicação (`data/proveniencia.json`, também em `/api/proveniencia`): o commit do
   código, a data de referência, a versão de cada regra e, de cada fonte, a coleta usada com o sha256, a
   URL e os parâmetros de cada arquivo bruto (vem do manifest, gravado em `core.arquivo_coleta`).
+- **Refazer uma publicação** (`slf atualizar --proveniencia CAMINHO`): usa, de cada fonte, a coleta que a
+  proveniência lista em vez da última boa (fonte sem coleta, ou fora da lista, fica sem coleta). Antes de
+  montar o banco confere cada arquivo bruto: pasta ou arquivo faltando, sha256 diferente ou arquivo a mais na
+  pasta param com a lista das diferenças e o banco anterior continua valendo; commit diferente só avisa.
+  Desenho: `raw.coletas_fixadas` guarda as coletas num `ContextVar` que `ultima_coleta_boa` respeita só dentro
+  do bloco, então o processamento não mudou e a escolha não sobra para o `atualizar` seguinte.
 
 - **Pacote de dados abertos** (`slf pacote`, `slf/pacote.py`): as tabelas tratadas em Parquet, em modo
   público, com a proveniência e um LEIAME. Pessoa física sem nome, CPF ou objeto; pedidos limpos (D40);

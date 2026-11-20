@@ -27,6 +27,7 @@ uv sync                      # instala dependências (uv também baixa o Python)
 uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara | congresso | tce; sem argumento, todas
 uv run slf atualizar         # raw -> staging -> core -> testes -> sinais (sem coletar)
 uv run slf atualizar --forcar  # troca o banco mesmo com teste de dados falhando
+uv run slf atualizar --proveniencia CAMINHO  # refaz uma publicação: as coletas do proveniencia.json dela, com sha256 conferido (D43)
 uv run slf diario            # coletar tudo + atualizar (o que o agendamento roda)
 uv run slf status            # última coleta boa por fonte e contagem de sinais
 uv run slf servir            # API + front (site/) em http://localhost:8765 (mostra o IP pro celular)
@@ -67,7 +68,7 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `slf/coletores/*.py` (`tce`: TCE-RS, empenhos e pagamentos por órgão e ano, D44) | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
 | `slf/raw.py` | `data/raw/{fonte}/{AAAA-MM-DDTHHMMSS}/*.json` + `manifest.jsonl` (url, params, sha256, linhas) |
 | `slf/http.py` | httpx com retry (tenacity) em 429/5xx/timeout e pausa entre chamadas |
-| `slf/processar.py` | Carrega a última coleta boa de cada fonte em `staging`, roda `core.sql`, testes, sinais |
+| `slf/processar.py` | Carrega a última coleta boa de cada fonte (ou a da proveniência, `--proveniencia`) em `staging`, roda `core.sql`, testes, sinais |
 | `slf/core.sql` | Entidades: `plano_acao`, `emenda`, `transferencia`, `relatorio_gestao`, `prazo_plano`, `meta`, `rastro_plano`, `compra`, `contrato`, `aditivo`, `fornecedor`, `pessoal`, `receita`, `limite_pessoal`, `resultado_anual`, `proposicao`, `vereador`, `bairro`, `pedido`, `pedido_autor`, `pedido_bairro`, `tema`, `fonte` |
 | `slf/temas.yaml` | Tema dos pedidos dos vereadores por expressão na ementa; a primeira que casa vence |
 | `slf/sinais.py` | Lê `slf/regras/*.yaml`, roda o SQL de cada regra, guarda histórico e aplica a revisão |

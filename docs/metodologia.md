@@ -79,6 +79,25 @@ com o tempo (corrigem dados, publicam atrasado), então uma coleta nova não rep
 compare os sha256 da sua coleta com os da proveniência para saber se partiu do mesmo dado. Os dados brutos
 não são publicados porque trazem CPF de fornecedor pessoa física.
 
+**Refazer uma publicação exata.** Pegue a proveniência dela (`data/proveniencia.json` no site, ou o
+`proveniencia.json` da Release `dados-AAAA-MM-DD`), volte o código ao commit que ela registra
+(`git checkout <commit>`) e rode:
+
+```bash
+uv run slf atualizar --proveniencia proveniencia.json
+uv run slf exportar --modo publico
+```
+
+O `atualizar` usa, de cada fonte, a coleta que a publicação usou, e não a última. Antes, confere cada arquivo
+bruto: se faltar a pasta ou um arquivo, se um sha256 não bater ou se sobrar arquivo na pasta, ele para, lista
+cada diferença (fonte, coleta, arquivo, sha256 esperado e achado) e o banco anterior continua valendo. Com
+outro commit, avisa e segue: serve para medir o efeito de uma mudança no código sobre os mesmos dados, sabendo
+que o resultado pode mudar. Precisa das mesmas pastas em `data/raw`, que só tem quem coletou: no Mac o projeto
+guarda o raw inteiro; no Actions, só as duas últimas coletas de cada fonte (D32). Num commit sem a opção
+`--proveniencia`, o mesmo efeito vem de deixar em `data/raw/{fonte}` só as coletas listadas, porque o
+`atualizar` usa a última coleta boa. O teste `test_refazer_pela_proveniencia_da_o_mesmo_resultado` refaz uma
+publicação com uma coleta mais nova presente e compara a exportação inteira, byte a byte.
+
 ## As regras
 
 Para cada regra: o que ela testa, o limiar, o que pode explicar o caso sem problema e como mostrar que o
