@@ -28,6 +28,7 @@ Em ordem de peso:
 |---|---|---|---|---|
 | Quanto de emenda Pix foi indicado e transferido? | Transferegov, transferências especiais (API PostgREST) | Nacional | CNPJ do município, código da emenda | Igual. Só muda o CNPJ |
 | Como estão as contas da prefeitura (pessoal, receita, despesa)? | SICONFI, RGF e RREO (API do Tesouro) | Nacional | Código IBGE | Igual. Só muda o IBGE |
+| Quem recebeu dinheiro de cada órgão, e quanto? | TCE-RS, dados abertos: despesa orçamentária por empenhos (CSV por órgão e ano) | Estadual (RS) | Código do órgão no TCE-RS, CNPJ do credor | Igual no RS: troque os códigos em `tce_rs.orgaos`. Fora do RS, o tribunal de contas do estado, quando publica |
 | Quem a prefeitura contratou, como e com quais aditivos? | PNCP, consulta de contratos, compras e termos | Nacional (obrigatório pela Lei 14.133) | CNPJ de cada órgão, número de controle | Igual, mas a **lista de órgãos** é sua (veja abaixo) |
 | Quanto da emenda foi empenhado e pago, e a quem? | Portal de transparência do município | Municipal | Código da emenda, CNPJ/CPF do credor | **Muda.** Depende do sistema do portal (fase 2) |
 | Quem pediu obra, placa, limpeza, poda? | Sistema legislativo da Câmara (indicações e pedidos de providência) | Municipal | Vereador, bairro | **Muda.** Depende do sistema da Câmara |

@@ -38,3 +38,17 @@ orgaos_pncp:
 #    nome: Município de São Leopoldo (filial 0004)
 #  - cnpj: "89814693000593"
 #    nome: Município de São Leopoldo (filial 0005)
+
+# TCE-RS, despesa orçamentária por empenhos (D44): código de cada órgão no Tribunal, conferido em 19/11/2026
+# em dados.tce.rs.gov.br. A Fundação Municipal de Saúde não tem arquivo próprio; o instituto de
+# previdência (58706) fica de fora: é quase todo benefício pago a aposentados e pensionistas, com CPF.
+tce_rs:
+  orgaos:
+    - codigo: 58700
+      nome: Prefeitura Municipal de São Leopoldo
+    - codigo: 58701
+      nome: Câmara Municipal de São Leopoldo
+    - codigo: 58702
+      nome: SEMAE
+    - codigo: 58704
+      nome: Fundação Hospital Centenário

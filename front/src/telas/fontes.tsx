@@ -26,6 +26,7 @@ const O_QUE_TRAZ: Record<string, string> = {
   pncp: 'Contratos, a compra de origem e os termos aditivos da prefeitura, das fundações, do SEMAE e da Câmara.',
   camara: 'Pedidos de providência e indicações dos vereadores, a situação de cada pedido na Câmara, os bairros e o cadastro dos vereadores de todas as legislaturas, com foto.',
   congresso: 'Cadastro de deputados federais (Câmara dos Deputados) e senadores (Senado), para o nome oficial e o cargo de quem indicou cada emenda.',
+  tce: 'Empenhos, liquidações e pagamentos da prefeitura, da Câmara, do SEMAE e do Hospital Centenário, por credor (TCE-RS). Chega com meses de atraso.',
 }
 
 export function TelaFontes() {

@@ -24,7 +24,7 @@ Antes de começar o item 3, pergunte ao Ruan a decisão de privacidade (seção 
 
 ```bash
 uv sync                      # instala dependências (uv também baixa o Python)
-uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara | congresso; sem argumento, todas
+uv run slf coletar [fonte]   # transferegov | siconfi | pncp | camara | congresso | tce; sem argumento, todas
 uv run slf atualizar         # raw -> staging -> core -> testes -> sinais (sem coletar)
 uv run slf atualizar --forcar  # troca o banco mesmo com teste de dados falhando
 uv run slf diario            # coletar tudo + atualizar (o que o agendamento roda)
@@ -63,7 +63,7 @@ fontes -> coletores -> data/raw (imutável) -> staging (DuckDB) -> core -> sinai
 | `docs/replicar.md` | Como montar o painel para outra cidade: critérios de escolha de fonte e passo a passo |
 | `docs/metodologia.md` | Do dado bruto ao sinal, resultado repetível (D43), como refazer as contas e cada regra (um teste confere a versão) |
 | `slf/pacote.py` | Pacote de dados abertos: tabelas tratadas em Parquet, modo público, com proveniência (`slf pacote`, D43) |
-| `slf/coletores/*.py` | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
+| `slf/coletores/*.py` (`tce`: TCE-RS, empenhos e pagamentos por órgão e ano, D44) | Um coletor por fonte. Grava via `raw.Coleta` e só marca `_OK` no fim |
 | `slf/raw.py` | `data/raw/{fonte}/{AAAA-MM-DDTHHMMSS}/*.json` + `manifest.jsonl` (url, params, sha256, linhas) |
 | `slf/http.py` | httpx com retry (tenacity) em 429/5xx/timeout e pausa entre chamadas |
 | `slf/processar.py` | Carrega a última coleta boa de cada fonte em `staging`, roda `core.sql`, testes, sinais |

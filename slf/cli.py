@@ -6,13 +6,13 @@ import socket
 import sys
 import traceback
 
-COLETORES = ("transferegov", "siconfi", "pncp", "camara", "congresso")
+COLETORES = ("transferegov", "siconfi", "pncp", "camara", "congresso", "tce")
 
 
 def coletar(fontes) -> list[str]:
-    from .coletores import camara, congresso, pncp, siconfi, transferegov
+    from .coletores import camara, congresso, pncp, siconfi, tce, transferegov
     mods = {"transferegov": transferegov, "siconfi": siconfi, "pncp": pncp, "camara": camara,
-            "congresso": congresso}
+            "congresso": congresso, "tce": tce}
     falhas = []
     for nome in fontes:
         print(f"Coletando {nome}…")

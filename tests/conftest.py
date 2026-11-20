@@ -5,11 +5,14 @@ conferidos ao vivo em 18/11/2026), com valores inventados. Nenhum teste usa a re
 """
 from __future__ import annotations
 
+import collections
+import io
 import json
 import os
 import re
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 # Precisa vir antes de qualquer import de slf: config.py lê SLF_HOME ao ser importado.
@@ -20,7 +23,9 @@ os.environ["SLF_MODO"] = "privado"
 (HOME / "config" / "ente.yaml").write_text(
     'nome: São Leopoldo\nuf: RS\nibge: 4318705\ncnpj_municipio: "89814693000160"\ninicio: 2024-01-01\n'
     'camara:\n  sistema: legiflow\n  api: https://api.camara.exemplo\n  site: https://www.camara.exemplo\n'
-    'orgaos_pncp:\n  - cnpj: "89814693000160"\n    nome: Prefeitura Municipal de São Leopoldo\n',
+    'orgaos_pncp:\n  - cnpj: "89814693000160"\n    nome: Prefeitura Municipal de São Leopoldo\n'
+    'tce_rs:\n  orgaos:\n    - codigo: 58700\n      nome: Prefeitura\n    - codigo: 58701\n      nome: Câmara\n'
+    '    - codigo: 58702\n      nome: SEMAE\n',
     encoding="utf-8",
 )
 
@@ -135,8 +140,27 @@ def _jpeg(largura: int, altura: int) -> bytes:
     return saida.getvalue()
 
 
+# TCE-RS: um zip por órgão e ano, com o CSV da fixture dentro; o que não tem fixture dá 404.
+# PEDIDOS_TCE conta os pedidos por caminho (o teste de reaproveitar ano fechado olha isso).
+PEDIDOS_TCE: collections.Counter = collections.Counter()
+
+
+def _tce(caminho: str) -> httpx.Response:
+    PEDIDOS_TCE[caminho] += 1
+    m = re.fullmatch(r"/dados/municipal/empenhos/(\d{4})/(\d+)\.csv\.zip", caminho)
+    arq = FIXTURES / "tce" / f"{m[2]}-{m[1]}.csv" if m else None
+    if not arq or not arq.exists():
+        return httpx.Response(404)
+    saida = io.BytesIO()
+    with zipfile.ZipFile(saida, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr(zipfile.ZipInfo(f"{m[2]}.csv", date_time=(2026, 1, 1, 0, 0, 0)), arq.read_bytes())
+    return httpx.Response(200, content=saida.getvalue(), headers={"Content-Type": "application/zip"})
+
+
 def responder(request: httpx.Request) -> httpx.Response:
     caminho, params = request.url.path, dict(request.url.params)
+    if request.url.host == "dados.tce.rs.gov.br":
+        return _tce(caminho)
     if request.url.host == "cdn.exemplo":  # fotos da Câmara: só a do Beto existe
         if caminho == "/2.jpg":
             return httpx.Response(200, content=_jpeg(300, 400), headers={"Content-Type": "image/jpeg"})
@@ -176,6 +200,7 @@ def responder(request: httpx.Request) -> httpx.Response:
 def pasta_limpa():
     """Cada teste começa sem data/ (raw, banco e revisão)."""
     shutil.rmtree(HOME / "data", ignore_errors=True)
+    PEDIDOS_TCE.clear()
     yield
 
 
@@ -199,3 +224,9 @@ def banco(api_falsa):
     assert cli.coletar(cli.COLETORES) == []
     processar.atualizar()
     return DB
+
+
+@pytest.fixture
+def pedidos_tce():
+    """Quantas vezes cada arquivo do TCE-RS foi pedido no teste."""
+    return PEDIDOS_TCE

@@ -28,6 +28,7 @@ LINKS = {
     "siconfi": "https://apidatalake.tesouro.gov.br/docs/siconfi/",
     "pncp": "https://pncp.gov.br/app/contratos",
     "congresso": "https://dadosabertos.camara.leg.br/",
+    "tce": "https://dados.tce.rs.gov.br/",
 }
 
 
